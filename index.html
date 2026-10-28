@@ -2421,6 +2421,18 @@ function mergeStatic(){
     const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); bg.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
     const mm = new THREE.Mesh(bg, m); mm.castShadow = mm.receiveShadow = true; world.add(mm); });
 }
+// ---------- Desempenho da Ilha Feijoada: não desenha o que está longe ou pequeno demais pra aparecer na tela ----------
+// Só visual: tira da camada 0 (nenhuma câmera desenha, nem a da luneta nem a da sombra). Não mexe em .visible, em solids nem em b.mesh, que o jogo usa.
+// Baús e itens do chão eram ~1.700 das ~3.700 chamadas de desenho vistas do avião.
+const FJP = {t:0};
+function fjCull(cam){
+  if(!TER) return; FJP.t -= 1; if(FJP.t > 0) return; FJP.t = 6;
+  const all = twoP, fogF = scene.fog.far + 10, px = innerHeight/(7*Math.tan(THREE.MathUtils.degToRad(cam.fov)/2)), P = cam.position, c = new THREE.Vector3();
+  const lay = (o, on) => { if(!o.userData.fjOff === on) return; o.userData.fjOff = !on; o.traverse(q => { if(q.isMesh || q.isSprite || q.isPoints || q.isLine) q.layers.mask = on ? 1 : 2; }); };
+  world.children.forEach(o => { if(o.userData.keep) return; let u = o.userData.fjS;   // raio e centro medidos uma vez; objeto que anda (carro, lancha) leva o centro junto
+    if(u === undefined){ const b = new THREE.Box3().setFromObject(o), s = b.isEmpty() ? null : b.getBoundingSphere(new THREE.Sphere()); u = o.userData.fjS = s && s.radius <= 40 ? {r:s.radius, off:s.center.sub(o.position)} : null; }
+    if(!u) return; const d = P.distanceTo(c.copy(o.position).add(u.off)) - u.r; lay(o, all || d < fogF && d < u.r*px); });   // some quando fica menor que ~7 px de altura
+}
 function stripes(x0, x1, z, color, y=0){ const s = mesh(new THREE.BoxGeometry(x1-x0, 0.02, 0.22), mat(color), world); s.position.set((x0+x1)/2, y + 0.01, z); s.castShadow = false; }
 
 function clearWorld(){ TER = null; FJ_LIFE = []; scene.fog.near = 60; scene.fog.far = 160; if(camera.far !== 400){ camera.far = 400; camera.updateProjectionMatrix(); } if(typeof splats !== "undefined"){ splats.length = 0; dmgs.forEach(d => d.el.remove()); dmgs.length = 0; } GRID = null; scene.remove(world); world = new THREE.Group(); scene.add(world); solids = []; bars = []; hammers = []; robot = null; doors = []; itemBoxes = []; hazards = []; }
@@ -6618,7 +6630,7 @@ let fpsN = 0, fpsT = 0;
 function frame(now){
   if(CFG.fps && now - last < 1000/CFG.fps - 2){ requestAnimationFrame(frame); return; }
   const dt = Math.min(0.05, (now - last)/1000); last = now;
-  if(!PAUSED) tick(dt); view(dt); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
+  if(!PAUSED) tick(dt); view(dt); fjCull(camera); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
   if(TOON){ toonT += dt; if(toonT > 1.5) applyToon(); }
   fpsN++; fpsT += dt; if(fpsT >= 0.5){ if(CFG.showFps) $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS'; fpsN = 0; fpsT = 0; }
   if(pv && !$('shop').hidden){ pv.rot += dt*0.9; pv.m.g.rotation.y = Math.sin(pv.rot)*0.75 + pv.off; if(pv.m.spin) pv.m.spin.rotation.y += dt*8; SKINS.tick(pv.m, pv.rot*2, dt); SKINS.tickCos(pv.m, pv.rot*2); pv.r.render(pv.sc, pv.cam); }
