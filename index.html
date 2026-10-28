@@ -2926,6 +2926,58 @@ function fjCull(cam){
     if(u === undefined){ const b = new THREE.Box3().setFromObject(o), s = b.isEmpty() ? null : b.getBoundingSphere(new THREE.Sphere()); u = o.userData.fjS = s && s.radius <= 40 ? {r:s.radius, off:s.center.sub(o.position)} : null; }
     if(!u) return; const d = P.distanceTo(c.copy(o.position).add(u.off)) - u.r; lay(o, all || d < fogF && d < u.r*px); });   // some quando fica menor que ~7 px de altura
 }
+// ---------- Grama 3D da Ilha Feijoada: tufos que balançam com o vento, só perto da câmera ----------
+// Um único InstancedMesh (1 chamada de desenho). A grade de células anda junto com a câmera feito esteira: só as células que entraram na borda são refeitas.
+// Cada célula sorteia os tufos pela própria posição (volta igual quando você passa de novo). Não nasce na areia, na pedra, na estrada nem embaixo de chão/parede/pedra (solids).
+const FJG = {w:null, m:null};
+const FJG_Q = [null, {G:26, C:2, T:5}, {G:40, C:2, T:6}];   // Perto ~26 m de raio, Longe ~40 m
+function fjGrassGeo(){
+  const P = [], C = [], H = [], I = [], base = new THREE.Color(0x3f7a2c), mid = new THREE.Color(0x67a83f), tip = new THREE.Color(0xa9d46a);
+  for(let b = 0; b < 7; b++){ const a = b*2.399, r = 0.06 + (b % 3)*0.09, cx = Math.cos(a)*r, cz = Math.sin(a)*r, h = 0.24 + ((b*37) % 7)*0.03, w = 0.045, la = a + 1.4,
+      lx = Math.cos(a)*0.12, lz = Math.sin(a)*0.12, tx = Math.cos(la)*w, tz = Math.sin(la)*w, n = P.length/3;
+    [[cx - tx, 0, cz - tz, 0, base], [cx + tx, 0, cz + tz, 0, base], [cx - tx*0.6 + lx*0.35, h*0.55, cz - tz*0.6 + lz*0.35, 0.55, mid], [cx + tx*0.6 + lx*0.35, h*0.55, cz + tz*0.6 + lz*0.35, 0.55, mid], [cx + lx, h, cz + lz, 1, tip]]
+      .forEach(([x, y, z, k, c]) => { P.push(x, y, z); C.push(c.r, c.g, c.b); H.push(k); });
+    I.push(n, n + 1, n + 3, n, n + 3, n + 2, n + 2, n + 3, n + 4); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3)); g.setAttribute('hgt', new THREE.Float32BufferAttribute(H, 1));
+  g.setAttribute('normal', new THREE.Float32BufferAttribute(new Array(P.length).fill(0).map((v, i) => i % 3 === 1 ? 1 : 0), 3)); g.setIndex(I); return g;
+}
+function fjGrassBuild(q){
+  if(FJG.m){ FJG.m.parent && FJG.m.parent.remove(FJG.m); FJG.m.dispose && FJG.m.dispose(); }
+  const Q = FJG_Q[q], N = Q.G*Q.G*Q.T, U = {uT:{value:0}, uC:{value:new THREE.Vector2()}, uR:{value:Q.G*Q.C/2}};
+  const mt = new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide});
+  mt.onBeforeCompile = sh => { Object.assign(sh.uniforms, U);
+    sh.vertexShader = 'attribute float hgt; uniform float uT; uniform vec2 uC; uniform float uR;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+  vec3 ip = instanceMatrix[3].xyz; float fd = 1.0 - smoothstep(uR*0.62, uR*0.95, length(ip.xz - uC)); transformed *= fd;
+  float ph = uT*1.9 + ip.x*0.31 + ip.z*0.23, gu = 0.6 + 0.4*sin(uT*0.7 + ip.x*0.05 + ip.z*0.04), ww = hgt*hgt*gu;
+  transformed.x += sin(ph)*0.09*ww; transformed.z += cos(ph*0.83)*0.07*ww;`);
+    sh.fragmentShader = sh.fragmentShader.replace('? vLightFront : vLightBack', '? vLightFront : vLightFront').replace('? vIndirectFront : vIndirectBack', '? vIndirectFront : vIndirectFront'); };
+  mt.customProgramCacheKey = () => 'fjGrama';
+  const m = new THREE.InstancedMesh(fjGrassGeo(), mt, N); m.frustumCulled = false; m.receiveShadow = true; m.castShadow = false; m.userData.keep = true;
+  m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.setColorAt(0, new THREE.Color()); m.instanceColor.setUsage(THREE.DynamicDrawUsage);
+  FJG.m = m; FJG.Q = Q; FJG.q = q; FJG.U = U; FJG.slot = new Array(Q.G*Q.G).fill(null); FJG.w = world; world.add(m);
+}
+function fjGrassCell(s, ci, cj){
+  const Q = FJG.Q, m = FJG.m, M = new THREE.Matrix4(), Z0 = new THREE.Matrix4().makeScale(0, 0, 0), col = new THREE.Color(), qt = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), v = new THREE.Vector3(), sc = new THREE.Vector3();
+  let sd = (ci*73856093 ^ cj*19349663) >>> 0; const rnd = () => (sd = (sd*1664525 + 1013904223) >>> 0)/4294967296;
+  for(let k = 0; k < Q.T; k++){ const i = s*Q.T + k, x = (ci + rnd())*Q.C, z = (cj + rnd())*Q.C, ry = rnd()*6.283, s0 = 0.75 + rnd()*0.6, cv = rnd(); let ok = !!TER && Math.abs(x) < TER.X && Math.abs(z) < TER.Z;
+    const h = ok ? TER.h(x, z) : 0;
+    if(ok && (h < 3.0 || h > 33 || fjSlope(x, z) > 0.7 || roadD(x, z) < 3.4)) ok = false;
+    if(ok) for(const b of solidsAt(x, z)){ if(b.max.y > h - 0.3 && b.min.y < h + 1.2 && x > b.min.x - 0.2 && x < b.max.x + 0.2 && z > b.min.z - 0.2 && z < b.max.z + 0.2){ ok = false; break; } }
+    if(!ok){ m.setMatrixAt(i, Z0); continue; }
+    M.compose(v.set(x, h - 0.03, z), qt.setFromAxisAngle(up, ry), sc.set(s0, s0*(0.8 + cv*0.5), s0)); m.setMatrixAt(i, M);
+    col.setRGB(0.9 + cv*0.18, 0.94 + cv*0.1, 0.85 + cv*0.1); m.setColorAt(i, col); }
+}
+function fjGrass(dt){
+  const q = TER ? CFG.grass|0 : 0;
+  if(!q){ if(FJG.m) FJG.m.visible = false; return; }
+  if(FJG.w !== world || FJG.q !== q || !FJG.m || !FJG.m.parent) fjGrassBuild(q);
+  const m = FJG.m, Q = FJG.Q, P = camera.position; FJG.U.uT.value += dt; FJG.U.uC.value.set(P.x, P.z);
+  m.visible = P.y - TER.h(P.x, P.z) < 45; if(!m.visible) return;
+  const c0 = Math.floor(P.x/Q.C) - Q.G/2, r0 = Math.floor(P.z/Q.C) - Q.G/2; if(FJG.c0 === c0 && FJG.r0 === r0 && FJG.m0 === m) return; FJG.c0 = c0; FJG.r0 = r0; FJG.m0 = m; let n = 0;
+  for(let a = 0; a < Q.G; a++) for(let b = 0; b < Q.G; b++){ const ci = c0 + a, cj = r0 + b, s = ((ci % Q.G) + Q.G) % Q.G*Q.G + ((cj % Q.G) + Q.G) % Q.G, key = ci + ',' + cj;
+    if(FJG.slot[s] !== key){ FJG.slot[s] = key; fjGrassCell(s, ci, cj); n++; } }
+  if(n){ m.instanceMatrix.needsUpdate = true; m.instanceColor.needsUpdate = true; }
+}
 function stripes(x0, x1, z, color, y=0){ const s = mesh(new THREE.BoxGeometry(x1-x0, 0.02, 0.22), mat(color), world); s.position.set((x0+x1)/2, y + 0.01, z); s.castShadow = false; }
 
 function clearWorld(){ TER = null; FJ_LIFE = []; scene.fog.near = 60; scene.fog.far = 160; if(camera.far !== 400){ camera.far = 400; camera.updateProjectionMatrix(); } if(typeof splats !== "undefined"){ splats.length = 0; dmgs.forEach(d => d.el.remove()); dmgs.length = 0; } GRID = null; scene.remove(world); world = new THREE.Group(); scene.add(world); solids = []; bars = []; hammers = []; robot = null; doors = []; itemBoxes = []; hazards = []; }
@@ -7289,7 +7341,7 @@ let fpsN = 0, fpsT = 0;
 function frame(now){
   if(CFG.fps && now - last < 1000/CFG.fps - 2){ requestAnimationFrame(frame); return; }
   const dt = Math.min(0.05, (now - last)/1000); last = now;
-  if(!PAUSED) tick(dt); view(dt); fjCull(camera); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
+  if(!PAUSED) tick(dt); view(dt); fjCull(camera); fjGrass(PAUSED ? 0 : dt); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
   if(TOON){ toonT += dt; if(toonT > 1.5) applyToon(); }
   fpsN++; fpsT += dt; if(fpsT >= 0.5){ if(CFG.showFps) $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS'; fpsN = 0; fpsT = 0; }
   if(pv && !$('shop').hidden){ pv.rot += dt*0.9; pv.m.g.rotation.y = Math.sin(pv.rot)*0.75 + pv.off; if(pv.m.spin) pv.m.spin.rotation.y += dt*8; SKINS.tick(pv.m, pv.rot*2, dt); SKINS.tickCos(pv.m, pv.rot*2); pv.r.render(pv.sc, pv.cam); }
@@ -7587,7 +7639,7 @@ const Platform = {
   copy(text){ try{ if(navigator.clipboard) return navigator.clipboard.writeText(text).catch(() => {}); }catch(e){} },
   online:null, // ainda não existe servidor: salas e convites são só interface
 };
-const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true};
+const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true};
 const CFG = Object.assign({}, CFG_DEF, Platform.load('feijao-cfg') || {});
 let PAUSED = false, returnTo = 'menu', setTab = 'video';
 function applyAudio(){ if(!ac) return; master.gain.value = 0.7*CFG.vol/100*(CFG.muteBlur && !document.hasFocus() ? 0 : 1); musicGain.gain.value = 0.32*CFG.music/100; sfxGain.gain.value = CFG.sfx/100; }
@@ -7608,7 +7660,7 @@ addEventListener('blur', applyAudio); addEventListener('focus', applyAudio);
 const SET_UI = {
   video:[['full', 'Modo de tela', 'seg', [[false, 'Janela'], [true, 'Tela cheia']]], ['quality', 'Qualidade gráfica', 'seg', [[0, 'Baixa'], [1, 'Média'], [2, 'Alta'], [3, 'Ultra']]],
     ['scale', 'Escala de renderização', 'range', [50, 100, 5, '%']], ['shadows', 'Sombras', 'tog'], ['toon', 'Visual de desenho (contorno e luz em faixas)', 'tog'], ['fov', 'Campo de visão', 'range', [50, 90, 1, '°']],
-    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['shake', 'Tremer a câmera nos impactos', 'tog']],
+    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
   audio:[['vol', 'Volume geral', 'range', [0, 100, 1, '%']], ['music', 'Música', 'range', [0, 100, 1, '%']], ['sfx', 'Efeitos', 'range', [0, 100, 1, '%']], ['muteBlur', 'Silenciar quando a janela perde o foco', 'tog']],
   ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['keys']],
   game:[['name', 'Nome do jogador', 'text'], ['cross', 'Mira (Modo 100 e Guerra de Tomate)', 'seg', [['cruz', 'Cruz'], ['ponto', 'Ponto'], ['circulo', 'Círculo']]], ['hudTheme', 'Cor da HUD do Modo 100', 'seg', [['tatico', 'Tático'], ['creme', 'Creme'], ['roxo', 'Roxo']]], ['autoQ', 'Tecla 5 escolhe a melhor cura quando o marcado acaba', 'tog'], ['tips', 'Mensagens no canto (quem caiu, quem pegou o quê)', 'tog'], ['lang', 'Idioma', 'seg', [['pt', 'Português (Brasil)']]], ['wipe']],
