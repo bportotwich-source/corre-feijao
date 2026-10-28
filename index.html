@@ -53,7 +53,7 @@ body{background:#7fd3ff;color:var(--ink);font-family:var(--body);font-weight:600
 #bag h4{margin:7px 0 5px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.7;display:flex;justify-content:space-between}#bag h4:first-child{margin-top:0}
 #bag .nr{display:flex;flex-direction:column;gap:5px}#bag .nr p{margin:0;font-size:12px;opacity:.6}
 #bag button{font:inherit;color:inherit;cursor:pointer;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);border-radius:10px}#bag button:hover{background:rgba(255,255,255,.14);border-color:var(--sun)}
-#bag .li{display:flex;align-items:center;gap:8px;padding:4px 8px;text-align:left;font-size:12px;font-weight:800}#bag .li img{width:44px;height:28px;object-fit:contain;flex:none}#bag .li span{flex:1}#bag .li em{font-style:normal;font-size:10px;color:var(--sun)}
+#bag .tk{font-size:10px;padding:1px 8px;letter-spacing:0;text-transform:none;opacity:1}#bag .li{display:flex;align-items:center;gap:8px;padding:4px 8px;text-align:left;font-size:12px;font-weight:800}#bag .li img{width:44px;height:28px;object-fit:contain;flex:none}#bag .li span{flex:1}#bag .li em{font-style:normal;font-size:10px;color:var(--sun)}
 #bag .ws{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 #bag .wc{position:relative;border-radius:12px;padding:8px;background:linear-gradient(160deg,color-mix(in srgb,var(--rc,#888) 40%,rgba(28,14,50,.9)),rgba(28,14,50,.92) 75%);border:1px solid rgba(255,255,255,.14);min-height:104px;display:flex;flex-direction:column;gap:3px}
 #bag .wc.on{border:2px solid var(--sun)}#bag .wc.empty{background:rgba(0,0,0,.2);border-style:dashed;align-items:center;justify-content:center;font-size:12px;opacity:.6}
@@ -488,6 +488,8 @@ body.brh{--glass:linear-gradient(180deg,rgba(58,34,96,.86),rgba(28,14,50,.9));--
 #netChatLog div{background:rgba(43,24,70,.78);color:#fff;font-size:13px;padding:4px 10px;border-radius:10px;width:fit-content;max-width:100%;overflow-wrap:anywhere;transition:opacity .6s}
 #netChatLog div.old{opacity:0}#netChat.open #netChatLog{overflow:auto;pointer-events:auto}
 #netChatIn{pointer-events:auto;margin-top:6px;width:100%;box-sizing:border-box;padding:8px 12px;border-radius:12px;border:2px solid var(--orange);background:rgba(255,255,255,.95);color:var(--ink);font:inherit}
+.nmaps{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:-4px}.nmaps .nmode{padding:6px 8px}.nmaps .nmode b{font-size:13px}
+.lslot em.team{color:var(--orange);font-style:normal;font-weight:800}
 /* controles */
 .card.panel .ctrl{background:#fff;border:1px solid var(--line);color:var(--ink)}.card.panel .ctrl kbd{background:var(--ink);color:#fff}
 /* passe */
@@ -668,6 +670,7 @@ body.brh{--glass:linear-gradient(180deg,rgba(58,34,96,.86),rgba(28,14,50,.9));--
         <section class="pbox">
           <h3>Modo <small id="modeWho"></small></h3>
           <div class="nmodes" id="netModes"></div>
+          <div class="nmodes nmaps" id="netMaps" hidden></div>
           <h3>Na sala <small id="netCount"></small></h3>
           <div class="lobby" id="lobby"></div>
         </section>
@@ -4500,7 +4503,7 @@ function shootInput(p, inp){
     if(Q[p.i].nadeNext){ Q[p.i].nadeNext = false; const i = NTYPES.indexOf(p.nadeSel || 'nade'), N = NTYPES.length; for(let k=1;k<=N;k++){ const n = NTYPES[(i + k) % N]; if(p[KIT[n].f] > 0 || k === N){ p.nadeSel = n; break; } } }
     if(inp.nade && !p.car && !p.climb && NTYPES.some(k => p[KIT[k].f] > 0)){ const c = p.i === 0 ? cam1 : cam2, dir = crossRay(c), o = c.pos.clone(); throwNade(p, rayHit(o, dir, 26, p, o.distanceTo(p.pos) + 0.6)); }
     if(inp.push && p.useT > 0) p.useT = 0;
-    if(inp.item && !p.glide && !p.climb){ if(p.car) leaveCar(p); else { const L = nearLoot(p, 1.8, L => !!WPN[L.k]); if(L) pickUp(p, L); else { const c = nearCar(p); if(c) enterCar(p, c); } } } inp.item = false;
+    if(inp.item && !p.glide && !p.climb){ if(p.car) leaveCar(p); else { const L = nearLoot(p, 1.8, L => !!WPN[L.k] && !boxLock(L, p)); if(L) pickUp(p, L); else if(p === players[0] && !twoP && nearBox(p)){ const B = nearBox(p); if(B.chest) chestOpen(B); bagToggle(true); } else { const c = nearCar(p); if(c) enterCar(p, c); } } } inp.item = false;
     if(p.car){ inp.nade = false; inp.push = false; }
     if(p.i === 0 && curW(p).auto && (keys.KeyF || mouseHeld)) inp.push = true; }
   if(p.car) inp.push = false;
@@ -4728,7 +4731,7 @@ function addLoot(k, x, y, z, ammo, rr, att){ const r = WPN[k] ? (typeof rr === '
     if(r >= 2){ const b = new THREE.Mesh(beamGeo, glowMat(c, r === 3 ? 0.3 : 0.2)); b.position.y = 3.5; g.add(b); }
     world.add(g); L.glow = g; }
   return L; }
-function removeLoot(L){ world.remove(L.s); if(L.glow) world.remove(L.glow); const i = loot.indexOf(L); if(i >= 0) loot.splice(i, 1); if(L.box && !loot.some(o => o.box === L.box)) world.remove(L.box.g); }
+function removeLoot(L){ world.remove(L.s); if(L.glow) world.remove(L.glow); const i = loot.indexOf(L); if(i >= 0) loot.splice(i, 1); if(L.box && L.box.chest) chestOpen(L.box); else if(L.box && !loot.some(o => o.box === L.box)) world.remove(L.box.g); }
 // superfícies com espaço em cima: chão, andares dos prédios, terraços
 function surfacesAt(x, z){ const L = solidsAt(x, z).filter(b => b.mesh && b.kind !== 'ramp' && x > b.min.x + 0.3 && x < b.max.x - 0.3 && z > b.min.z + 0.3 && z < b.max.z - 0.3);
   const out = L.filter(b => !L.some(o => o !== b && o.min.y < b.max.y + 1.8 && o.max.y > b.max.y + 0.05)).map(b => b.max.y);
@@ -4829,12 +4832,32 @@ function updateCars(dt){ const cs = twoP ? [cam1.pos, cam2.pos] : [cam1.pos];
 const fjTierOf = g => g[6] ? 3 : /Vila|Fazenda|Resort/.test(g[0]) ? 2 : 1;
 function fjTier(x, z){ let t = 1; for(const g of FJ_REG){ if(Math.hypot(x - g[1], z - g[2]) < (g[3] || 34) + 14) t = Math.max(t, fjTierOf(g)); }
   if(t < 2 && FJ_POI.some(q => Math.hypot(x - q[1], z - q[2]) < 14)) t = 2; return t; }
+// tem teto em cima? (então é dentro de prédio, galpão, cabana...)
+const lootCovered = (x, y, z) => solidsAt(x, z).some(b => b.active && b.min.y > y + 1.7 && b.min.y < y + 7 && x > b.min.x && x < b.max.x && z > b.min.z && z < b.max.z);
+// baú de madeira com cintas de ferro e cadeado; a tampa abre quando alguém mexe
+function chestModel(){ const g = new THREE.Group(), wood = mat(0x9a6a3a), dark = mat(0x6b4426), iron = mat(0x4a4f58), gold = mat(0xffc93c);
+  const add = (m, w, h, d, x, y, z, p) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = true; (p || g).add(o); return o; };
+  add(wood, 0.9, 0.42, 0.56, 0, 0.21, 0); add(dark, 0.94, 0.06, 0.6, 0, 0.03, 0);
+  [-0.3, 0.3].forEach(x => add(iron, 0.06, 0.44, 0.6, x, 0.22, 0));
+  const lid = new THREE.Group(); lid.position.set(0, 0.42, -0.28); g.add(lid);
+  const top = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.9, 12, 1, false, 0, Math.PI), wood); top.rotation.z = Math.PI/2; top.rotation.y = Math.PI/2; top.scale.set(1, 1, 0.55); top.position.set(0, 0, 0.28); top.castShadow = true; lid.add(top);
+  [-0.3, 0.3].forEach(x => { const b = new THREE.Mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.06, 12, 1, false, 0, Math.PI), iron); b.rotation.z = Math.PI/2; b.rotation.y = Math.PI/2; b.scale.set(1, 1, 0.56); b.position.set(x, 0, 0.28); lid.add(b); });
+  add(gold, 0.12, 0.14, 0.05, 0, 0.36, 0.29); g.userData.lid = lid; return g; }
+function chestOpen(B){ if(B.open) return; B.open = true; if(B.g.userData.lid) B.g.userData.lid.rotation.x = -1.9; }
+const CHEST_X = ['band', 'band', 'heal', 'shield', 'shield', 'vest', 'helm', 'pack', 'nade', 'pimenta', 'impacto', 'luneta', 'silenc', 'pente', 'pdq', 'turbo', 'cha', 'med', 'heal', 'ammo'];
+function fillChest(x, y, z, sr, pickW){ const g = chestModel(); g.position.set(x, y, z); g.rotation.y = sr()*6.283; world.add(g); const B = {g, chest:true, label:'Baú'};
+  const put = (k, rr) => { const L = addLoot(k, x, y + 0.3, z, undefined, rr); L.box = B; return L; };
+  const w = pickW(); put(w); if(CALS.includes(w)) put('ammo', w);
+  const nx = LOOT_TIER === 3 ? 3 : LOOT_TIER === 1 ? 1 : 2; for(let i=0; i<nx; i++) put(CHEST_X[Math.floor(sr()*CHEST_X.length)]); }
+// caixa ou baú perto (o jogador abre com E; bots pegam andando, como sempre)
+const boxLock = (L, p) => L.box && p === players[0] && !twoP;
+const nearBox = p => { const L = nearLoot(p, 2.0, L => !!L.box); return L && L.box; };
 function spawnLoot(){
   loot = []; drops = []; let seed = 5 + Math.floor(Math.random()*1000); const sr = () => (seed = seed*16807 % 2147483647)/2147483647;
   const pickW = () => { const r = sr(); return r < 0.22 ? 'smg' : r < 0.4 ? 'shotgun' : r < 0.6 ? 'rifle' : r < 0.66 ? 'sniper' : r < 0.7 ? 'bazooka' : r < 0.78 ? 'banana' : r < 0.86 ? 'lmg' : r < 0.9 ? 'flame' : 'pistol'; };
-  const NL = TER ? 760 : 280;
+  const NL = TER ? 760 : 280, NC = TER ? 150 : 50, NG = TER ? 190 : 80; let nc = 0, ng = 0;   // baús e itens soltos
   const FJ_RW = {l:TER /* o porto é metade água: pesa mais pra sobrar o mesmo tanto */ ? FJ_REG.map(g => [g, /Porto/.test(g[0]) ? 6 : fjTierOf(g) === 3 ? 3.2 : fjTierOf(g) === 2 ? 1.8 : 0.9]) : [], tot:0}; FJ_RW.l.forEach(([, k]) => FJ_RW.tot += k);
-  for(let n=0, tries=0; n<NL && tries<NL*20; tries++){ let x = (sr()*2 - 1)*(BIG_W - 2), z = (sr()*2 - 1)*(BIG_W - 2);
+  for(let n=0, tries=0; (nc < NC || ng < NG) && tries<NL*20; tries++){ let x = (sr()*2 - 1)*(BIG_W - 2), z = (sr()*2 - 1)*(BIG_W - 2);
     const u0 = TER ? sr() : 1;
     if(u0 < 0.66){ let w = sr()*FJ_RW.tot, g = FJ_REG[0]; for(const [G, k] of FJ_RW.l){ w -= k; if(w <= 0){ g = G; break; } } const a = sr()*6.283, d = Math.sqrt(sr())*((g[3] || 34) + 14); x = g[1] + Math.sin(a)*d; z = g[2] + Math.cos(a)*d; } // mais coisa nas regiões (quentes pesam mais)
     else if(u0 < 0.76 && FJ_POI.length){ const q = FJ_POI[Math.floor(sr()*FJ_POI.length)], a = sr()*6.283, d = Math.sqrt(sr())*11; x = q[1] + Math.sin(a)*d; z = q[2] + Math.cos(a)*d; } // pontos pequenos
@@ -4842,7 +4865,11 @@ function spawnLoot(){
     if(TER && TER.h(x, z) < 2.6) continue; const S = surfacesAt(x, z); if(!S.length) continue;
     const y = S[Math.floor(sr()*S.length)]; if(!TER && y < 0.5 && sr() < 0.5) continue; // mais coisa dentro e em cima dos prédios
     if(loot.some(L => Math.abs(L.pos.x - x) < 2.5 && Math.abs(L.pos.z - z) < 2.5 && Math.abs(L.pos.y - y) < 1)) continue;
-    const r = sr(); addLoot(r < 0.47 ? pickW() : r < 0.485 ? 'luneta' : r < 0.5 ? 'silenc' : r < 0.515 ? 'pente' : r < 0.548 ? 'band' : r < 0.562 ? 'pdq' : r < 0.569 ? 'cha' : r < 0.575 ? 'turbo' : r < 0.62 ? 'heal' : r < 0.635 ? 'med' : r < 0.72 ? 'shield' : r < 0.765 ? 'ammo' : r < 0.775 ? 'pao' : r < 0.783 ? 'mola' : r < 0.79 ? 'radar' : r < 0.835 ? 'nade' : r < 0.855 ? 'pimenta' : r < 0.875 ? 'impacto' : r < 0.925 ? 'vest' : r < 0.965 ? 'helm' : 'pack', x, y, z); n++; }
+    const cov = lootCovered(x, y, z); let isChest = sr() < (cov ? 0.25 : 0.7);   // dentro: mais item solto; fora: quase só baú
+    if(isChest && nc >= NC) isChest = false; if(!isChest && (ng >= NG || !cov && sr() > 0.12)) continue;
+    if(isChest){ if(loot.some(L => L.box && Math.hypot(L.pos.x - x, L.pos.z - z) < 9)) continue; fillChest(x, y, z, sr, pickW); nc++; continue; }
+    ng++;
+    const r = sr() < 0.5 ? sr() : 0.47 + sr()*0.53; addLoot(r < 0.47 ? pickW() : r < 0.485 ? 'luneta' : r < 0.5 ? 'silenc' : r < 0.515 ? 'pente' : r < 0.548 ? 'band' : r < 0.562 ? 'pdq' : r < 0.569 ? 'cha' : r < 0.575 ? 'turbo' : r < 0.62 ? 'heal' : r < 0.635 ? 'med' : r < 0.72 ? 'shield' : r < 0.765 ? 'ammo' : r < 0.775 ? 'pao' : r < 0.783 ? 'mola' : r < 0.79 ? 'radar' : r < 0.835 ? 'nade' : r < 0.855 ? 'pimenta' : r < 0.875 ? 'impacto' : r < 0.925 ? 'vest' : r < 0.965 ? 'helm' : 'pack', x, y, z); n++; }
   LOOT_TIER = null;
 }
 function giveStart(p){ p.inv = [normIt({k:'pistol', ammo:Infinity, r:0}), null, null]; p.sel = 0; p.arm = {vest:0, helm:0, pack:0}; p.nades = 0; p.pims = 0; p.imps = 0; p.paos = 0; p.molas = 0; p.radars = 0; p.turbos = 0; p.pdqs = 0; p.chas = 0; p.turboT = 0; p.chaT = 0; p.nadeSel = 'nade'; p.sh = 0; p.heals = 0; p.bands = 0; p.meds = 0; p.shs = 0; p.relT = 0; p.useT = 0; p.bloom = 0; p.iframe = 0; p.slideT = 0; p.stam = 100; p.climb = null; p.vault = null; p.stance = 0; p.sprinting = false; p.down = false; p.dhp = 0; p.rvT = 0; p.stT = 0; }
@@ -5001,7 +5028,7 @@ function explode(s){ const w = s.w; puff(s.pos.x, Math.max(0.2, s.pos.y), s.pos.
 function dropAll(p){ if(!p.inv) return; const y = Math.max(0, groundBelow(p)), list = p.inv.filter(Boolean).map(x => [x.k, totalAmmo(normIt(x)), x.r ?? WPN[x.k].rar, x.att]);
   const ck = p.inv.find(x => x && CALS.includes(x.k)); if(ck) list.push(['ammo', 0, ck.k]); for(const k in KIT) for(let n=0;n<(p[KIT[k].f] || 0);n++) list.push([k]); if(!p.heals && !p.bands && Math.random() < 0.5) list.push(['band']); if(p.arm) for(const k in ARM) if(p.arm[k]) list.push([k, 0, p.arm[k]]);
   // tudo vai pra uma caixa com a tampa na cor de quem caiu; a caixa some quando esvazia
-  const box = BRE.deathBox(p.m.body.material.color.getHex()); box.position.set(p.pos.x, y, p.pos.z); box.rotation.y = rand(0, 6.3); world.add(box); const B = {g:box};
+  const box = BRE.deathBox(p.m.body.material.color.getHex()); box.position.set(p.pos.x, y, p.pos.z); box.rotation.y = rand(0, 6.3); world.add(box); const B = {g:box, label:'Caixa de ' + nm(p)};
   list.forEach(([k, a, r, at], i) => { const ang = i/list.length*Math.PI*2, L = addLoot(k, p.pos.x + Math.sin(ang)*0.3, y + 0.62, p.pos.z + Math.cos(ang)*0.22, a, r, at); L.box = B; L.s.scale.setScalar(0.55); if(L.glow) L.glow.scale.setScalar(0.6); }); p.inv = null; }
 // avião que cruza o mapa
 function startPlane(){
@@ -5034,18 +5061,19 @@ function updateDrops(dt){ for(let i=drops.length - 1;i>=0;i--){ const d = drops[
   d.y -= dt*4; d.g.position.y = d.y; d.g.rotation.y += dt*0.6; d.g.userData.lamp.visible = Math.sin(clock*8) > 0;
   if(d.y <= gy){ world.remove(d.g); drops.splice(i, 1); addLoot(Math.random() < 0.5 ? 'sniper' : 'bazooka', d.x - 0.6, gy, d.z, undefined, 3); addLoot('shield', d.x + 0.6, gy, d.z); addLoot('med', d.x, gy, d.z + 0.8); addLoot(Math.random() < 0.5 ? 'vest' : 'helm', d.x, gy, d.z - 0.8, 0, 3); puff(d.x, gy + 0.3, d.z, 16, 0x3ea0ff, 0.14, 4); } } }
 function updateLoot(dt){ const cs = twoP ? [cam1.pos, cam2.pos] : [cam1.pos];
-  for(const L of loot){ L.s.visible = cs.some(c => Math.abs(c.x - L.pos.x) < 42 && Math.abs(c.z - L.pos.z) < 42); if(L.s.visible){ L.s.position.y = L.pos.y + (L.box ? 0.18 : 0.45) + Math.sin(clock*2.5 + L.pos.x)*(L.box ? 0.03 : 0.08); L.s.rotation.y += dt*1.1; }
-    if(L.glow){ L.glow.visible = L.s.visible || L.glow.children.length > 1 && cs.some(c => Math.abs(c.x - L.pos.x) < 90 && Math.abs(c.z - L.pos.z) < 90); if(L.glow.visible){ const k = 1 + Math.sin(clock*3 + L.pos.z)*0.12; L.glow.children[0].scale.set(k, k, 1); L.glow.rotation.y += dt*0.8; } } }
+  for(const L of loot){ L.s.visible = !L.box && cs.some(c => Math.abs(c.x - L.pos.x) < 42 && Math.abs(c.z - L.pos.z) < 42); if(L.s.visible){ L.s.position.y = L.pos.y + (L.box ? 0.18 : 0.45) + Math.sin(clock*2.5 + L.pos.x)*(L.box ? 0.03 : 0.08); L.s.rotation.y += dt*1.1; }
+    if(L.glow){ L.glow.visible = L.s.visible || !L.box && L.glow.children.length > 1 && cs.some(c => Math.abs(c.x - L.pos.x) < 90 && Math.abs(c.z - L.pos.z) < 90); if(L.glow.visible){ const k = 1 + Math.sin(clock*3 + L.pos.z)*0.12; L.glow.children[0].scale.set(k, k, 1); L.glow.rotation.y += dt*0.8; } } }
   // cura, escudo e munição: pega passando por cima
-  for(const p of players){ if(!p.alive || p.dying > 0 || p.glide || !p.inv) continue; const L = nearLoot(p, 1.1, L => !WPN[L.k] && !(L.noBy === p && R1.t < L.noT)); if(L) pickUp(p, L); } }
+  for(const p of players){ if(!p.alive || p.dying > 0 || p.glide || !p.inv) continue; const L = nearLoot(p, 1.1, L => !WPN[L.k] && !boxLock(L, p) && !(L.noBy === p && R1.t < L.noT)); if(L) pickUp(p, L); } }
 // ---------- inventário (Tab): armas, acessórios, equipamento, curas, arremessáveis e o que tem no chão perto ----------
-let bagOn = false, bagNear = [];
+let bagOn = false, bagNear = [], bagBoxes = [];
 function bagToggle(on){ const me = players[0]; if(on && !(me && me.alive && me.inv && !me.glide)) return; bagOn = on; $('bag').hidden = !on; $('bag').firstChild.lastChild._h = '';
   if(on){ mouseHeld = false; mouseR = false; if(document.pointerLockElement) document.exitPointerLock(); }
   else { try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} } }
 function bagDrop(p, k, lv, ammo, att){ const a = p.face || 0, L = addLoot(k, p.pos.x + Math.sin(a)*1.4 + rand(-0.3, 0.3), Math.max(0, groundBelow(p)), p.pos.z + Math.cos(a)*1.4 + rand(-0.3, 0.3), ammo, lv, att); if(L){ L.noBy = p; L.noT = R1.t + 4; } sfx('pickup'); }
 function bagAct(a, v){ const p = players[0]; if(!p || !p.alive || !p.inv) return;
   if(a === 'pick'){ const L = bagNear[+v]; if(L && loot.includes(L)) pickUp(p, L); }
+  else if(a === 'all'){ const B = bagBoxes[+v]; if(B) loot.filter(L => L.box === B).forEach(L => { if(WPN[L.k] && !p.inv.includes(null) && !p.inv.some(x => x && x.k === L.k)) return; pickUp(p, L); }); }
   else if(a === 'eq'){ if(p.inv[+v]){ p.sel = +v; p.relT = 0; } }
   else if(a === 'dw'){ const i = +v, x = p.inv[i]; if(!x || p.inv.filter(Boolean).length < 2) return; p.inv[i] = null; bagDrop(p, x.k, x.r ?? WPN[x.k].rar, totalAmmo(normIt(x)), x.att); if(p.sel === i){ p.sel = p.inv.findIndex(Boolean); p.relT = 0; } }
   else if(a === 'da'){ const k = v, lv = p.arm && p.arm[k]; if(!lv) return; p.arm[k] = 0; bagDrop(p, k, lv, 0); if(k === 'pack') for(const q in KIT){ const f = KIT[q].f; while((p[f] || 0) > kitCap(p, q)){ p[f]--; bagDrop(p, q); } } }
@@ -5054,8 +5082,9 @@ function bagAct(a, v){ const p = players[0]; if(!p || !p.alive || !p.inv) return
   else if(a === 'uk'){ useKit(p); }
   renderBag(); }
 function renderBag(){ const me = players[0], box = $('bag').firstChild.lastChild; if(!bagOn) return; if(!(me && me.alive && me.inv && !me.glide && R1.phase === 'play' && BIG && round === 20)){ bagToggle(false); return; }
-  bagNear = loot.filter(L => Math.abs(L.pos.y - me.pos.y) < 1.6 && Math.hypot(L.pos.x - me.pos.x, L.pos.z - me.pos.z) < 3.5).sort((a, b) => Math.hypot(a.pos.x - me.pos.x, a.pos.z - me.pos.z) - Math.hypot(b.pos.x - me.pos.x, b.pos.z - me.pos.z)).slice(0, 10);
-  const near = bagNear.map((L, i) => `<button class="li" data-a="pick" data-v="${i}">${iconImg(L.k === 'ammo' ? L.k : L.k, L.r, '')}<span style="${WPN[L.k] ? `color:${RAR[L.r][1]}` : ''}">${lootName(L)}</span><em>pegar</em></button>`).join('') || '<p>Nada no chão por perto.</p>';
+  bagNear = loot.filter(L => Math.abs(L.pos.y - me.pos.y) < 1.6 && Math.hypot(L.pos.x - me.pos.x, L.pos.z - me.pos.z) < 3.5).sort((a, b) => Math.hypot(a.pos.x - me.pos.x, a.pos.z - me.pos.z) - Math.hypot(b.pos.x - me.pos.x, b.pos.z - me.pos.z)).slice(0, 24); bagBoxes = [...new Set(bagNear.filter(L => L.box).map(L => L.box))]; bagBoxes.forEach(B => B.chest && chestOpen(B));
+  const li = (L, i) => `<button class="li" data-a="pick" data-v="${i}">${iconImg(L.k === 'ammo' ? L.k : L.k, L.r, '')}<span style="${WPN[L.k] ? `color:${RAR[L.r][1]}` : ''}">${lootName(L)}</span><em>pegar</em></button>`;
+  const near = (bagNear.map((L, i) => L.box ? '' : li(L, i)).join('') + bagBoxes.map((B, j) => `<h4>${B.chest ? '📦 Baú' : '🎁 ' + B.label}<span><button class="tk" data-a="all" data-v="${j}">pegar tudo</button></span></h4>` + bagNear.map((L, i) => L.box === B ? li(L, i) : '').join('')).join('')) || '<p>Nada por perto.</p>';
   const ws = me.inv.map((x, i) => { if(!x) return `<div class="wc empty">Espaço ${i + 1} vazio</div>`; const w = WI(normIt(x)), ok = ATT_OK(x.k);
     return `<div class="wc${i === me.sel ? ' on' : ''}" style="--rc:${RAR[w.rar][1]}"><span class="rr">${i + 1} · ${RAR[w.rar][0]}</span>${iconImg(x.k, 0, w.ic)}<b>${w.name}</b><small>Pente ${x.mag}/${w.mag} · reserva ${x.ammo === Infinity ? '∞' : x.ammo} · ${w.dmg} de dano</small>${ok.length ? `<div class="ac">${ok.map(k => `<span class="${x.att && x.att[k] ? '' : 'off'}">${ATT[k].ic} ${ATT[k].name.split(' ')[0]}</span>`).join('')}</div>` : ''}<div class="bt">${i === me.sel ? '' : `<button data-a="eq" data-v="${i}">Usar</button>`}${me.inv.filter(Boolean).length > 1 ? `<button data-a="dw" data-v="${i}">Largar</button>` : ''}</div></div>`; }).join('');
   const arm = ['vest', 'helm', 'pack'].map(k => { const lv = me.arm ? me.arm[k] : 0; return `<button class="tl${lv ? '' : ' off'}" ${lv ? `data-a="da" data-v="${k}" title="Largar"` : 'disabled'}>${lv ? iconImg(k, lv, ITEMS[k].ic) : ''}<span>${ITEMS[k].name}</span><u>${lv ? 'Nv. ' + lv : '—'}</u><s>${k === 'vest' ? (lv ? `-${VEST_CUT[lv]*100}% no corpo` : 'sem proteção') : k === 'helm' ? (lv ? `-${HELM_CUT[lv]*100}% na cabeça` : 'sem proteção') : `mais espaço${lv ? ' · largar' : ''}`}</s></button>`; }).join('');
@@ -5072,7 +5101,8 @@ function invHUD(){ renderBag(); const el = $('inv'), me = humans().find(h => h.a
   const html = me.inv.map((x, i) => x ? (normIt(x), `<div class="slot${i === me.sel ? ' on' : ''}" style="--rc:${RAR[WI(x).rar][1]}"><kbd>${i + 1}</kbd>${i === me.sel ? `<span class="rr">${RAR[WI(x).rar][0]}</span>` : ''}<i>${iconImg(x.k, 0, WPN[x.k].ic)}</i><b>${i === me.sel ? WI(x).name : WI(x).name.split(' ')[0]}${x.att ? `<em class="att">${Object.keys(ATT).filter(k => x.att[k]).map(k => ATT[k].ic).join('')}</em>` : ''}</b><small class="${x.mag <= Math.ceil(WI(x).mag*0.25) ? 'lo' : ''}">${x.mag}<u>/${x.ammo === Infinity ? '∞' : x.ammo}</u></small></div>`) : `<div class="slot empty"><kbd>${i + 1}</kbd><small>vazio</small></div>`).join('') + `<div class="kit two">${['band', 'heal', 'med', 'shield', 'pdq', 'cha', 'turbo'].filter(k => KIT[k].t <= 2 && (['band', 'heal', 'med', 'shield'].includes(k) || me[KIT[k].f] > 0)).map(k => { const n = me[KIT[k].f] || 0; return `<span class="${n ? '' : 'off'}" title="${ITEMS[k] ? ITEMS[k].name : ''}">${iconImg(k, 0, ITEMS[k].ic)} ${n}<u>/${kitCap(me, k)}</u></span>`; }).join('')}<kbd>Q</kbd>${me.turbos > 0 ? '<kbd>V</kbd>' : ''}</div><div class="kit nades">${NTYPES.filter(k => !UTIL[k] || me[KIT[k].f] > 0 || me.nadeSel === k).map(k => { const n = me[KIT[k].f] || 0; return `<span class="${n ? '' : 'off'}${(me.nadeSel || 'nade') === k ? ' sel' : ''}" title="${ITEMS[k].name}">${iconImg(k, 0, ITEMS[k].ic)} ${n}<u>/${kitCap(me, k)}</u></span>`; }).join('')}<kbd>T</kbd><kbd class="k4">4</kbd></div>`
     ;
   if(el._h !== html){ el._h = html; el.innerHTML = html; }
-  const L = nearLoot(me, 1.8, L => !!WPN[L.k]); if(L){ $('pick').hidden = false; $('pick').innerHTML = `<kbd>E</kbd> pegar <b style="color:${RAR[L.r][1]}">${lootName(L)}</b>`; }
+  const L = nearLoot(me, 1.8, L => !!WPN[L.k] && !boxLock(L, me)), NB = !L && !me.car && nearBox(me); if(NB){ $('pick').hidden = false; $('pick').innerHTML = `<kbd>E</kbd> abrir <b>${NB.chest ? '📦 baú' : NB.label}</b>`; }
+  else if(L){ $('pick').hidden = false; $('pick').innerHTML = `<kbd>E</kbd> pegar <b style="color:${RAR[L.r][1]}">${lootName(L)}</b>`; }
   else if(!me.car && nearCar(me)){ $('pick').hidden = false; $('pick').innerHTML = nearCar(me).boat ? '<kbd>E</kbd> pilotar <b>🚤 Lancha</b>' : '<kbd>E</kbd> dirigir <b>🚜 Trator</b>'; } }
 // ---------- HUD do Battle Royale (uma tela só; na tela dividida fica a HUD antiga) ----------
 const mmss = t => { t = Math.max(0, Math.ceil(t)); return Math.floor(t/60) + ':' + String(t % 60).padStart(2, '0'); };
@@ -5155,7 +5185,7 @@ function losTo(p, q){ const o = p.pos.clone().setY(p.pos.y + 1.35), t = q.pos.cl
 function botLoot(p, dt){
   p.lootT = (p.lootT || 0) - dt; if(p.want && !loot.includes(p.want)) p.want = null;
   if(p.lootT <= 0){ p.lootT = rand(0.6, 1.1); const minR = p.inv.includes(null) ? -1 : Math.min(...p.inv.map(x => WI(x).rar));
-    p.want = nearLoot(p, 24, L => WPN[L.k] ? !p.inv.some(x => x && x.k === L.k) && L.r > minR : KIT[L.k] ? (p[KIT[L.k].f] || 0) < kitCap(p, L.k) : ARM[L.k] ? L.r > (p.arm ? p.arm[L.k] : 0) : ATT[L.k] ? p.inv.some(x => canAtt(x, L.k)) : L.k === 'ammo' ? p.inv.some(x => x && x.k === L.c && totalAmmo(normIt(x)) < WPN[x.k].ammo*0.4) : false); }
+    p.want = nearLoot(p, TER ? 36 : 28, L => WPN[L.k] ? !p.inv.some(x => x && x.k === L.k) && L.r > minR : KIT[L.k] ? (p[KIT[L.k].f] || 0) < kitCap(p, L.k) : ARM[L.k] ? L.r > (p.arm ? p.arm[L.k] : 0) : ATT[L.k] ? p.inv.some(x => canAtt(x, L.k)) : L.k === 'ammo' ? p.inv.some(x => x && x.k === L.c && totalAmmo(normIt(x)) < WPN[x.k].ammo*0.4) : false); }
   if(p.want && WPN[p.want.k] && Math.hypot(p.want.pos.x - p.pos.x, p.want.pos.z - p.pos.z) < 1.3 && Math.abs(p.want.pos.y - p.pos.y) < 1.3){
     if(!p.inv.includes(null)){ let lo = 0; p.inv.forEach((x, i) => { if(WI(x).rar < WI(p.inv[lo]).rar) lo = i; }); p.sel = lo; } pickUp(p, p.want); p.want = null; }
   return p.want;
@@ -6887,23 +6917,31 @@ renderProf();
 menuScene(); applyCfg();
 window.__game = {passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
-// O líder cria a sala e roda a partida de verdade (bots, regras, tempo). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
-const NET_VER = 1, NET_PFX = 'corre-feijao-v1-', NET_MAX = 8, NET_HZ = 15;
-const NET = {on:false, host:false, peer:null, conns:new Map(), hc:null, code:'', myId:'', members:[], mode:'party', match:null, over:false, fromHost:false, tg:{}, byNid:[], sendT:0, wonArg:null, chatOpen:false};
+// O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
+// No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
+const NET_VER = 2, NET_PFX = 'corre-feijao-v1-', NET_MAX = 8, NET_HZ = 15, NET_EVHZ = 30;
+const NET = {on:false, host:false, peer:null, conns:new Map(), hc:null, code:'', myId:'', members:[], mode:'party', map:'feijoada', match:null, over:false, fromHost:false, fromNet:false, tg:{}, byNid:[], sendT:0, evT:0, sn:0, wonArg:null, chatOpen:false,
+  out:new Map(), stat:{tx:{}, rx:{}}, inRound:false, lootLive:false, li:0, lc:0, quiet:false, noLoot:false, endT:0};
 const NET_MODES = [
-  ['party', 'Partida completa', '3 provas sorteadas e a final', true],
-  ['pts', 'Modo Pontos', '5 provas, ganha quem somar mais pontos', true],
-  ['br1', 'Battle Royale Solo', 'Em breve no online', false],
-  ['br2', 'Battle Royale Dupla', 'Em breve no online', false],
-  ['br3', 'Battle Royale Trio', 'Em breve no online', false],
-  ['br4', 'Battle Royale Squad', 'Em breve no online', false]];
+  ['party', 'Partida completa', '3 provas sorteadas e a final'],
+  ['pts', 'Modo Pontos', '5 provas, ganha quem somar mais pontos'],
+  ['br1', 'Battle Royale Solo', 'Cada um por si, o resto dos 100 são bots'],
+  ['br2', 'Battle Royale Dupla', 'Times de 2 na ordem da sala'],
+  ['br3', 'Battle Royale Trio', 'Times de 3 na ordem da sala'],
+  ['br4', 'Battle Royale Squad', 'Times de 4 na ordem da sala']];
+const NET_MAPS = [['feijoada', 'Ilha Feijoada'], ['vale', 'Vale do Feijão'], ['serra', 'Serra Gelada'], ['lego', 'Cidade de Lego'], ['ilha', 'Ilha dos Tomates']];
 const NET_POOL = [1, 3, 6, 9, 10, 11, 12, 13, 15, 16, 21], NET_FINALS = [3, 15];   // provas que já funcionam online
 const netClient = () => NET.on && !NET.host;
+const netBR = () => !!NET.match && BIG && round === 20;
+const netSq = id => /^br\d$/.test(id) ? +id[2] : 0;
 const netName = () => (CFG.name || '').trim().slice(0, 16) || 'Feijão';
 const netRnd = () => (Math.random()*4294967296) >>> 0;
+const r2 = v => Math.round(v*100)/100;
 function withSeed(seed, fn){ const R = Math.random; let a = seed >>> 0;
   Math.random = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0)/4294967296; };
   try{ return fn(); } finally { Math.random = R; } }
+// aplicando o que veio da rede: libera o que só o líder pode fazer e não manda de volta
+function netDo(fn){ const a = NET.fromHost, b = NET.fromNet; NET.fromHost = NET.fromNet = true; try{ return fn(); } finally { NET.fromHost = a; NET.fromNet = b; } }
 function netLook(l){ const ok = (slot, id) => typeof id === 'string' && SHOP[slot].some(it => it[0] === id) ? id : SHOP[slot][0][0];
   l = l && typeof l === 'object' ? l : {}; return {color:Number.isFinite(l.color) ? l.color & 0xffffff : COLORS[0], hat:ok('hat', l.hat), glasses:ok('glasses', l.glasses), outfit:ok('outfit', l.outfit), skin:ok('skin', l.skin)}; }
 const netHex = c => '#' + new THREE.Color(c).getHexString();
@@ -6913,7 +6951,7 @@ function netMsg(t){ $('joinMsg').textContent = t; }
 function netHost(){ if(typeof Peer === 'undefined'){ netMsg('Não deu pra carregar o online. Confira a internet e abra o jogo de novo.'); return; }
   netReset(); const code = 'FJ-' + Array.from({length:4}, () => ROOM_CH[Math.floor(Math.random()*ROOM_CH.length)]).join(''), peer = netPeer(NET_PFX + code.toLowerCase());
   NET.peer = peer; $('btnHost').disabled = true; netMsg('Criando a sala...');
-  peer.on('open', id => { Object.assign(NET, {on:true, host:true, code, myId:id, mode:'party'}); NET.members = [{id, name:netName(), look:myLook()}]; $('btnHost').disabled = false; netSys('Sala criada. Mande o código pros seus amigos.'); netShowRoom(); });
+  peer.on('open', id => { Object.assign(NET, {on:true, host:true, code, myId:id, mode:'party', map:BIGMAP}); NET.members = [{id, name:netName(), look:myLook()}]; $('btnHost').disabled = false; netSys('Sala criada. Mande o código pros seus amigos.'); netShowRoom(); });
   peer.on('connection', c => {
     c.on('data', d => netFromClient(c, d));
     c.on('close', () => netDrop(c.peer));
@@ -6929,11 +6967,28 @@ function netJoin(code){ if(typeof Peer === 'undefined'){ netMsg('Não deu pra ca
     c.on('data', d => { if(d && d.t === 'room' && !NET.on){ clearTimeout(to); Object.assign(NET, {on:true, host:false, code}); $('btnJoin').disabled = false; netMsg(''); } netFromHost(d); });
     c.on('close', () => { if(NET.hc === c) netLost('A conexão com o líder caiu.'); }); });
   peer.on('error', e => { if(e.type === 'peer-unavailable'){ clearTimeout(to); fail(`Não achei a sala ${code}. Confira o código e se o líder ainda está com a sala aberta.`); netReset(); } else if(!NET.on){ clearTimeout(to); fail('Não deu pra conectar (' + (e.type || 'erro') + '). Tente de novo.'); netReset(); } }); }
-function netReset(){ const p = NET.peer; Object.assign(NET, {on:false, host:false, peer:null, hc:null, code:'', members:[], match:null, over:false, tg:{}, byNid:[]}); NET.conns.clear(); if(p) try{ p.destroy(); }catch(e){} $('netChatLog').innerHTML = ''; $('lobbyLog').innerHTML = ''; }
+function netReset(){ const p = NET.peer; Object.assign(NET, {on:false, host:false, peer:null, hc:null, code:'', members:[], match:null, over:false, tg:{}, byNid:[]}); NET.conns.clear(); NET.out.clear(); if(p) try{ p.destroy(); }catch(e){} $('netChatLog').innerHTML = ''; $('lobbyLog').innerHTML = ''; }
 function netLeave(){ if(NET.on && !NET.host && NET.hc) try{ NET.hc.send({t:'bye'}); }catch(e){} if(NET.match) netEndMatch(); netReset(); netShowStart(); }
 function netLost(why){ const inM = !!NET.match; netReset(); if(inM){ toMenu(); } openParty(); netShowStart(); netMsg(why); toast(why); }
 function netSend(d){ if(NET.host){ for(const c of NET.conns.values()) if(c.open) try{ c.send(d); }catch(e){} } else if(NET.hc && NET.hc.open) try{ NET.hc.send(d); }catch(e){} }
 function netTo(id, d){ const c = NET.conns.get(id); if(c && c.open) try{ c.send(d); }catch(e){} }
+// mensagem de controle (começo/fim de rodada): antes, manda os eventos que estão na fila, pra chegar tudo na ordem
+function netCtl(d){ netFlush(); netSend(d); }
+// ---- eventos: vão juntos num pacote, até 30 vezes por segundo ----
+// com "to" vai só pro dono daquele feijão (dano, empurrão, reviver); sem "to" vai pra todo mundo
+function netQ(id, e){ let q = NET.out.get(id); if(!q) NET.out.set(id, q = []); q.push(e); }
+const netOwnerIdx = n => n < NET.members.length ? n : 0;   // bots são do líder
+function netEv(e){ if(!NET.match) return; NET.stat.tx[e.t] = (NET.stat.tx[e.t] || 0) + 1;
+  if(e.to !== undefined){ const p = NET.byNid[e.to]; if(!p) return; if(own(p)){ netEvIn(e); return; }
+    if(NET.host){ const m = NET.members[netOwnerIdx(e.to)]; if(m && m.id !== NET.myId) netQ(m.id, e); } else netQ('h', e); return; }
+  if(NET.host){ for(const id of NET.conns.keys()) netQ(id, e); } else netQ('h', e); }
+function netFlush(){ for(const [id, q] of NET.out){ if(!q.length) continue; const d = {t:'ev', e:q.splice(0)};
+  if(id === 'h'){ if(NET.hc && NET.hc.open) try{ NET.hc.send(d); }catch(e){} } else netTo(id, d); } }
+// o líder recebe um pacote de eventos de um amigo: aplica e repassa
+function netEvFrom(list, from){ if(!Array.isArray(list)) return;
+  for(const e of list){ if(!e || typeof e !== 'object') continue;
+    if(e.to !== undefined){ const p = NET.byNid[e.to]; if(!p) continue; if(own(p)) netEvIn(e, from); else { const m = NET.members[netOwnerIdx(e.to)]; if(m && m.id !== from) netQ(m.id, e); } continue; }
+    netEvIn(e, from); for(const id of NET.conns.keys()) if(id !== from) netQ(id, e); } }
 // ---- líder: recebe dos amigos ----
 function netFromClient(c, d){ if(!d || typeof d !== 'object') return; const id = c.peer, mem = NET.members.find(m => m.id === id);
   if(d.t === 'hello'){
@@ -6946,12 +7001,12 @@ function netFromClient(c, d){ if(!d || typeof d !== 'object') return; const id =
   if(d.t === 'chat'){ netCols(); netChatIn(mem.name, mem.col, d.text, true); }
   else if(d.t === 'bye') netDrop(id);
   else if(!NET.match) return;
-  else if(d.t === 'm'){ const p = NET.byNid[NET.members.indexOf(mem)]; if(p && Array.isArray(d.s)) NET.tg[p.nid] = {s:d.s, at:performance.now()}; }
-  else if(d.t === 'kn' || d.t === 'sd' || d.t === 'pw') netEvent(d, id); }
-function netDrop(id){ const k = NET.members.findIndex(m => m.id === id); NET.conns.delete(id); if(k <= 0) return; const m = NET.members[k];
+  else if(d.t === 'm'){ const p = NET.byNid[NET.members.indexOf(mem)]; if(p && Array.isArray(d.s)) netState(p, d.s); }
+  else if(d.t === 'ev') netEvFrom(d.e, id); }
+function netDrop(id){ const k = NET.members.findIndex(m => m.id === id); NET.conns.delete(id); NET.out.delete(id); if(k <= 0) return; const m = NET.members[k];
   if(NET.match){ const p = NET.byNid[k]; m.gone = true; if(p && p.alive){ NET.fromHost = true; try{ eliminate(p, 'Saiu da partida'); }finally{ NET.fromHost = false; } } netSys(`${m.name} saiu da partida`); }
   else { NET.members.splice(k, 1); netSys(`${m.name} saiu da sala`); netRoomOut(); } }
-function netRoomOut(){ const d = {t:'room', code:NET.code, mode:NET.mode, members:NET.members.filter(m => !m.gone).map(m => ({id:m.id, name:m.name, look:m.look}))}; netSend(d); netRoomIn(d); }
+function netRoomOut(){ const d = {t:'room', code:NET.code, mode:NET.mode, map:NET.map, members:NET.members.filter(m => !m.gone).map(m => ({id:m.id, name:m.name, look:m.look}))}; netSend(d); netRoomIn(d); }
 // ---- amigo: recebe do líder ----
 function netFromHost(d){ if(!d || typeof d !== 'object') return;
   if(d.t === 'room'){ netRoomIn(d); }
@@ -6960,15 +7015,13 @@ function netFromHost(d){ if(!d || typeof d !== 'object') return;
   else if(d.t === 'start'){ netBegin(d); }
   else if(!NET.match) return;
   else if(d.t === 's'){ netSnapIn(d); }
+  else if(d.t === 'ev'){ if(Array.isArray(d.e)) d.e.forEach(e => e && netEvIn(e)); }
   else if(d.t === 'round'){ plan = d.plan; stage = d.stage; round = plan[stage]; clock = d.clock; netRound(d.seed); }
-  else if(d.t === 'el'){ const p = NET.byNid[d.n]; if(p && p.alive){ NET.fromHost = true; try{ eliminate(p, d.why || 'Eliminado'); }finally{ NET.fromHost = false; } } }
-  else if(d.t === 'fin'){ const p = NET.byNid[d.n]; if(p && !p.done && p.alive){ NET.fromHost = true; try{ finishPlayer(p); }finally{ NET.fromHost = false; } } }
   else if(d.t === 'end'){ players.forEach(p => { if(p.alive && !d.alive.includes(p.nid)){ p.alive = false; p.m.g.visible = false; } p.done = d.done.includes(p.nid); }); R1.finished = d.done.length;
-    NET.fromHost = true; try{ endRound(); }finally{ NET.fromHost = false; } }
+    netDo(endRound); }
   else if(d.t === 'over'){ netOver(); }
-  else if(d.t === 'abort'){ netEndMatch(); toMenu(); openParty(); toast('O líder encerrou a partida'); }
-  else if(d.t === 'kn' || d.t === 'sd' || d.t === 'pw') netEvent(d); }
-function netRoomIn(d){ NET.code = d.code; NET.mode = d.mode; if(!NET.host) NET.members = d.members.map(m => ({id:m.id, name:String(m.name).slice(0, 16), look:netLook(m.look)})); if(!$('party').hidden) netShowRoom(); }
+  else if(d.t === 'abort'){ netEndMatch(); toMenu(); openParty(); toast('O líder encerrou a partida'); } }
+function netRoomIn(d){ NET.code = d.code; NET.mode = d.mode; if(d.map) NET.map = d.map; if(!NET.host) NET.members = d.members.map(m => ({id:m.id, name:String(m.name).slice(0, 16), look:netLook(m.look)})); if(!$('party').hidden) netShowRoom(); }
 // ---- chat ----
 function netSys(t){ netChatIn('', 0, t, NET.host, true); }
 function netChatIn(n, c, text, relay, sys){ text = String(text || '').slice(0, 200).trim(); if(!text) return;
@@ -6998,13 +7051,16 @@ const inviteLink = () => `${location.origin}${location.pathname}?sala=${NET.code
 function openParty(){ returnTo = 'menu'; openScreen('party'); $('netName').value = CFG.name || ''; if(NET.on) netShowRoom(); else netShowStart(); }
 function netShowStart(){ $('netStart').hidden = false; $('netRoom').hidden = true; }
 function netShowRoom(){ netCols(); $('netStart').hidden = true; $('netRoom').hidden = false; $('roomCode').textContent = NET.code;
-  const L = $('lobby'); L.innerHTML = '';
-  NET.members.forEach((m, k) => { const d = document.createElement('div'); d.className = 'lslot' + (m.id === NET.myId ? ' me' : ''); const i = document.createElement('i'); i.style.setProperty('--c', netHex(m.col ?? m.look.color)); d.appendChild(i); d.appendChild(document.createTextNode(m.name)); const em = document.createElement('em'); em.textContent = (k === 0 ? 'líder' : '') + (m.id === NET.myId ? (k === 0 ? ' · você' : 'você') : ''); d.appendChild(em); L.appendChild(d); });
+  const L = $('lobby'), sq = netSq(NET.mode); L.innerHTML = '';
+  NET.members.forEach((m, k) => { const d = document.createElement('div'); d.className = 'lslot' + (m.id === NET.myId ? ' me' : ''); const i = document.createElement('i'); i.style.setProperty('--c', netHex(m.col ?? m.look.color)); d.appendChild(i); d.appendChild(document.createTextNode(m.name)); const em = document.createElement('em'); em.textContent = (k === 0 ? 'líder' : '') + (m.id === NET.myId ? (k === 0 ? ' · você' : 'você') : ''); d.appendChild(em);
+    if(sq > 1){ const t = document.createElement('em'); t.className = 'team'; t.textContent = 'Time ' + (Math.floor(k/sq) + 1); d.appendChild(t); } L.appendChild(d); });
   for(let k = NET.members.length; k < Math.max(4, NET.members.length + 1) && k < NET_MAX; k++){ const b = document.createElement('button'); b.className = 'lslot'; b.innerHTML = '<i></i>Convidar<em>vazio</em>'; b.onclick = () => { Platform.copy(inviteLink()); toast(`Convite copiado! Mande pro seu amigo: <b>${NET.code}</b>`); }; L.appendChild(b); }
   $('netCount').textContent = `${NET.members.length} de ${NET_MAX} · o resto vira bot`;
   const M = $('netModes'); M.innerHTML = '';
-  NET_MODES.forEach(([id, t, s, ok]) => { const b = document.createElement('button'); b.className = 'nmode' + (NET.mode === id ? ' on' : ''); b.disabled = !ok || !NET.host; b.innerHTML = `<b>${t}</b><small>${s}</small>`; if(!ok) b.classList.add('soon');
+  NET_MODES.forEach(([id, t, s]) => { const b = document.createElement('button'); b.className = 'nmode' + (NET.mode === id ? ' on' : ''); b.disabled = !NET.host; b.innerHTML = `<b>${t}</b><small>${s}</small>`;
     b.onclick = () => { NET.mode = id; netRoomOut(); }; M.appendChild(b); });
+  const P = $('netMaps'); P.hidden = !sq; P.innerHTML = '';
+  if(sq) NET_MAPS.forEach(([id, t]) => { const b = document.createElement('button'); b.className = 'nmode' + (NET.map === id ? ' on' : ''); b.disabled = !NET.host; b.innerHTML = `<b>${t}</b>`; b.onclick = () => { NET.map = id; netRoomOut(); }; P.appendChild(b); });
   $('modeWho').textContent = NET.host ? '· você escolhe' : '· o líder escolhe';
   $('btnRoomStart').hidden = !NET.host; $('startHint').textContent = NET.host ? (NET.members.length < 2 ? 'Dá pra começar sozinho, mas é melhor esperar os amigos entrarem.' : 'Todo mundo pronto? Aperte Começar.') : 'Esperando o líder começar a partida...'; }
 $('btnParty').onclick = openParty;
@@ -7018,14 +7074,15 @@ $('joinCode').oninput = () => { let v = $('joinCode').value.toUpperCase().replac
 $('btnJoin').onclick = () => { const c = $('joinCode').value;
   if(!/^FJ-[A-Z0-9]{4}$/.test(c)){ netMsg('Código inválido. Ele tem o formato FJ-1234.'); return; } netJoin(c); };
 $('joinCode').addEventListener('keydown', e => { e.stopPropagation(); if(e.code === 'Enter') $('btnJoin').click(); });
-$('btnRoomStart').onclick = () => { if(!NET.host) return; const id = NET.mode; if(!NET_MODES.find(m => m[0] === id)[3]) return;
-  const pts = id === 'pts', fin = NET_FINALS[Math.floor(Math.random()*NET_FINALS.length)], pool = NET_POOL.filter(r => r !== fin).sort(() => Math.random() - 0.5);
-  const d = {t:'start', mode:id, pts, plan:window.__NET_PLAN || pool.slice(0, pts ? 4 : 3).concat([fin]), seed:netRnd(), clock, diff:DIFF, members:NET.members.map(m => ({id:m.id, name:m.name, look:m.look}))};
+$('btnRoomStart').onclick = () => { if(!NET.host) return; const id = NET.mode; if(!NET_MODES.find(m => m[0] === id)) return;
+  const pts = id === 'pts', br = netSq(id), fin = NET_FINALS[Math.floor(Math.random()*NET_FINALS.length)], pool = NET_POOL.filter(r => r !== fin).sort(() => Math.random() - 0.5);
+  const d = {t:'start', mode:id, pts, br, map:NET.map, plan:br ? [20] : window.__NET_PLAN || pool.slice(0, pts ? 4 : 3).concat([fin]), seed:netRnd(), clock, diff:DIFF, members:NET.members.map(m => ({id:m.id, name:m.name, look:m.look}))};
   netSend(d); netBegin(d); };
 // ---- partida ----
-function netBegin(d){ NET.match = d; NET.over = false; NET.wonArg = null; NET.tg = {}; NET.byNid = []; if(!NET.host) NET.members = d.members.map(m => ({id:m.id, name:String(m.name).slice(0, 16), look:netLook(m.look)}));
-  if(twoP) setNP(1); DIFF = d.diff ?? DIFF; BR_TEST = false; $('netChat').hidden = false; netChatToggle(false); play(0, false, d.pts); }
-function netEndMatch(){ if(NET.host && NET.members.some(m => m.gone)){ NET.members = NET.members.filter(m => !m.gone); setTimeout(netRoomOut, 0); } NET.match = null; NET.over = false; $('netChat').hidden = true; netChatToggle(false); players.forEach(p => { if(p.m.ntag){ p.m.g.remove(p.m.ntag); p.m.ntag = null; } }); }
+function netBegin(d){ NET.match = d; NET.over = false; NET.wonArg = null; NET.tg = {}; NET.byNid = []; NET.out.clear(); NET.endT = 0; if(!NET.host) NET.members = d.members.map(m => ({id:m.id, name:String(m.name).slice(0, 16), look:netLook(m.look)}));
+  if(twoP) setNP(1); DIFF = d.diff ?? DIFF; BR_TEST = false; $('netChat').hidden = false; netChatToggle(false);
+  if(d.br){ BR_SQ = d.br; if(NET_MAPS.some(m => m[0] === d.map)) BIGMAP = d.map; play(20, true); } else play(0, false, d.pts); }
+function netEndMatch(){ if(NET.host && NET.members.some(m => m.gone)){ NET.members = NET.members.filter(m => !m.gone); setTimeout(netRoomOut, 0); } NET.match = null; NET.over = false; NET.out.clear(); $('netChat').hidden = true; netChatToggle(false); players.forEach(p => { if(p.m.ntag){ p.m.g.remove(p.m.ntag); p.m.ntag = null; } }); }
 // quem é quem: o líder é o número 0, depois os amigos na ordem da sala; os bots vêm depois. No PC de cada um, ele mesmo é o players[0].
 // cores iguais confundem: quem chegou depois ganha outra
 function netCols(){ const used = []; NET.members.forEach(m => { let c = m.look.color; if(used.includes(c)) c = COLORS.find(x => !used.includes(x)); used.push(c); m.col = c; }); }
@@ -7037,38 +7094,113 @@ function netArrange(){ const k = NET.members.findIndex(m => m.id === NET.myId); 
 function nameTag(text, col){ const c = document.createElement('canvas'), g = c.getContext('2d'); c.width = 256; c.height = 64; g.font = '800 34px system-ui, sans-serif'; const w = Math.min(244, g.measureText(text).width + 28);
   g.fillStyle = 'rgba(43,24,70,.82)'; g.beginPath(); g.roundRect ? g.roundRect(128 - w/2, 8, w, 48, 22) : g.rect(128 - w/2, 8, w, 48); g.fill(); g.fillStyle = netHex(col); g.fillRect(128 - w/2 + 14, 48, w - 28, 3);
   g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 128, 33, 230);
-  const t = new THREE.CanvasTexture(c), s = new THREE.Sprite(new THREE.SpriteMaterial({map:t, depthTest:false, transparent:true})); s.scale.set(2.4, 0.6, 1); s.position.y = 2.75; s.renderOrder = 999; return s; }
+  const t = new THREE.CanvasTexture(c), s = new THREE.Sprite(new THREE.SpriteMaterial({map:t, depthTest:false, transparent:true})); s.scale.set(2.4, 0.6, 1); s.position.y = BIG ? 3.15 : 2.75; s.renderOrder = 999; return s; }
 function netTags(){ players.forEach(p => { const want = p.netH && NET.match; if(p.m.ntag && (!want || p.m.ntag.userData.n !== p.name)){ p.m.g.remove(p.m.ntag); p.m.ntag = null; }
   if(want && !p.m.ntag){ const m = NET.members[p.nid]; p.m.ntag = nameTag(p.name, m ? m.col : 0xffffff); p.m.ntag.userData.n = p.name; p.m.g.add(p.m.ntag); } }); }
-const own = p => NET.host ? !p.netH : p.i === 0;   // quem decide a posição desse feijão é este PC?
-// estado compacto: posição, velocidade, direção e flags
+const own = p => NET.host ? !p.netH : p.i === 0;   // quem decide esse feijão é este PC?
+const WK = Object.keys(WPN);
+// estado compacto: posição, velocidade, direção e flags. No Battle Royale vão junto vida, escudo, arma, pose e equipamento
 function netPack(p){ const f = (p.alive ? 1 : 0) | (p.grounded ? 2 : 0) | (p.dive > 0 ? 4 : 0) | (p.done ? 8 : 0) | (p.item ? 16 : 0) | (p.stun > 0 ? 32 : 0) | (p.dying > 0 ? 64 : 0) | (p.pushAnim > 0 ? 128 : 0);
-  return [p.nid, Math.round(p.pos.x*100), Math.round(p.pos.y*100), Math.round(p.pos.z*100), Math.round(p.face*100), Math.round(p.vel.x*10), Math.round(p.vel.y*10), Math.round(p.vel.z*10), f]; }
-function netSnapIn(d){ const now = performance.now(); if(typeof d.tl === 'number' && R1.phase === 'play') R1.timeLeft = d.tl;
+  const s = [p.nid, Math.round(p.pos.x*100), Math.round(p.pos.y*100), Math.round(p.pos.z*100), Math.round(p.face*100), Math.round(p.vel.x*10), Math.round(p.vel.y*10), Math.round(p.vel.z*10), f];
+  if(!netBR()) return s;
+  const it = p.inv && p.inv[p.sel], wc = it && WPN[it.k] ? WK.indexOf(it.k)*4 + (it.r ?? WPN[it.k].rar) : -1;
+  const f2 = ({plane:1, fall:2, chute:3}[p.glide] || 0) | ((p.stance || 0) & 3) << 2 | (p.down ? 16 : 0) | (p.ads ? 32 : 0) | (p.slideT > 0 ? 64 : 0) | (p.climb ? 128 : 0) | (p.vault ? 256 : 0);
+  const a = p.arm ? (p.arm.vest | 0) | (p.arm.helm | 0) << 2 | (p.arm.pack | 0) << 4 : 0;
+  s.push(Math.round(p.hp ?? 100), Math.round(p.sh || 0), wc, f2, a); return s; }
+// chegou o estado de um feijão que não é deste PC
+function netState(p, s){ NET.tg[p.nid] = {s, at:performance.now()}; const f = s[7], a = !!(f & 1);
+  if(!netBR()){ if(!NET.host){ p.item = !!(f & 16); if(!a && p.alive && !(f & 64)){ p.alive = false; p.m.g.visible = false; } } return; }
+  if(p._na !== a){ p._na = a; p._bkS = false;
+    if(!a && p.alive) netDo(() => eliminate(p, 'Eliminado'));
+    else if(a && !p.alive && R1.phase === 'play'){ revival(p); p.alive = true; p.m.g.visible = true; p.card = false; p.cardUsed = true; const i = elimOrder.indexOf(p); if(i >= 0) elimOrder.splice(i, 1); } }
+  if(s.length < 13) return;
+  p.hp = s[8]; p.sh = s[9];
+  if(p._nw !== s[10]){ p._nw = s[10]; const k = WK[s[10] >> 2]; p.inv = [s[10] >= 0 && k ? {k, r:s[10] & 3, ammo:999, mag:999} : null, null, null]; p.sel = 0; }
+  const f2 = s[11]; p._ng = [false, 'plane', 'fall', 'chute'][f2 & 3]; netGlide(p);
+  p.stance = f2 >> 2 & 3; p.ads = !!(f2 & 32); p.slideT = f2 & 64 ? 0.2 : 0; p.climb = f2 & 128 ? p.climb || {net:1} : null; p.vault = f2 & 256 ? p.vault || {net:1} : null;
+  const dn = !!(f2 & 16); if(p._nd !== dn){ p._nd = dn; p._upS = false; p.down = dn; if(dn){ p.dhp = 100; if(p.car) leaveCar(p, true); } }
+  const A = s[12]; p.arm = {vest:A & 3, helm:A >> 2 & 3, pack:A >> 4 & 3}; }
+// avião e paraquedas dos outros seguem a rede (o jogo tenta pular sozinho junto com o seu time)
+function netGlide(p){ if(p._ng === undefined) return; p.glide = p._ng; if(p.m.chute) p.m.chute.visible = p._ng === 'chute';
+  if(p._ng === 'plane'){ p.m.g.visible = false; p.wantJump = false; } else if(p.alive) p.m.g.visible = true; }
+function netSnapIn(d){ if(typeof d.tl === 'number' && R1.phase === 'play') R1.timeLeft = d.tl; if(d.z) netZoneIn(d.z);
   for(const s of d.p){ const p = NET.byNid[s[0]]; if(!p) continue;
-    if(p.i === 0){ if(!(s[8] & 1) && p.alive && !(s[8] & 64)){ NET.fromHost = true; try{ eliminate(p, 'Eliminado'); }finally{ NET.fromHost = false; } } if(round === 4 || round === 5) p.item = !!(s[8] & 16); continue; }
-    NET.tg[p.nid] = {s:s.slice(1), at:now}; p.item = !!(s[8] & 16);
-    if(!(s[8] & 1) && p.alive && !(s[8] & 64)){ p.alive = false; p.m.g.visible = false; } } }
+    if(p.i === 0){ if(netBR()) continue; if(!(s[8] & 1) && p.alive && !(s[8] & 64)){ NET.fromHost = true; try{ eliminate(p, 'Eliminado'); }finally{ NET.fromHost = false; } } if(round === 4 || round === 5) p.item = !!(s[8] & 16); continue; }
+    netState(p, s.slice(1)); } }
 // feijão dos outros: anda até onde a rede diz, com um pouco de previsão pela velocidade
 function netPuppet(p, dt){ const T = NET.tg[p.nid]; if(!T) return; const s = T.s, k = T.at ? Math.min(0.25, (performance.now() - T.at)/1000) : 0;
   const vx = s[4]/10, vy = s[5]/10, vz = s[6]/10, x = s[0]/100 + vx*k, y = s[1]/100 + (s[7] & 2 ? 0 : vy*k), z = s[2]/100 + vz*k, f = s[7];
   const far = Math.hypot(x - p.pos.x, y - p.pos.y, z - p.pos.z) > 5; if(far) p.pos.set(x, y, z); else { const a = Math.min(1, dt*14); p.pos.x += (x - p.pos.x)*a; p.pos.y += (y - p.pos.y)*a; p.pos.z += (z - p.pos.z)*a; }
   p.vel.set(vx, vy, vz); let df = s[3]/100 - p.face; df = Math.atan2(Math.sin(df), Math.cos(df)); p.face += df*Math.min(1, dt*16);
-  p.grounded = !!(f & 2); p.dive = f & 4 ? 0.3 : 0; p.stun = f & 32 ? 0.1 : 0; p.pushAnim = f & 128 ? 0.12 : 0; if(!NET.host) p.done = !!(f & 8); }
+  p.grounded = !!(f & 2); p.dive = f & 4 ? 0.3 : 0; p.stun = f & 32 ? 0.1 : 0; if(!(p.pushAnim > 0.12)) p.pushAnim = f & 128 ? 0.12 : 0; if(!NET.host) p.done = !!(f & 8);
+  if(p.climb) p.climbPh = (p.climbPh || 0) + dt*8; }
+// zona do Battle Royale: o líder decide, os amigos copiam
+function netZonePack(){ const z = zoneP; if(!z) return null; const c0 = z.c0 || z.c;
+  return [z.i, ['wait', 'shrink', 'done'].indexOf(z.st), r2(z.t), r2(z.c[0]), r2(z.c[1]), r2(z.r), r2(z.nc ? z.nc[0] : 0), r2(z.nc ? z.nc[1] : 0), r2(z.nr || 0), z.dps || 0, z.dpsNext || 0, r2(z.r0 || z.r), r2(c0[0]), r2(c0[1])]; }
+function netZoneIn(a){ const z = zoneP; if(!z || !Array.isArray(a) || NET.host) return; const st = ['wait', 'shrink', 'done'][a[1]] || 'wait';
+  if(z.st !== 'shrink' && st === 'shrink' && R1.phase === 'play'){ banner('A zona está fechando!', a[0] === 0 ? 'Corra pro círculo branco do minimapa' : `Fase ${a[0] + 1} de ${ZP.length}: dói mais fora dela`, 1600); sfx('red'); }
+  Object.assign(z, {i:a[0], st, t:a[2], c:[a[3], a[4]], r:a[5], nc:[a[6], a[7]], nr:a[8], dps:a[9], dpsNext:a[10], r0:a[11], c0:[a[12], a[13]]}); }
 // a rodada começa com a lista na ordem do líder, pra todo mundo nascer no mesmo lugar em todos os PCs
-function netRound(seed){ players.sort((a, b) => a.nid - b.nid); try{ withSeed(seed, _startRound); } finally { players.sort((a, b) => a.i - b.i); } netTags(); }
-// envia o estado: o líder manda todo mundo, o amigo só o próprio feijão
-function netTick(dt){ if(!NET.match) return; NET.sendT -= dt; if(NET.sendT > 0) return; NET.sendT = 1/NET_HZ;
-  if(NET.host){ if(!NET.conns.size) return; netSend({t:'s', tl:R1.timeLeft, p:players.filter(p => p.alive || p.dying > 0 || p.nid < NET.members.length).map(netPack)}); }
+function netRound(seed){ const br = BIG && round === 20, bots = players.map(p => p.isBot);
+  NET.inRound = true; NET.lootLive = false; NET.li = 0; NET.lc = 0; players.sort((a, b) => a.nid - b.nid);
+  if(br) players.forEach(p => p.isBot = true);   // no Battle Royale todo mundo sorteia igual (o plano de pulo dos bots também)
+  NET.rs = seed; try{ withSeed(seed, _startRound); } finally { players.sort((a, b) => a.i - b.i); players.forEach((p, i) => p.isBot = bots[i]); NET.inRound = false; NET.lootLive = true; }
+  if(br){ players.forEach(p => { p.squad = Math.floor(p.nid/BR_SQ); p.revUsed = true; p._na = true; p._nd = false; p._nw = undefined; p._ng = undefined; if(!own(p)) p.jumpU = 2; }); markMates(); }
+  netTags(); netSane(); }
+// envia o estado: o líder manda todo mundo (o que está longe de cada amigo vai menos vezes), o amigo só o próprio feijão
+function netTick(dt){ if(!NET.match) return;
+  NET.evT -= dt; if(NET.evT <= 0){ NET.evT = 1/NET_EVHZ; netFlush(); }
+  NET.sendT -= dt; if(NET.sendT > 0) return; NET.sendT = 1/NET_HZ; netFlush();
+  if(NET.host){ if(!NET.conns.size) return; const M = NET.members.length, br = netBR(), z = br ? netZonePack() : null; NET.sn++;
+    const all = players.filter(p => p.alive || p.dying > 0 || p.nid < M).map(p => [p, br && p.netH && NET.tg[p.nid] ? [p.nid, ...NET.tg[p.nid].s] : netPack(p)]);
+    if(!br){ netSend({t:'s', tl:R1.timeLeft, p:all.map(x => x[1])}); return; }
+    NET.members.forEach((m, k) => { if(!k || m.gone) return; const me = NET.byNid[k];
+      const list = all.filter(([p]) => p.nid < M || !me || NET.sn % 4 === 0 || Math.abs(p.pos.x - me.pos.x) + Math.abs(p.pos.z - me.pos.z) < 150).map(x => x[1]);
+      netTo(m.id, {t:'s', tl:R1.timeLeft, z, p:list}); }); }
   else { const me = players[0]; if(me.alive || me.dying > 0) netSend({t:'m', s:netPack(me).slice(1)}); } }
-// eventos: empurrão em quem não é seu, chão que caiu e vidro que quebrou
-function netEvent(d, from){
-  if(d.t === 'kn'){ const p = NET.byNid[d.n]; if(!p || !Array.isArray(d.a)) return;
-    if(own(p)){ NET.fromHost = true; try{ knock(p, +d.a[0] || 0, +d.a[1] || 0, +d.a[2] || 0, +d.a[3] || 0, d.a[4]); }finally{ NET.fromHost = false; } }
-    else if(NET.host){ const m = NET.members[p.nid]; if(m) netTo(m.id, d); } }
-  else if(d.t === 'sd'){ const b = solids[d.k]; if(!b) return; netSolid(b, d.k, true); if(NET.host) netRelay(d, from); }
-  else if(d.t === 'pw'){ const p = NET.byNid[d.n]; if(!p || own(p) || !POW[d.k]) return; p.power = d.k; NET.fromHost = true; try{ _usePower(p); }finally{ NET.fromHost = false; } if(NET.host) netRelay(d, from); } }
-function netRelay(d, from){ for(const [id, c] of NET.conns) if(id !== from && c.open) try{ c.send(d); }catch(e){} }
+const netNear = (p, R) => NET.members.some((m, k) => { const q = NET.byNid[k]; return k && q && !m.gone && Math.abs(q.pos.x - p.pos.x) < R && Math.abs(q.pos.z - p.pos.z) < R; });
+const lootPack = L => [L.id, L.k, r2(L.pos.x), r2(L.pos.y), r2(L.pos.z), L.ammo === Infinity ? -1 : L.ammo, L.k === 'ammo' ? L.c : L.r, L.att || 0];
+function lootIn(a){ if(!Array.isArray(a) || (!WPN[a[1]] && !ITEMS[a[1]])) return null; if(loot.some(L => L.id === a[0])) return null;
+  NET.quiet = true; try{ const L = _addLoot(a[1], +a[2], +a[3], +a[4], a[5] < 0 ? Infinity : a[5], a[6], a[7] || undefined); L.id = a[0]; return L; } finally { NET.quiet = false; } }
+// eventos que chegam (de qualquer PC)
+function netEvIn(e, from){ const P = n => NET.byNid[n]; NET.stat.rx[e.t] = (NET.stat.rx[e.t] || 0) + 1;
+  switch(e.t){
+  case 'kn': { const p = P(e.n); if(!p || !Array.isArray(e.a) || !own(p)) return; netDo(() => knock(p, +e.a[0] || 0, +e.a[1] || 0, +e.a[2] || 0, +e.a[3] || 0, e.a[4])); return; }
+  case 'sd': { const b = solids[e.k]; if(b) netSolid(b, e.k, true); return; }
+  case 'pw': { const p = P(e.n); if(!p || own(p) || !POW[e.k]) return; p.power = e.k; netDo(() => _usePower(p)); return; }
+  case 'el': { const p = P(e.n); if(p && p.alive) netDo(() => eliminate(p, e.why || 'Eliminado')); return; }
+  case 'fin': { const p = P(e.n); if(p && !p.done && p.alive) netDo(() => finishPlayer(p)); return; }
+  case 'hu': { const q = P(e.to), by = P(e.by); if(!q || !own(q) || !q.alive || q.dying > 0 || q.iframe > 0) return;
+    const hp0 = q.hp ?? 100, sh0 = q.sh || 0, wasDown = !!q.down; _hurt(q, by || null, +e.d || 0, String(e.w || ''), !!e.ns, !!e.h);   // sem netDo: se morrer, a morte e a caixa saem daqui pra todo mundo
+    const k = !q.alive ? 1 : !wasDown && q.down ? 2 : 0;
+    if(by && (e.by < NET.members.length || k)) netEv({t:'hr', to:e.by, q:q.nid, ab:Math.round(sh0 - (q.sh || 0)), d:Math.round(wasDown ? 0 : Math.max(0, hp0 - (q.hp ?? 0))), h:e.h ? 1 : 0, k}); return; }
+  case 'hr': { const q = P(e.q), by = P(e.to); if(!q || !by || !own(by)) return; const me = !by.isBot && by.i === 0;
+    if(me){ if(e.ab) dmgNum(q, e.ab, 'sh'); if(e.d) dmgNum(q, e.d, e.k === 1 ? 'big' : e.h ? 'hs' : ''); }
+    if(e.k === 1){ by.kills = (by.kills || 0) + 1; if(me){ bump('splats'); sfx('kill'); hitMark(true); killCall(q, by); } }
+    else if(e.k === 2 && me){ sfx('kill'); hitMark(true); } return; }
+  case 'fw': { const p = P(e.n); if(!p || own(p) || !WPN[e.k] || !Array.isArray(e.s)) return; const at = String(e.at || ''), att = at ? {luneta:at.includes('L'), silenc:at.includes('S'), pente:at.includes('P')} : undefined;
+    const w = WI({k:e.k, r:clamp(e.r | 0, 0, 3), att}); let last = null;
+    e.s.slice(0, 12).forEach((s, i) => { const pos = new V3(+s[0], +s[1], +s[2]), vel = new V3(+s[3], +s[4], +s[5]); const m = w.boom ? boomProto().clone() : w.flame ? new THREE.Mesh(shotGeo(w.r), FLAME_M[i % 3]) : new THREE.Mesh(shotGeo(w.r), mat(w.col)); m.position.copy(pos); world.add(m);
+      shots.push({pos, vel, m, owner:p, t:0, w, hit:w.boom ? new Set() : null}); last = {pos, vel}; });
+    if(!last) return; p.lastShot = clock; p.shotFx = true; p.pushAnim = 0.25; p.face = Math.atan2(last.vel.x, last.vel.z);
+    if(!p.m.far && !w.sil && !w.flame && !w.boom) puff(last.pos.x, last.pos.y, last.pos.z, 1, 0xfff3a0, 0.13, 0.4);
+    sfxAt(p.pos, 'w_' + e.k, (e.k === 'sniper' || e.k === 'bazooka' ? 80 : 50)*(w.sil ? 0.35 : 1)); return; }
+  case 'nd': { const p = P(e.n), s = e.s; if(!p || own(p) || !NW[e.kind] || !Array.isArray(s)) return; const pos = new V3(+s[0], +s[1], +s[2]), m = nadeProto[e.kind].clone(); m.position.copy(pos); world.add(m);
+    shots.push({pos, vel:new V3(+s[3], +s[4], +s[5]), m, owner:p, t:0, w:NW[e.kind], spin:true}); p.pushAnim = 0.3; p.face = Math.atan2(+s[3], +s[5]); sfxAt(p.pos, 'push', 30); return; }
+  case 'la': lootIn(e.l); return;
+  case 'lr': { const L = loot.find(o => o.id === e.id); if(L){ NET.quiet = true; try{ removeLoot(L); } finally { NET.quiet = false; } } return; }
+  case 'box': { const p = P(e.n); if(!Array.isArray(e.l)) return; const box = BRE.deathBox(e.c | 0); box.position.set(+e.x, +e.y, +e.z); box.rotation.y = +e.r || 0; world.add(box);
+    const B = {g:box, label:'Caixa de ' + (p ? nm(p) : 'alguém')}; e.l.forEach(a => { const L = lootIn(a); if(!L) return; L.box = B; L.s.scale.setScalar(0.55); if(L.glow) L.glow.scale.setScalar(0.6); });
+    if(!loot.some(L => L.box === B)) world.remove(box); return; }
+  case 'sup': { if(NET.host || !zoneP) return; const g = BRE.supplyCrate(); g.position.set(+e.x, +e.y, +e.z); world.add(g); drops.push({g, x:+e.x, z:+e.z, y:+e.y}); banner('Suprimento chegando!', 'Uma caixa com arma lendária está caindo (★ no minimapa)', 2000); sfx('beep'); return; }
+  case 'car': { const p = P(e.n), c = cars[e.c]; if(!p || own(p)) return; NET.quiet = true;
+    try{ if(p.car) leaveCar(p, true); if(e.on && c && p.alive){ if(c.driver && c.driver !== p) leaveCar(c.driver, true); enterCar(p, c); } } finally { NET.quiet = false; } return; }
+  case 'up': { const q = P(e.to), by = P(e.by); if(!q || !own(q) || !q.alive || !q.down) return; q.down = false; q.hp = 30; q.dhp = 0; q.hitCD = 0;
+    if(!q.isBot){ banner('De pé de novo!', `${by ? nm(by) : 'Seu time'} te levantou`, 1600); sfx('heal'); } return; }
+  case 'back': { const q = P(e.to), by = P(e.by); if(!q || !own(q) || q.alive || q.cardUsed || R1.phase !== 'play') return;
+    revival(q); q.alive = true; giveStart(q); q.hp = 100; q.card = false; q.cardUsed = true; q.pos.set(+e.x, +e.y, +e.z); q.vel.set(0, 0, 0); q.zoneD = 0; q.grounded = true;
+    const i = elimOrder.indexOf(q); if(i >= 0) elimOrder.splice(i, 1); NET.wonArg = null; if(!q.isBot){ banner('Você voltou!', `${by ? nm(by) : 'Seu time'} te trouxe de volta com 100 de vida`, 2000); sfx('win'); } return; }
+  } }
 function netSolid(b, k, remote){
   if(netSolidSig && remote) netSolidSig[k] = true;
   if(b.kind === 'drop' && b.t < 0){ b.t = 0; }
@@ -7077,36 +7209,89 @@ function netSolid(b, k, remote){
 let netSolidSig = null;
 function netWatchSolids(){ if(!NET.match || !(round === 13 || round === 15)) { netSolidSig = null; return; }
   if(!netSolidSig || netSolidSig.length !== solids.length) netSolidSig = solids.map(b => b.kind === 'drop' ? b.t >= 0 : b.kind === 'glass' ? !b.active : false);
-  solids.forEach((b, k) => { const s = b.kind === 'drop' ? b.t >= 0 : b.kind === 'glass' ? !b.active : false; if(s && !netSolidSig[k]) netSend({t:'sd', k}); netSolidSig[k] = s; }); }
+  solids.forEach((b, k) => { const s = b.kind === 'drop' ? b.t >= 0 : b.kind === 'glass' ? !b.active : false; if(s && !netSolidSig[k]) netEv({t:'sd', k}); netSolidSig[k] = s; }); }
+// Battle Royale: alguém deste PC levantou ou trouxe de volta um amigo que é de outro PC? avisa o dono
+function netWatchMates(){ if(!netBR() || R1.phase !== 'play') return; const me = players[0];
+  for(const p of players){ if(own(p)) continue;
+    if(p._nd && p.alive && !p.down && !p._upS){ p._upS = true; netEv({t:'up', to:p.nid, by:me.nid}); }
+    if(p._na === false && p.alive && !p._bkS){ p._bkS = true; netEv({t:'back', to:p.nid, by:me.nid, x:r2(p.pos.x), y:r2(p.pos.y), z:r2(p.pos.z)}); } } }
 // ---- ganchos nas funções do jogo ----
 const _startGame = startGame, _startRound = startRound, _nextRound = nextRound, _endRound = endRound, _eliminate = eliminate, _finish = finishPlayer, _knock = knock, _botInput = botInput, _stepPlayer = stepPlayer, _showResult = showResult, _toMenu = toMenu, _pause = pause, _updateDrop = updateDrop, _usePower = usePower, _tick = tick, _createPlayers = createPlayers;
+const _hurt = hurt, _fireW = fireW, _throwNade = throwNade, _addLoot = addLoot, _removeLoot = removeLoot, _pickUp = pickUp, _dropAll = dropAll, _enterCar = enterCar, _leaveCar = leaveCar, _nextZone = nextZone, _supplyDrop = supplyDrop, _updateDrops = updateDrops, _updateShoot = updateShoot;
 startGame = function(){ if(!NET.match) return _startGame();
-  const d = NET.match; $('top').hidden = false; withSeed(d.seed, _createPlayers); netArrange(); elimOrder = []; earn = newEarn(); bump('games'); R1.ptsOver = false; $('ptsBoard').hidden = true;
+  const d = NET.match; $('top').hidden = false; withSeed(d.seed, _createPlayers); netArrange(); elimOrder = []; earn = newEarn(); bump('games'); if(BIG) bump('brGames'); R1.ptsOver = false; $('ptsBoard').hidden = true;
   plan = d.plan.slice(); if(PTS) players.forEach(p => { p.pts = 0; }); stage = 0; round = plan[0]; clock = d.clock; netRound(d.seed + 1); };
 nextRound = function(){ if(!NET.match) return _nextRound(); if(!NET.host || NET.over) return;
-  const seed = netRnd(); stage++; round = plan[stage]; netSend({t:'round', plan, stage, seed, clock}); netRound(seed); };
+  const seed = netRnd(); stage++; round = plan[stage]; netCtl({t:'round', plan, stage, seed, clock}); netRound(seed); };
 endRound = function(){ if(!NET.match) return _endRound(); if(!NET.host && !NET.fromHost) return;
-  if(NET.host) netSend({t:'end', alive:players.filter(p => p.alive).map(p => p.nid), done:players.filter(p => p.done).map(p => p.nid)});
+  if(NET.host) netCtl({t:'end', alive:players.filter(p => p.alive).map(p => p.nid), done:players.filter(p => p.done).map(p => p.nid)});
   _endRound(); if(!NET.host) return;
-  const n = players.filter(p => p.alive).length, hum = players.filter(p => p.alive && (p.i === 0 || p.netH)).length, over = PTS ? stage >= plan.length - 1 : isFinal() || n <= 1 || !hum;
-  if(over) setTimeout(() => { netSend({t:'over'}); netOver(); }, PTS ? 4000 : 2800);
+  const n = players.filter(p => p.alive).length, hum = players.filter(p => p.alive && (p.i === 0 || p.netH)).length, over = PTS ? stage >= plan.length - 1 : single || isFinal() || n <= 1 || !hum;
+  if(over) setTimeout(() => { netCtl({t:'over'}); netOver(); }, PTS ? 4000 : 2800);
   else if(!PTS && !humanSideAlive()) setTimeout(nextRound, 2600); };   // o líder caiu, mas os amigos seguem
-eliminate = function(p, why){ if(!NET.match) return _eliminate(p, why); if(!NET.host && !NET.fromHost) return; if(!p.alive) return;
-  _eliminate(p, why); if(NET.host) netSend({t:'el', n:p.nid, why}); };
-finishPlayer = function(p){ if(!NET.match) return _finish(p); if(!NET.host && !NET.fromHost) return; _finish(p); if(NET.host) netSend({t:'fin', n:p.nid}); };
-const NET_HZD = ['banana', 'tomate', 'onda', 'fruit'];   // coisas que cada PC simula sozinho: só derrubam o próprio feijão
+// eliminação: nas provas só o líder decide; no Battle Royale cada um decide a própria (e o líder, a dos bots)
+eliminate = function(p, why){ if(!NET.match) return _eliminate(p, why); if(!p.alive) return;
+  if(!NET.fromHost && !(NET.host || (netBR() && own(p)))) return;
+  _eliminate(p, why); if(!own(p)){ p._na = false; p._bkS = false; } if(!NET.fromNet) netEv({t:'el', n:p.nid, why:String(why || '').replace(/<b>Você<\/b>/g, `<b>${netName()}</b>`).slice(0, 160)}); };
+finishPlayer = function(p){ if(!NET.match) return _finish(p); if(!NET.host && !NET.fromHost) return; _finish(p); if(NET.host && !NET.fromNet) netEv({t:'fin', n:p.nid}); };
+const NET_HZD = ['banana', 'tomate', 'onda', 'fruit', 'trator'];   // coisas que cada PC simula sozinho: só derrubam o próprio feijão
 knock = function(p, vx, vy, vz, stun, why){ if(!NET.match || own(p) || NET.fromHost) return _knock(p, vx, vy, vz, stun, why);
-  if(p.hitCD > 0 || NET_HZD.includes(why)) return; p.hitCD = 0.35; netSend({t:'kn', n:p.nid, a:[vx, vy, vz, stun, why]}); };
-usePower = function(p){ if(!NET.match || NET.fromHost || !own(p)) return _usePower(p); const k = p.power; _usePower(p); netSend({t:'pw', n:p.nid, k}); };
+  if(p.hitCD > 0 || NET_HZD.includes(why)) return; p.hitCD = 0.35; netEv({t:'kn', to:p.nid, n:p.nid, a:[vx, vy, vz, stun, why]}); };
+usePower = function(p){ if(!NET.match || NET.fromHost || !own(p)) return _usePower(p); const k = p.power; _usePower(p); netEv({t:'pw', n:p.nid, k}); };
 botInput = function(p, dt){ if(NET.match && !own(p)) return {mx:0, mz:0}; return _botInput(p, dt); };
 stepPlayer = function(p, dt, inp){ if(NET.match && !own(p)){ netPuppet(p, dt); return; } return _stepPlayer(p, dt, inp); };
 updateDrop = function(dt){ if(netClient() && NET.match) dropT = 1e9; return _updateDrop(dt); };   // no amigo, o chão só cai pelo líder ou onde ele pisa
+// dano no Battle Royale: quem atira decide se acertou; o dono do feijão atingido aplica (colete, escudo, cair, morrer)
+hurt = function(q, by, dmg, why, noShield, head){ if(!netBR() || NET.fromNet) return _hurt(q, by, dmg, why, noShield, head);
+  if(own(q)){ if(by && by !== q && !own(by)) return; return _hurt(q, by, dmg, why, noShield, head); }
+  if(!by || !own(by) || !q.alive || q.dying > 0 || q.iframe > 0) return;
+  netEv({t:'hu', to:q.nid, by:by.nid, d:Math.round(dmg), w:String(why || '').replace(/<b>Você<\/b>/g, `<b>${netName()}</b>`).slice(0, 160), ns:noShield ? 1 : 0, h:head ? 1 : 0});
+  if(!by.isBot && by.i === 0){ hitMark(false); sfx('hitm'); } };
+// tiros e granadas: quem atira cria aqui e manda pros outros desenharem igual (bot longe de todo mundo não precisa)
+fireW = function(p, dir){ if(!netBR() || !own(p)) return _fireW(p, dir); const it = p.inv && p.inv[p.sel], n0 = shots.length; _fireW(p, dir);
+  if(!it || shots.length <= n0 || (p.isBot && !netNear(p, 130))) return;
+  netEv({t:'fw', n:p.nid, k:it.k, r:it.r ?? WPN[it.k].rar, at:attKey(it.att), s:shots.slice(n0).map(s => [r2(s.pos.x), r2(s.pos.y), r2(s.pos.z), r2(s.vel.x), r2(s.vel.y), r2(s.vel.z)])}); };
+throwNade = function(p, target, kind){ if(!netBR() || !own(p)) return _throwNade(p, target, kind); const n0 = shots.length; _throwNade(p, target, kind);
+  const s = shots[n0]; if(!s || (p.isBot && !netNear(p, 130))) return; const k = Object.keys(NW).find(x => NW[x] === s.w); if(!k) return;
+  netEv({t:'nd', n:p.nid, kind:k, s:[r2(s.pos.x), r2(s.pos.y), r2(s.pos.z), r2(s.vel.x), r2(s.vel.y), r2(s.vel.z)]}); };
+// loot: cada item tem um número igual em todos os PCs; quem pega ou solta avisa os outros
+addLoot = function(k, x, y, z, ammo, rr, att){ if(!netBR() && !NET.inRound) return _addLoot(k, x, y, z, ammo, rr, att); if(NET.noLoot) return null;
+  const L = _addLoot(k, x, y, z, ammo, rr, att); if(!NET.match) return L;
+  if(!NET.lootLive){ L.id = 'i' + NET.li++; return L; } L.id = (players[0].nid | 0) + ':' + ++NET.lc; if(!NET.quiet) netEv({t:'la', l:lootPack(L)}); return L; };
+removeLoot = function(L){ _removeLoot(L); if(netBR() && NET.lootLive && !NET.quiet && L.id) netEv({t:'lr', id:L.id}); };
+pickUp = function(p, L){ if(netBR() && !own(p)) return false; return _pickUp(p, L); };
+dropAll = function(p){ if(!netBR()) return _dropAll(p); if(!own(p)){ p.inv = null; return; } if(!p.inv) return;
+  const n0 = loot.length, nb = world.children.length; NET.quiet = true; try{ _dropAll(p); } finally { NET.quiet = false; }
+  const items = loot.slice(n0), B = items.length ? items[0].box : null, g = B ? B.g : world.children[nb]; if(!g) return;
+  netEv({t:'box', n:p.nid, c:p.m.body.material.color.getHex(), x:r2(g.position.x), y:r2(g.position.y), z:r2(g.position.z), r:r2(g.rotation.y), l:items.map(lootPack)}); };
+// trator e lancha: quem entra ou sai avisa
+enterCar = function(p, c){ _enterCar(p, c); if(netBR() && own(p) && !NET.quiet) netEv({t:'car', n:p.nid, c:cars.indexOf(c), on:1}); };
+leaveCar = function(p, quiet){ const had = !!p.car; _leaveCar(p, quiet); if(had && netBR() && own(p) && !NET.quiet) netEv({t:'car', n:p.nid, on:0}); };
+// zona e suprimentos: só o líder sorteia
+nextZone = function(){ if(netClient() && NET.match && !NET.inRound) return; return _nextZone(); };
+supplyDrop = function(){ if(!NET.match) return _supplyDrop(); if(!NET.host) return; _supplyDrop(); const d = drops[drops.length - 1]; if(d) netEv({t:'sup', x:r2(d.x), y:r2(d.y), z:r2(d.z)}); };
+updateDrops = function(dt){ if(!netClient() || !NET.match) return _updateDrops(dt); NET.noLoot = true; try{ _updateDrops(dt); } finally { NET.noLoot = false; } };   // o que cai da caixa vem do líder
+// loot, trator/lancha e avião sorteiam cada um com a sua semente: mesmo se algo antes no mapa sortear diferente num PC (modelo do Blender que ainda está carregando), isso sai igual
+const _spawnLoot = spawnLoot, _spawnCars = spawnCars, _startPlane = startPlane;
+spawnLoot = function(){ return NET.match && NET.inRound ? withSeed(NET.rs + 101, _spawnLoot) : _spawnLoot(); };
+spawnCars = function(){ return NET.match && NET.inRound ? withSeed(NET.rs + 202, _spawnCars) : _spawnCars(); };
+startPlane = function(){ return NET.match && NET.inRound ? withSeed(NET.rs + 303, _startPlane) : _startPlane(); };
+updateShoot = function(dt){ _updateShoot(dt); if(netBR()) players.forEach(p => { if(!own(p)) netGlide(p); }); };
 showResult = function(won){ if(!NET.match || NET.over) return _showResult(won); NET.wonArg = won;
   if(!won && !players[0].alive) banner('Você caiu!', 'Assistindo seus amigos · Enter abre o chat', 2600); };
 function netOver(){ if(!NET.match || NET.over) return; NET.over = true; const me = players[0], won = NET.wonArg ?? (me.alive && !PTS); setTimeout(() => { _showResult(won); $('btnAgain').textContent = 'Voltar pra sala'; }, 300); }
-toMenu = function(){ if(NET.match){ if(NET.host && !NET.over) netSend({t:'abort'}); else if(!NET.host && !NET.over) netSend({t:'bye'}); netEndMatch(); _toMenu(); openParty(); return; } _toMenu(); };
+toMenu = function(){ if(NET.match){ if(NET.host && !NET.over) netCtl({t:'abort'}); else if(!NET.host && !NET.over) netCtl({t:'bye'}); netEndMatch(); _toMenu(); openParty(); return; } _toMenu(); };
 pause = function(on){ _pause(on); if(NET.match && on) PAUSED = false; };   // online não pausa: a partida dos outros continua
-tick = function(dt){ _tick(dt); if(NET.match){ netWatchSolids(); netTick(dt); } };
+// Battle Royale: quando nenhum amigo está mais vivo, o líder encerra pra todo mundo (os bots não precisam terminar)
+function netHostEnd(){ if(!NET.host || NET.over || !netBR() || R1.phase !== 'play') { NET.endT = 0; return; }
+  const hum = NET.members.some((m, k) => !m.gone && NET.byNid[k] && NET.byNid[k].alive);
+  if(hum){ NET.endT = 0; return; } if(!NET.endT) NET.endT = clock + 3.5; else if(clock > NET.endT){ NET.endT = 0; netCtl({t:'over'}); netOver(); } }
+// câmera ou feijão com número inválido (NaN) travam o som e a câmera pra sempre: conserta na hora
+const finite = v => Number.isFinite(v.x + v.y + v.z);
+function netSane(){ const me = players[0]; if(!me) return; if(!finite(me.pos)) me.pos.set(0, 1, 0); if(!finite(me.vel)) me.vel.set(0, 0, 0);
+  for(const c of [cam1, cam2]){ if(!c || !c.look) continue; if(!finite(c.look)) c.look.copy(me.pos); if(c.pos && !finite(c.pos)) c.pos.copy(me.pos).add(new V3(0, 3, 6)); if(!Number.isFinite(c.yaw)) c.yaw = 0; if(!Number.isFinite(c.pitch)) c.pitch = 0.2; } }
+let saneT = 0;
+tick = function(dt){ if((saneT -= dt) <= 0){ saneT = 0.5; netSane(); } _tick(dt); if(NET.match){ netWatchSolids(); netWatchMates(); netHostEnd(); netTick(dt); } };
 $('btnAgain').addEventListener('click', e => { if(!NET.on) return; e.stopImmediatePropagation(); $('result').hidden = true; $('btnAgain').textContent = 'Jogar de novo'; netEndMatch(); _toMenu(); openParty(); }, true);
 $('btnMenu').addEventListener('click', e => { if(!NET.on) return; e.stopImmediatePropagation(); $('btnAgain').textContent = 'Jogar de novo'; netEndMatch(); _toMenu(); openParty(); }, true);
 // aba escondida: o navegador para de desenhar, mas a partida precisa seguir (principalmente no líder). Um worker bate o ritmo.
@@ -7116,7 +7301,12 @@ try{ const w = new Worker(URL.createObjectURL(new Blob(['setInterval(() => postM
 // o chat some sozinho depois de uns segundos quando está fechado
 setInterval(() => { const now = Date.now(); for(const d of $('netChatLog').children) d.classList.toggle('old', !NET.chatOpen && now - (+d.dataset.t || 0) > 9000); }, 1000);
 addEventListener('beforeunload', () => { if(NET.on){ if(NET.host) netSend({t:'bye', why:'O líder fechou o jogo.'}); else netSend({t:'bye'}); } });
-window.__net = NET; NET.dbg = {R1, get players(){ return players; }, get solids(){ return solids; }, get round(){ return round; }, get clock(){ return clock; }};
+window.__net = NET; NET.dbg = {R1, get players(){ return players; }, get solids(){ return solids; }, get round(){ return round; }, get clock(){ return clock; }, get loot(){ return loot; }, get zone(){ return zoneP; }, get shots(){ return shots; }, get cars(){ return cars; }, get cam(){ return cam1; }, get plane(){ return plane; },
+  // só pros testes: atirar, jogar granada, pegar e ganhar arma com o próprio feijão
+  fire:(x, y, z) => { const p = players[0], d = new V3(x, y, z).sub(p.pos.clone().add(new V3(0, 1.32, 0))).normalize(); p.relT = 0; fireW(p, d); },
+  nade:(x, y, z) => { const p = players[0]; p.nades = 3; p.nadeCD = 0; throwNade(p, new V3(x, y, z), 'nade'); },
+  give:(k, r) => { const p = players[0]; p.inv[1] = normIt({k, ammo:WPN[k].ammo, r:r ?? WPN[k].rar}); p.sel = 1; p.relT = 0; },
+  pick:i => pickUp(players[0], loot[i]), hit:(n, d) => hurt(NET.byNid[n], players[0], d, `${nm(players[0])} te acertou`), hitMe:d => hurt(players[0], null, d, 'Teste')};
 
 requestAnimationFrame(frame);
 })();
