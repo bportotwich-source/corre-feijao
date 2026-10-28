@@ -859,7 +859,7 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
 <div class="row"><svg viewBox="0 0 24 24"><path fill="var(--zhp)" d="M12 21s-8-5.2-8-11.2A4.6 4.6 0 0 1 12 6.6a4.6 4.6 0 0 1 8 3.2C20 15.8 12 21 12 21z"/></svg><div class="n" id="nhHpN">100</div><div class="hb hp"><s id="nhHpT"></s><i id="nhHpB"></i></div></div></div>
 <div id="nhZone" class="pn" hidden></div><div id="nhPick" class="pn" hidden></div><div id="nhQuick" hidden></div><div id="nhGuns" hidden></div>
 <div id="nhWheel"><svg viewBox="-125 -125 250 250"><g id="nhWsegs"></g><circle class="ring" r="103"/></svg><div class="mid pn"><div><img id="nhWIc" alt=""><b id="nhWName">—</b><small id="nhWSub"></small></div></div></div>
-<div id="nhBag" hidden><div class="hd"><div class="btabs"><span class="on">Inventário</span></div><small><kbd>Tab</kbd> fecha · arraste as armas pra trocar de lugar · clique num consumível ou utilitário pra deixar no Q ou no T · botão direito larga 1 · clique num acessório pra tirar</small></div><div class="bgp" id="nhBagIn"></div></div>
+<div id="nhBag" hidden><div class="hd"><div class="btabs"><span class="on">Inventário</span></div><small><kbd>Tab</kbd> fecha · arraste as armas pra trocar de lugar · clique num consumível ou utilitário pra deixar no 5 ou no T · botão direito larga 1 · clique num acessório pra tirar</small></div><div class="bgp" id="nhBagIn"></div></div>
 </div>
 <div id="light" hidden></div>
 <div class="feed" id="feed" aria-live="polite"></div>
@@ -973,7 +973,7 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
 <div class="screen" id="confirm" hidden>
   <div class="card panel cfbox"><h2 id="cfT"></h2><p id="cfM"></p><div class="row2"><button class="go" id="cfYes">Sim</button><button class="go alt" id="cfNo">Cancelar</button></div></div>
 </div>
-<div id="fps" hidden></div><div id="brHud" hidden><div id="brComp"><div class="cw"><div class="cs"></div></div><em>0°</em></div><div id="brTop"></div><div id="brZoneBox"></div><div id="brOut" hidden></div><div id="brMe"></div><div id="brTip" hidden></div><div id="brAct" hidden><span></span><div><i></i></div></div><div id="brKeys"><div><kbd>Clique</kbd> atirar · <kbd>Botão direito</kbd> mirar · <kbd>R</kbd> recarregar</div><div><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> arma · <kbd>E</kbd> pegar · <kbd>Q</kbd> cura · <kbd>V</kbd> turbo</div><div><kbd>Shift</kbd> corre (mirando de sniper: segura o ar) · <kbd>C</kbd> agacha (correndo: slide) · <kbd>X</kbd> deita · <kbd>Z</kbd> esquiva · <kbd>G</kbd> arremessar</div><div><kbd>T</kbd> granada · <kbd>4</kbd> troca a granada · <kbd>E</kbd> trator</div><div>Pule na parede e segure <kbd>Espaço</kbd> pra escalar · <kbd>Espaço</kbd> na janela pula ela · <kbd>Esc</kbd> pausa</div></div></div><div id="dirLayer"></div><div id="dmgLayer"></div><div id="speedFx"></div><div id="hurtFx"></div><div id="killFx"></div>
+<div id="fps" hidden></div><div id="brHud" hidden><div id="brComp"><div class="cw"><div class="cs"></div></div><em>0°</em></div><div id="brTop"></div><div id="brZoneBox"></div><div id="brOut" hidden></div><div id="brMe"></div><div id="brTip" hidden></div><div id="brAct" hidden><span></span><div><i></i></div></div><div id="brKeys"><div><kbd>Clique</kbd> atirar · <kbd>Botão direito</kbd> mirar · <kbd>R</kbd> recarregar</div><div><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> arma · <kbd>E</kbd> pegar · <kbd>5</kbd> cura · <kbd>V</kbd> turbo</div><div><kbd>Shift</kbd> corre (mirando de sniper: segura o ar) · <kbd>C</kbd> agacha (correndo: slide) · <kbd>X</kbd> deita · <kbd>Z</kbd> esquiva · <kbd>G</kbd> arremessar</div><div><kbd>T</kbd> granada · <kbd>4</kbd> troca a granada · <kbd>E</kbd> trator</div><div>Pule na parede e segure <kbd>Espaço</kbd> pra escalar · <kbd>Espaço</kbd> na janela pula ela · <kbd>Esc</kbd> pausa</div></div></div><div id="dirLayer"></div><div id="dmgLayer"></div><div id="speedFx"></div><div id="hurtFx"></div><div id="killFx"></div>
 <div class="screen" id="ctrls" hidden>
   <div class="card panel">
     <div class="phead"><h2>Controles</h2><button class="back" data-close>← Voltar <kbd>Esc</kbd></button></div>
@@ -991,7 +991,9 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
       <kbd>1 2 3</kbd><span>Modo 100: trocar de arma</span>
       <kbd>E</kbd><span>Modo 100: pegar arma do chão ou entrar/sair do trator</span>
       <kbd>Botão direito</kbd><span>Modo 100: mirar com a sniper</span>
-      <kbd>Q</kbd><span>Modo 100: toque usa o consumível marcado · segure pra abrir a roda e escolher</span>
+      <kbd>5</kbd><span>Modo 100: toque usa o consumível marcado · segure pra abrir a roda e escolher</span>
+      <kbd>Q / E</kbd><span>Modo 100: inclinar pra esquerda / direita (segure)</span>
+      <kbd>H</kbd><span>Modo 100: guardar ou sacar a arma</span>
       <kbd>T</kbd><span>Modo 100: toque joga a granada ou o utilitário marcado · segure pra abrir a roda</span>
       <kbd>4</kbd><span>Modo 100: passa pro próximo utilitário</span>
       <kbd>Tab</kbd><span>Modo 100: inventário (arraste as armas pra trocar de lugar)</span>
@@ -5315,17 +5317,17 @@ function whDraw(){ const me = players[0], n = WH.list.length, R = 100, r = 47, P
   WH.list.forEach((k, i) => { const a0 = -Math.PI/2 + (i - .5)*2*Math.PI/n + .02, a1 = a0 + 2*Math.PI/n - .04, am = (a0 + a1)/2, cnt = me[KIT[k].f] || 0, cx = Math.cos(am)*73, cy = Math.sin(am)*73, bx = Math.cos(am)*111, by = Math.sin(am)*111;
     h += `<g class="${i === WH.hi ? 'hi' : ''}${cnt ? '' : ' off'}"><path class="wsg" d="M${P(a0, r)} L${P(a0, R)} A${R},${R} 0 0 1 ${P(a1, R)} L${P(a1, r)} A${r},${r} 0 0 0 ${P(a0, r)}Z"/><image href="${itemIcon(k, 0) || ''}" x="${(cx - 17).toFixed(1)}" y="${(cy - 22).toFixed(1)}" width="34" height="34"/><text x="${cx.toFixed(1)}" y="${(cy + 20).toFixed(1)}">${(NH_SH[k] || knm(k)).slice(0, 13)}</text><circle class="cb" cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="9"/><text class="cnt" x="${bx.toFixed(1)}" y="${(by + 4).toFixed(1)}">${cnt}</text></g>`; });
   $('nhWsegs').innerHTML = h; const k = WH.list[WH.hi]; $('nhWIc').src = k ? itemIcon(k, 0) || '' : ''; $('nhWIc').hidden = !k; nhT($('nhWName'), k ? knm(k) : 'Mexa o mouse');
-  nhT($('nhWSub'), k ? `${NH_SUB[k]} · ${me[KIT[k].f] || 0}/${kitCap(me, k)} · solte ${WH.kind.toUpperCase()} pra marcar` : 'pra escolher'); }
+  nhT($('nhWSub'), k ? `${NH_SUB[k]} · ${me[KIT[k].f] || 0}/${kitCap(me, k)} · solte ${WH.kind === 'q' ? '5' : 'T'} pra marcar` : 'pra escolher'); }
 function whMove(e){ WH.vx += e.movementX || 0; WH.vy += e.movementY || 0; const m = Math.hypot(WH.vx, WH.vy); if(m > 90){ WH.vx *= 90/m; WH.vy *= 90/m; } if(m < 18) return;
   const n = WH.list.length; let a = Math.atan2(WH.vy, WH.vx) + Math.PI/2; a = (a + Math.PI/n + 4*Math.PI) % (2*Math.PI); const i = Math.floor(a/(2*Math.PI)*n) % n; if(i !== WH.hi){ WH.hi = i; whDraw(); } }
 function whClose(ok){ if(!WH.on) return; WH.on = false; $('nhWheel').classList.remove('on'); const me = players[0], k = WH.list[WH.hi]; if(!ok || !k || !me) return;
-  if(WH.kind === 'q') me.qSel = k; else me.nadeSel = k; sfx('click'); say(`<b>${WH.kind.toUpperCase()}</b> = ${knm(k)}${me[KIT[k].f] > 0 ? '' : ' (acabou, pegue mais)'}`, true); }
+  if(WH.kind === 'q') me.qSel = k; else me.nadeSel = k; sfx('click'); say(`<b>${WH.kind === 'q' ? '5' : 'T'}</b> = ${knm(k)}${me[KIT[k].f] > 0 ? '' : ' (acabou, pegue mais)'}`, true); }
 // ---- barra de baixo: armas (a da mão cresce), Q / T / V e o cartão de pegar
 function nhInv(me){ const G = $('nhGuns'), QK = $('nhQuick'); G.hidden = QK.hidden = false;
   nhSet(G, me.inv.map((x, i) => { if(!x) return `<div class="gs pn empty"><kbd>${i + 1}</kbd><div class="rt"></div><div class="ft"><b>vazio</b></div></div>`; normIt(x); const w = WI(x), on = i === me.sel, rl = me.relT > 0 && me.relK === i;
     return `<div class="gs pn${on ? ' on' : ''}${rl ? ' reloading' : ''}"><kbd>${i + 1}</kbd><div class="rt r${w.rar}">${nhImg(x.k, 0)}</div><span class="rr">${RAR[w.rar][0]}</span><div class="att">${on && x.att ? Object.keys(ATT).filter(k => x.att[k]).map(k => nhImg(k, 0)).join('') : ''}</div><div class="rl">Recarregando…</div><div class="ft"><b>${on ? w.name : w.name.split(' ')[0]}</b><span class="am${x.mag <= Math.ceil(w.mag*0.25) && !w.boom ? ' lo' : ''}">${x.mag}<u>/${x.ammo === Infinity ? '∞' : x.ammo}</u></span></div><div class="pips" style="--w:${Math.round(x.mag/Math.max(1, w.mag)*100)}%"></div></div>`; }).join(''));
   const qk = me.qSel || pickKit(me) || 'heal', tk = me.nadeSel || 'nade', qs = (key, k, n, cls, hint) => `<div class="qs pn${n ? '' : ' off'}"><kbd>${key}</kbd><div class="rt ${cls}">${nhImg(k, 0)}</div><div class="n">${n}</div><div class="hint">${hint}</div></div>`;
-  nhSet(QK, qs('Q', qk, me[KIT[qk].f] || 0, 'rc', NH_SH[qk] || knm(qk)) + qs('T', tk, me[KIT[tk].f] || 0, 'ru', NH_SH[tk] || knm(tk)) + qs('V', 'turbo', me.turbos || 0, 'rc', 'Turbo'));
+  nhSet(QK, qs('5', qk, me[KIT[qk].f] || 0, 'rc', NH_SH[qk] || knm(qk)) + qs('T', tk, me[KIT[tk].f] || 0, 'ru', NH_SH[tk] || knm(tk)) + qs('V', 'turbo', me.turbos || 0, 'rc', 'Turbo'));
   const P = $('nhPick'), L = nearLoot(me, 1.8, L => !!WPN[L.k] && !boxLock(L, me)), NB = !L && !me.car && nearBox(me), car = !L && !NB && !me.car && nearCar(me); let ph = '', nt = false;
   if(L){ const w = WR(L.k, L.r); ph = `<div class="rt r${L.r}">${nhImg(L.k, 0)}</div><div style="--rc:${NH_RC[L.r]}"><span class="rr">${RAR[L.r][0]}</span><b>${WPN[L.k].name}</b><small>${w.dmg} de dano · pente ${w.mag}${L.att && attKey(L.att) ? ' · com acessório' : ''}</small><div class="k"><kbd>E</kbd> pegar</div></div>`; }
   else if(NB) ph = `<div class="rt rn">${nhImg('pack', 2)}</div><div><b>${NB.chest ? 'Baú' : NB.label}</b><small>Tab mostra o que tem dentro</small><div class="k"><kbd>E</kbd> abrir</div></div>`;
@@ -5370,11 +5372,11 @@ function nhBag(me){ const box = $('nhBagIn'); if(NHD.drag >= 0) return;
   const ws = me.inv.map((x, i) => { if(!x) return `<div class="wc empty" data-i="${i}">Espaço ${i + 1} vazio · solte uma arma aqui</div>`; normIt(x); const w = WI(x), ok = ATT_OK(x.k);
     return `<div class="wc${i === me.sel ? ' on' : ''}" draggable="true" data-i="${i}" style="--rc:${NH_RC[w.rar]}"><span class="grip">⋮⋮</span><div class="rt r${w.rar}">${nhImg(x.k, 0)}</div><div style="min-width:0"><span class="rr">${i + 1} · ${RAR[w.rar][0]}</span><b>${w.name}</b><small>Pente ${x.mag}/${w.mag} · reserva ${x.ammo === Infinity ? '∞' : x.ammo} · ${w.dmg} de dano</small><div class="ac">${Object.keys(ATT_SLOT).map(s => { const h = attSlot(x, s); return h ? `<span class="on" data-a="ra" data-v="${i}:${h}" title="${ATT[h].name}: ${ATT[h].d} · clique pra tirar">${nhImg(h, 0)}</span>` : `<span class="${ok.some(k => ATT[k].s === s) ? '' : 'no'}"><em>${s === 'emp' ? 'Empunh.' : ATT_SLOT[s]}</em></span>`; }).join('')}</div></div><div class="bt">${i === me.sel ? '<button disabled style="opacity:.5">Na mão</button>' : `<button data-a="eq" data-v="${i}">Usar</button>`}${me.inv.filter(Boolean).length > 1 ? `<button data-a="dw" data-v="${i}">Largar</button>` : ''}</div></div>`; }).join('');
   const tile = (k, w) => { const n = me[KIT[k].f] || 0, cap = kitCap(me, k), s = w === 'q' ? me.qSel === k : w === 't' ? (me.nadeSel || 'nade') === k : false;
-    return `<button class="tl${n ? '' : ' off'}${s ? ' sel' : ''}" data-a="${w === 'v' ? '' : w === 'q' ? 'q' : 'sel'}" data-v="${k}" title="${w === 'v' ? 'O turbo fica sempre no V' : 'Clique pra marcar · botão direito larga 1'}">${s ? `<kbd>${w.toUpperCase()}</kbd>` : w === 'v' ? '<kbd>V</kbd>' : ''}<div class="rt ${w === 't' ? 'ru' : 'rc'}">${nhImg(k, 0)}</div><div class="n">${n}<u>/${cap}</u></div><span>${knm(k)}</span><s>${NH_SUB[k]}</s></button>`; };
+    return `<button class="tl${n ? '' : ' off'}${s ? ' sel' : ''}" data-a="${w === 'v' ? '' : w === 'q' ? 'q' : 'sel'}" data-v="${k}" title="${w === 'v' ? 'O turbo fica sempre no V' : 'Clique pra marcar · botão direito larga 1'}">${s ? `<kbd>${w === 'q' ? '5' : 'T'}</kbd>` : w === 'v' ? '<kbd>V</kbd>' : ''}<div class="rt ${w === 't' ? 'ru' : 'rc'}">${nhImg(k, 0)}</div><div class="n">${n}<u>/${cap}</u></div><span>${knm(k)}</span><s>${NH_SUB[k]}</s></button>`; };
   const html = `<div class="col pn"><h4>Perto de você <span>clique pra pegar</span></h4><div class="bnear">${near}</div></div>
     <div class="col pn"><h4>Seu feijão <span>clique pra largar</span></h4><div class="hero"><div class="side">${eq('helm')}${eq('vest')}</div><div class="bean"><img src="${nhBean(myLook().color, me.arm) || ''}" alt="Seu feijão com o equipamento"></div><div class="side">${eq('pack')}${hand}</div></div>
       <h4>Armas <span>arraste pra trocar de lugar · 1 2 3 troca</span></h4><div class="ws">${ws}</div></div>
-    <div class="col pn"><h4>Consumíveis <span>Q usa o marcado</span></h4><div class="tg">${NH_CONS.map(k => tile(k, 'q')).join('')}${tile('turbo', 'v')}</div><label class="opt"><input type="checkbox" data-a="autoq"${CFG.autoQ !== false ? ' checked' : ''}> Se o marcado acabar, o Q escolhe sozinho a melhor cura</label>
+    <div class="col pn"><h4>Consumíveis <span>5 usa o marcado</span></h4><div class="tg">${NH_CONS.map(k => tile(k, 'q')).join('')}${tile('turbo', 'v')}</div><label class="opt"><input type="checkbox" data-a="autoq"${CFG.autoQ !== false ? ' checked' : ''}> Se o marcado acabar, o 5 escolhe sozinho a melhor cura</label>
       <h4>Granadas e utilitários <span>T joga o marcado · 4 troca</span></h4><div class="tg">${NTYPES.map(k => tile(k, 't')).join('')}</div></div>`;
   nhSet(box, html); }
 document.addEventListener('contextmenu', e => { const b = e.target.closest && e.target.closest('#nhBag .tl[data-v]'); if(!b) return; e.preventDefault(); bagAct('dk', b.dataset.v); });
@@ -7609,7 +7611,7 @@ const SET_UI = {
     ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['shake', 'Tremer a câmera nos impactos', 'tog']],
   audio:[['vol', 'Volume geral', 'range', [0, 100, 1, '%']], ['music', 'Música', 'range', [0, 100, 1, '%']], ['sfx', 'Efeitos', 'range', [0, 100, 1, '%']], ['muteBlur', 'Silenciar quando a janela perde o foco', 'tog']],
   ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['keys']],
-  game:[['name', 'Nome do jogador', 'text'], ['cross', 'Mira (Modo 100 e Guerra de Tomate)', 'seg', [['cruz', 'Cruz'], ['ponto', 'Ponto'], ['circulo', 'Círculo']]], ['hudTheme', 'Cor da HUD do Modo 100', 'seg', [['tatico', 'Tático'], ['creme', 'Creme'], ['roxo', 'Roxo']]], ['autoQ', 'Q escolhe a melhor cura quando o marcado acaba', 'tog'], ['tips', 'Mensagens no canto (quem caiu, quem pegou o quê)', 'tog'], ['lang', 'Idioma', 'seg', [['pt', 'Português (Brasil)']]], ['wipe']],
+  game:[['name', 'Nome do jogador', 'text'], ['cross', 'Mira (Modo 100 e Guerra de Tomate)', 'seg', [['cruz', 'Cruz'], ['ponto', 'Ponto'], ['circulo', 'Círculo']]], ['hudTheme', 'Cor da HUD do Modo 100', 'seg', [['tatico', 'Tático'], ['creme', 'Creme'], ['roxo', 'Roxo']]], ['autoQ', 'Tecla 5 escolhe a melhor cura quando o marcado acaba', 'tog'], ['tips', 'Mensagens no canto (quem caiu, quem pegou o quê)', 'tog'], ['lang', 'Idioma', 'seg', [['pt', 'Português (Brasil)']]], ['wipe']],
 };
 function renderSettings(){
   document.querySelectorAll('#setTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === setTab));
@@ -7708,7 +7710,10 @@ function netLook(l){ const ok = (slot, id) => typeof id === 'string' && SHOP[slo
   l = l && typeof l === 'object' ? l : {}; return {color:Number.isFinite(l.color) ? l.color & 0xffffff : COLORS[0], hat:ok('hat', l.hat), glasses:ok('glasses', l.glasses), outfit:ok('outfit', l.outfit), skin:ok('skin', l.skin)}; }
 const netHex = c => '#' + new THREE.Color(c).getHexString();
 // ---- conexão ----
-function netPeer(id){ const o = Object.assign({debug:0}, window.__PEER_OPTS || {}); return id ? new Peer(id, o) : new Peer(o); }
+// STUN de vários lugares + TURN do PeerJS (quando a ligação direta não passa pelo roteador)
+const NET_ICE = {iceServers:[{urls:['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302']}, {urls:'stun:stun.cloudflare.com:3478'},
+  {urls:['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username:'peerjs', credential:'peerjsp'}], sdpSemantics:'unified-plan'};
+function netPeer(id){ const o = Object.assign({debug:0, config:NET_ICE}, window.__PEER_OPTS || {}); return id ? new Peer(id, o) : new Peer(o); }
 function netMsg(t){ $('joinMsg').textContent = t; }
 function netHost(){ if(typeof Peer === 'undefined'){ netMsg('Não deu pra carregar o online. Confira a internet e abra o jogo de novo.'); return; }
   netReset(); const code = 'FJ-' + Array.from({length:4}, () => ROOM_CH[Math.floor(Math.random()*ROOM_CH.length)]).join(''), peer = netPeer(NET_PFX + code.toLowerCase());
@@ -7723,9 +7728,11 @@ function netHost(){ if(typeof Peer === 'undefined'){ netMsg('Não deu pra carreg
 function netJoin(code){ if(typeof Peer === 'undefined'){ netMsg('Não deu pra carregar o online. Confira a internet e abra o jogo de novo.'); return; }
   netReset(); const peer = netPeer(); NET.peer = peer; netMsg(`Procurando a sala ${code}...`); $('btnJoin').disabled = true;
   const fail = t => { $('btnJoin').disabled = false; netMsg(t); };
-  const to = setTimeout(() => { if(!NET.on){ fail(`Não achei a sala ${code}. Confira o código e se o líder ainda está com a sala aberta.`); netReset(); } }, 12000);
-  peer.on('open', id => { NET.myId = id; const c = peer.connect(NET_PFX + code.toLowerCase(), {reliable:true, serialization:'json'}); NET.hc = c;
-    c.on('open', () => c.send({t:'hello', v:NET_VER, name:netName(), look:myLook()}));
+  let st = 'srv'; const to = setTimeout(() => { if(NET.on) return;
+    fail(st === 'srv' ? 'Não consegui falar com o servidor do online. Confira a internet (ou o antivírus/navegador bloqueando) e tente de novo.'
+      : `Achei a sala ${code}, mas a ligação entre os PCs não fechou (roteador/rede bloqueando). Tente de novo; se repetir, teste com o celular roteando internet pra um dos PCs.`); netReset(); }, 25000);
+  peer.on('open', id => { st = 'ice'; netMsg(`Achei o servidor, ligando na sala ${code}...`); NET.myId = id; const c = peer.connect(NET_PFX + code.toLowerCase(), {reliable:true, serialization:'json'}); NET.hc = c;
+    c.on('open', () => { st = 'hello'; c.send({t:'hello', v:NET_VER, name:netName(), look:myLook()}); });
     c.on('data', d => { if(d && d.t === 'room' && !NET.on){ clearTimeout(to); Object.assign(NET, {on:true, host:false, code}); $('btnJoin').disabled = false; netMsg(''); } netFromHost(d); });
     c.on('close', () => { if(NET.hc === c) netLost('A conexão com o líder caiu.'); }); });
   peer.on('error', e => { if(e.type === 'peer-unavailable'){ clearTimeout(to); fail(`Não achei a sala ${code}. Confira o código e se o líder ainda está com a sala aberta.`); netReset(); } else if(!NET.on){ clearTimeout(to); fail('Não deu pra conectar (' + (e.type || 'erro') + '). Tente de novo.'); netReset(); } }); }
