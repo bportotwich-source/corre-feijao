@@ -490,6 +490,12 @@ body.brh{--glass:linear-gradient(180deg,rgba(58,34,96,.86),rgba(28,14,50,.9));--
 #netChatIn{pointer-events:auto;margin-top:6px;width:100%;box-sizing:border-box;padding:8px 12px;border-radius:12px;border:2px solid var(--orange);background:rgba(255,255,255,.95);color:var(--ink);font:inherit}
 .nmaps{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:-4px}.nmaps .nmode{padding:6px 8px}.nmaps .nmode b{font-size:13px}
 .lslot em.team{color:var(--orange);font-style:normal;font-weight:800}
+.voz{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.voz .go{padding:8px 14px}.voz .go.on{background:var(--orange);color:#fff;border-color:var(--orange)}
+.vprox{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);cursor:pointer}
+.vgroups{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:4px}.vgroups .nmode{padding:5px 8px}.vgroups .nmode b{font-size:13px}.vgroups .nmode small{font-size:11px}
+.lslot .vic{font-style:normal;margin-left:4px;opacity:.55}.lslot .vic.talk{opacity:1;filter:drop-shadow(0 0 4px #38d16a)}
+#netVoice{position:fixed;z-index:6;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(280px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:3px;pointer-events:none;font-size:13px}
+#netVoice div{background:rgba(43,24,70,.78);color:#fff;padding:3px 10px;border-radius:10px;width:fit-content}#netVoice .talk{box-shadow:0 0 0 2px #38d16a}#netVoice .me.off{opacity:.7}
 /* controles */
 .card.panel .ctrl{background:#fff;border:1px solid var(--line);color:var(--ink)}.card.panel .ctrl kbd{background:var(--ink);color:#fff}
 /* passe */
@@ -674,13 +680,17 @@ body.brh{--glass:linear-gradient(180deg,rgba(58,34,96,.86),rgba(28,14,50,.9));--
           <h3>Na sala <small id="netCount"></small></h3>
           <div class="lobby" id="lobby"></div>
         </section>
-        <section class="pbox chatbox"><h3>Chat</h3><div class="clog" id="lobbyLog" aria-live="polite"></div>
+        <section class="pbox chatbox"><h3>Voz <small id="vWho"></small></h3>
+          <div class="voz"><button class="go alt" id="btnMic">🎤 Ligar microfone</button><label class="vprox"><input type="checkbox" id="vProx" checked> Ouvir por perto na partida</label></div>
+          <div class="nmodes vgroups" id="vGroups"></div><p class="small" id="vMsg">Escolha com quem você fala. Na partida, <kbd>B</kbd> liga e desliga o microfone.</p>
+          <h3>Chat</h3><div class="clog" id="lobbyLog" aria-live="polite"></div>
           <div class="join"><input id="lobbyMsg" maxlength="200" placeholder="Escreva e aperte Enter" autocomplete="off" aria-label="Mensagem"><button class="go alt" id="btnLobbySend">Enviar</button></div></section>
       </div>
       <div class="row2 netgo"><button class="go" id="btnRoomStart">Começar</button><span class="small" id="startHint"></span></div>
     </div>
   </div>
 </div>
+<div id="netVoice" hidden></div>
 <div id="netChat" hidden><div id="netChatLog" aria-live="polite"></div><input id="netChatIn" maxlength="200" placeholder="Mensagem pros amigos · Enter envia · Esc fecha" autocomplete="off" hidden aria-label="Chat"></div>
 <div class="screen" id="pause" hidden>
   <div class="card panel pausebox">
@@ -7307,6 +7317,97 @@ window.__net = NET; NET.dbg = {R1, get players(){ return players; }, get solids(
   nade:(x, y, z) => { const p = players[0]; p.nades = 3; p.nadeCD = 0; throwNade(p, new V3(x, y, z), 'nade'); },
   give:(k, r) => { const p = players[0]; p.inv[1] = normIt({k, ammo:WPN[k].ammo, r:r ?? WPN[k].rar}); p.sel = 1; p.relT = 0; },
   pick:i => pickUp(players[0], loot[i]), hit:(n, d) => hurt(NET.byNid[n], players[0], d, `${nm(players[0])} te acertou`), hitMe:d => hurt(players[0], null, d, 'Teste')};
+
+// ---------- Voz (WebRTC pelo PeerJS): microfone, grupos de voz e voz por proximidade ----------
+// Cada dois amigos da sala abrem uma chamada de áudio direta. O som sai sempre por um "fio" próprio (quando o microfone está desligado ele manda silêncio),
+// então ligar e desligar o microfone não precisa refazer a chamada. Quem ouve decide o volume de cada um: mesmo grupo = alto; outro grupo = só de perto na partida.
+const VOICE = {ctx:null, out:null, mic:null, micSrc:null, micGain:null, micAn:null, on:false, calls:new Map(), g:'all', prox:true, vs:{}, talk:{}, busy:false};
+const V_GROUPS = [['all', 'Todos', 'a sala toda'], ['team', 'Meu time', 'só o seu time'], ['g1', 'Grupo 1', 'quem escolher'], ['g2', 'Grupo 2', 'quem escolher']];
+const V_NEAR = 32;   // até quantos metros dá pra ouvir quem não é do seu grupo
+function vCtx(){ if(!VOICE.ctx){ try{ const C = window.AudioContext || window.webkitAudioContext; VOICE.ctx = new C(); VOICE.out = VOICE.ctx.createMediaStreamDestination(); }catch(e){ return null; } }
+  if(VOICE.ctx.state === 'suspended') VOICE.ctx.resume().catch(() => {}); return VOICE.ctx; }
+const vMyId = () => NET.myId;
+const vState = id => VOICE.vs[id] || {g:'all', mic:false};
+// ---- estado de voz de cada um (grupo e microfone): o líder junta e espalha ----
+function vSendState(){ if(!NET.on) return; const st = {g:VOICE.g, mic:VOICE.on};
+  if(NET.host){ VOICE.vs[vMyId()] = st; netSend({t:'vst', v:VOICE.vs}); vRender(); } else { VOICE.vs[vMyId()] = st; netSend({t:'vs', g:st.g, mic:st.mic}); vRender(); } }
+const _nfcV = netFromClient, _nfhV = netFromHost, _npV = netPeer, _nsrV = netShowRoom, _nResetV = netReset, _nDropV = netDrop;
+netFromClient = function(c, d){ if(d && d.t === 'vs' && NET.members.some(m => m.id === c.peer)){ VOICE.vs[c.peer] = {g:V_GROUPS.some(x => x[0] === d.g) ? d.g : 'all', mic:!!d.mic}; VOICE.vs[vMyId()] = {g:VOICE.g, mic:VOICE.on}; netSend({t:'vst', v:VOICE.vs}); vRender(); return; }
+  const was = NET.members.length; _nfcV(c, d); if(NET.members.length > was){ VOICE.vs[vMyId()] = {g:VOICE.g, mic:VOICE.on}; netTo(c.peer, {t:'vst', v:VOICE.vs}); } };
+netFromHost = function(d){ if(d && d.t === 'vst' && d.v && typeof d.v === 'object'){ const mine = {g:VOICE.g, mic:VOICE.on}; VOICE.vs = {}; for(const id in d.v){ const v = d.v[id] || {}; VOICE.vs[id] = {g:V_GROUPS.some(x => x[0] === v.g) ? v.g : 'all', mic:!!v.mic}; } VOICE.vs[vMyId()] = mine; vRender(); return; }
+  const was = NET.on; _nfhV(d); if(!was && NET.on) vSendState(); };
+netPeer = function(id){ const p = _npV(id); p.on('call', call => { if(!call.metadata || !call.metadata.fj) return; if(!vCtx()){ call.close(); return; } call.answer(VOICE.out.stream); vHook(call); }); return p; };
+netReset = function(){ vCloseAll(); VOICE.vs = {}; return _nResetV(); };
+netDrop = function(id){ vClose(id); delete VOICE.vs[id]; _nDropV(id); if(NET.host) netSend({t:'vst', v:VOICE.vs}); };
+// ---- chamadas ----
+function vHook(call){ const id = call.peer, old = VOICE.calls.get(id); if(old && old.call !== call) try{ old.call.close(); }catch(e){}
+  const C = {call, gain:null, pan:null, an:null, el:null, buf:null}; VOICE.calls.set(id, C);
+  call.on('stream', rs => { const ctx = vCtx(); if(!ctx || C.gain) return;
+    C.el = new Audio(); C.el.srcObject = rs; C.el.muted = true; C.el.play().catch(() => {});   // o Chrome só solta o áudio remoto pro WebAudio se ele estiver num <audio>
+    const src = ctx.createMediaStreamSource(rs); C.gain = ctx.createGain(); C.gain.gain.value = 0; C.an = ctx.createAnalyser(); C.an.fftSize = 512; C.buf = new Uint8Array(C.an.fftSize);
+    src.connect(C.an); src.connect(C.gain); if(ctx.createStereoPanner){ C.pan = ctx.createStereoPanner(); C.gain.connect(C.pan); C.pan.connect(ctx.destination); } else C.gain.connect(ctx.destination); });
+  const gone = () => { if(VOICE.calls.get(id) === C) vClose(id); };
+  call.on('close', gone); call.on('error', gone); }
+function vClose(id){ const C = VOICE.calls.get(id); if(!C) return; VOICE.calls.delete(id); try{ C.call.close(); }catch(e){} try{ if(C.gain) C.gain.disconnect(); if(C.pan) C.pan.disconnect(); }catch(e){} if(C.el){ C.el.srcObject = null; } delete VOICE.talk[id]; }
+function vCloseAll(){ [...VOICE.calls.keys()].forEach(vClose); }
+// quem tem o id "menor" liga pro outro (assim não abrem duas chamadas)
+function vSync(){ if(!NET.on || !NET.peer || !VOICE.ctx) return; const ids = NET.members.filter(m => !m.gone).map(m => m.id);
+  for(const id of [...VOICE.calls.keys()]) if(!ids.includes(id)) vClose(id);
+  for(const id of ids){ if(id === vMyId() || VOICE.calls.has(id) || vMyId() > id) continue;
+    try{ const call = NET.peer.call(id, VOICE.out.stream, {metadata:{fj:1}}); if(call) vHook(call); }catch(e){} } }
+setInterval(vSync, 1500);
+// ---- microfone ----
+async function vMic(on){ const ctx = vCtx(); if(!ctx){ vMsg('Seu navegador não tem áudio pro chat de voz.'); return; } if(VOICE.busy) return;
+  if(on && !VOICE.mic){ VOICE.busy = true;
+    try{ VOICE.mic = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true, autoGainControl:true}}); }
+    catch(e){ VOICE.busy = false; vMsg('O navegador não deixou usar o microfone. Clique no cadeado ao lado do endereço e libere o microfone.'); toast('Libere o microfone no navegador'); return; }
+    VOICE.busy = false; VOICE.micSrc = ctx.createMediaStreamSource(VOICE.mic); VOICE.micGain = ctx.createGain(); VOICE.micAn = ctx.createAnalyser(); VOICE.micAn.fftSize = 512; VOICE.micBuf = new Uint8Array(512);
+    VOICE.micSrc.connect(VOICE.micAn); VOICE.micSrc.connect(VOICE.micGain); VOICE.micGain.connect(VOICE.out); }
+  if(!on && VOICE.mic){ VOICE.mic.getTracks().forEach(t => t.stop()); try{ VOICE.micSrc.disconnect(); VOICE.micGain.disconnect(); }catch(e){} VOICE.mic = null; VOICE.micSrc = null; VOICE.micGain = null; VOICE.micAn = null; }
+  VOICE.on = !!on; vMsg(on ? 'Microfone ligado. Seus amigos do mesmo grupo te ouvem.' : 'Microfone desligado. Você ainda ouve os outros.'); vSendState(); vSync(); }
+function vMsg(t){ const e = $('vMsg'); if(e) e.textContent = t; }
+// ---- volume de cada um: mesmo grupo = alto; os outros só de perto na partida ----
+function vSameGroup(id){ const a = VOICE.g, b = vState(id).g; if(a !== b) return false; if(a !== 'team') return true;
+  const k = NET.members.findIndex(m => m.id === id), me = NET.members.findIndex(m => m.id === vMyId());
+  if(NET.match && BIG){ const p = NET.byNid[k], q = players[0]; return !!(p && q && p.squad === q.squad); }
+  const sq = netSq(NET.mode); return sq > 1 ? Math.floor(k/sq) === Math.floor(me/sq) : true; }
+function vTarget(id){ if(!vState(id).mic) return [0, 0]; if(vSameGroup(id)) return [1, 0];
+  if(!VOICE.prox || !NET.match || R1.phase === 'podium') return [0, 0];
+  const k = NET.members.findIndex(m => m.id === id), p = NET.byNid[k], me = players[0]; if(!p || !me || !p.alive || !me.alive || p.glide === 'plane') return [0, 0];
+  const d = p.pos.distanceTo(me.pos); if(d > V_NEAR) return [0, 0]; let pan = 0; try{ pan = Math.sin(screenAng(p.pos.x, p.pos.z))*0.7; }catch(e){}
+  return [Math.pow(1 - d/V_NEAR, 1.4), Number.isFinite(pan) ? pan : 0]; }
+const vLevel = (an, buf) => { an.getByteTimeDomainData(buf); let s = 0; for(let i=0;i<buf.length;i+=4){ const v = (buf[i] - 128)/128; s += v*v; } return Math.sqrt(s/(buf.length/4)); };
+let vHudKey = '';
+setInterval(() => { if(!VOICE.ctx) return; const now = VOICE.ctx.currentTime;
+  for(const [id, C] of VOICE.calls){ if(!C.gain) continue; const [v, pan] = vTarget(id); C.gain.gain.setTargetAtTime(v*Math.min(1.5, (CFG.vol ?? 80)/80), now, 0.08); if(C.pan) C.pan.pan.setTargetAtTime(pan, now, 0.1);
+    VOICE.talk[id] = v > 0.02 && vLevel(C.an, C.buf) > 0.035; }
+  VOICE.talk[vMyId()] = !!(VOICE.on && VOICE.micAn && vLevel(VOICE.micAn, VOICE.micBuf) > 0.035);
+  vTalkUI(); }, 120);
+// quem está falando: bolinha no lobby, lista no canto da tela e o nome em cima do feijão cresce um pouco
+function vTalkUI(){ document.querySelectorAll('#lobby .vic').forEach(e => e.classList.toggle('talk', !!VOICE.talk[e.dataset.id]));
+  const hud = $('netVoice'); if(!hud) return; hud.hidden = !NET.match;
+  if(NET.match){ const list = NET.members.filter(m => !m.gone && m.id !== vMyId() && VOICE.talk[m.id]).map(m => m.name);
+    const key = VOICE.on + '|' + VOICE.talk[vMyId()] + '|' + list.join(',');
+    if(key !== vHudKey){ vHudKey = key; hud.innerHTML = ''; const me = document.createElement('div'); me.className = 'me' + (VOICE.on ? '' : ' off') + (VOICE.talk[vMyId()] ? ' talk' : ''); me.textContent = VOICE.on ? '🎤 Microfone ligado · B desliga' : '🔇 Microfone desligado · B liga'; hud.appendChild(me);
+      list.forEach(n => { const d = document.createElement('div'); d.className = 'talk'; d.textContent = '🔊 ' + n; hud.appendChild(d); }); }
+    players.forEach(p => { if(!p.m.ntag) return; const m = NET.members[p.nid], t = m && VOICE.talk[m.id]; p.m.ntag.scale.set(t ? 2.75 : 2.4, t ? 0.69 : 0.6, 1); }); } }
+// ---- telas ----
+function vRender(){ if(!$('vGroups')) return; const G = $('vGroups'); G.innerHTML = ''; const sq = netSq(NET.mode);
+  V_GROUPS.forEach(([id, t, s]) => { if(id === 'team' && !sq && VOICE.g !== 'team') return; const b = document.createElement('button'); b.className = 'nmode' + (VOICE.g === id ? ' on' : ''); b.innerHTML = `<b>${t}</b><small>${s}</small>`;
+    b.onclick = () => { VOICE.g = id; vCtx(); vSendState(); vSync(); }; G.appendChild(b); });
+  const B = $('btnMic'); B.textContent = VOICE.on ? '🎤 Microfone ligado' : '🎤 Ligar microfone'; B.classList.toggle('on', VOICE.on);
+  const n = NET.members.filter(m => vState(m.id).mic).length; $('vWho').textContent = n ? `· ${n} com microfone` : '';
+  document.querySelectorAll('#lobby .lslot').forEach((el, k) => { const m = NET.members[k]; if(!m) return; let i = el.querySelector('.vic'); if(!i){ i = document.createElement('em'); i.className = 'vic'; el.appendChild(i); }
+    i.dataset.id = m.id; const st = m.id === vMyId() ? {g:VOICE.g, mic:VOICE.on} : vState(m.id); i.textContent = st.mic ? '🎤' : '🔇';
+    i.title = (st.mic ? 'Microfone ligado' : 'Microfone desligado') + ' · ' + (V_GROUPS.find(x => x[0] === st.g) || V_GROUPS[0])[1]; }); }
+netShowRoom = function(){ _nsrV(); vCtx(); vRender(); };
+$('btnMic').onclick = () => vMic(!VOICE.on);
+$('vProx').onchange = e => { VOICE.prox = e.target.checked; };
+// B liga e desliga o microfone na partida (fora do chat)
+addEventListener('keydown', e => { if(e.code !== 'KeyB' || e.repeat || !NET.match || NET.chatOpen) return; if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return; vMic(!VOICE.on); });
+// o navegador só deixa tocar som depois de um clique: aproveita qualquer clique pra acordar o áudio da voz
+addEventListener('pointerdown', () => { if(NET.on) vCtx(); }, true);
+NET.voice = VOICE;
 
 requestAnimationFrame(frame);
 })();
