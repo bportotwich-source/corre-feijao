@@ -4386,6 +4386,10 @@ function skinUnder(m, a){ if(!m.skinG) return; let need = true;
     const [y0, z1] = c.userData.bb; c.visible = !(a && ((a.helm && y0 >= 1.1) || (a.pack && y0 > 0.4 && z1 < 0))); } }
 // arma na mão (modelos do BRE): só perto da câmera, fora do avião/paraquedas
 const gunProto = {};
+function relPose(p, m){ const g = m.gun; if(!g || !g.userData.bl || !m.hd) return; const it = p.inv && p.inv[p.sel]; if(!it) return;
+  const w = WI(it), t = p.relT > 0 ? 1 - p.relT/w.rel : -1, o = armaAnim(g, it.k, t, Math.min(w.mag - it.mag, it.ammo)); if(!o) return;
+  const k = ASEG(t, 0, 0.1)*(1 - ASEG(t, 0.88, 1)); g.rotation.x -= 0.25*k; g.rotation.z += 0.45*k; g.rotation.y += 0.3*k; g.position.y -= 0.05*k; g.updateMatrix();
+  if(o.hand){ const a = m.arms[1], q = o.hand.clone().applyMatrix4(g.matrix); a.position.lerp(q, o.w); } }
 function syncGun(p, far){ const m = p.m, it = p.inv && p.alive && p.dying <= 0 && !p.glide && R1.phase !== 'podium' ? p.inv[p.sel] : null, k = it && !far ? it.k : null, bl = k && !p.isBot && typeof ARMA !== 'undefined' && ARMA.lib && ARMA.lib[k], ak = k ? attKey(it.att) + (bl ? 'b' : '') : '';
   if(m.gunK === k && m.gunA === ak) return; m.gunK = k; m.gunA = ak; if(m.gun){ m.tilt.remove(m.gun); m.gun = null; } if(!k) return;
   const key = k + (p.isBot ? '' : 'd'); if(!gunProto[key]){ const w = BRE.weapon(k, {decal:!p.isBot}), big = k === 'bazooka'; w.position.set(-0.5, big ? 0.88 : 0.72, big ? 0.05 : 0.18); gunProto[key] = w; }
@@ -6587,7 +6591,7 @@ function animateBean(p, dt){
   const ty = p.dive > 0 || p.stance === 2 || p.down ? (p.dive > 0 ? 0.5 : 0.3) : 0; if(p.stance === 1) m.g.scale.y *= 0.72;
   const tz = p.stun > 0 ? Math.sin(clock*25)*0.25 : p.down ? Math.sin(clock*3 + p.i)*0.12 : 0;
   const special = p.dive > 0 || p.stance === 2 || p.down || p.climb || p.vault || p.mantle || p.slideT > 0 || !!p.glide;
-  FEIJAO_HD.anim(m, {speed:special ? 0 : sp, grounded:p.grounded || !!p.car || !!p.climb, gun:!!m.gun, aim:p.ads || clock - (p.lastShot ?? -9) < 1.2 ? 1 : 0, t:clock + p.i, shoot:p.shotFx, tx:p.tx, ty, tz, lean:!special, face:false}, dt); p.shotFx = false;
+  FEIJAO_HD.anim(m, {speed:special ? 0 : sp, grounded:p.grounded || !!p.car || !!p.climb, gun:!!m.gun, aim:p.ads || clock - (p.lastShot ?? -9) < 1.2 ? 1 : 0, t:clock + p.i, shoot:p.shotFx, tx:p.tx, ty, tz, lean:!special, face:false}, dt); p.shotFx = false; relPose(p, m);
   if(p.pushAnim > 0) m.arms.forEach(a => a.position.z += 0.45);
   if(R1.phase === 'podium' && p.rank === 0) m.arms.forEach((a, k) => a.position.y += 0.35 + Math.sin(clock*8 + k*3)*0.12);
   if(p.climb){ const s = Math.sin(p.climbPh || 0); m.arms.forEach((a, k) => { a.position.y = 1.2 + (k ? -s : s)*0.16; a.position.z = 0.3; }); m.legs[0].position.y = 0.2 + Math.max(0, -s)*0.16; m.legs[1].position.y = 0.2 + Math.max(0, s)*0.16; m.legs[0].position.z = m.legs[1].position.z = 0.12; }
@@ -6773,14 +6777,36 @@ function armaBuild(k, att, sg){ const L = ARMA.lib, g = L[k].clone(true), has = 
   const put = (n, sock) => { const s = vmKid(g, sock); if(!n || !s || !L[n]) return null; const o = L[n].clone(true); o.position.copy(s.position); g.add(o); return o; };
   const optic = sg !== 'ferro' && has('s_mira') ? put(sg, 's_mira') : null; if(optic) ['alca', 'massa'].forEach(n => { const o = vmKid(g, n); if(o) o.visible = false; });
   for(const a in ATT_BL) if(att[a]) g.userData[a] = put(...ATT_BL[a]);
-  g.userData.optic = optic; return g; }
+  g.userData.optic = optic; g.userData.bl = true; return g; }
+// recarga: t = 0..1 do tempo de recarga. Mexe as peças do Blender (pente, ferrolho, cartucho, telha, tampa, foguete) e devolve onde a mão de apoio vai buscar
+const AE = x => x*x*(3 - 2*x), ASEG = (t, a, b) => AE(clamp((t - a)/(b - a), 0, 1)), APULSE = (t, a, b) => Math.sin(Math.PI*clamp((t - a)/(b - a), 0, 1));
+function armaAnim(g, k, t, shells){ const U = g.userData; if(!U.rest) U.rest = g.children.map(o => [o, o.position.clone(), o.rotation.clone(), o.visible]);
+  for(const [o, p, r, v] of U.rest){ o.position.copy(p); o.rotation.copy(r); o.visible = v; }
+  const kid = n => vmKid(g, n), cart = kid('cartucho'); if(cart) cart.visible = false; if(!(t >= 0 && t < 1)) return null;
+  const mag = ['pente', 'pente_ext', 'pente_rap'].map(kid).find(o => o && o.visible), fer = kid('ferrolho'), O = {hand:null, w:ASEG(t, 0.04, 0.14)*(1 - ASEG(t, 0.7, 0.82))};
+  if(k === 'shotgun'){ // cartucho por cartucho na janela de baixo, depois o pump
+    const n = Math.max(1, Math.min(6, shells || 4)), u = clamp((t - 0.06)/0.76, 0, 0.9999)*n, f = u % 1;
+    if(cart && t > 0.06 && t < 0.82){ cart.visible = true; const ins = ASEG(f, 0.3, 0.85); cart.position.x += 0.09*(1 - ins); cart.position.y += 0.02*(1 - ins); cart.visible = ins < 0.97; O.hand = cart.position.clone().add(new V3(0.035, -0.01, 0)); }
+    const tl = kid('telha'); if(tl) tl.position.z -= 0.09*APULSE(t, 0.84, 0.97); O.w = ASEG(t, 0.03, 0.1)*(1 - ASEG(t, 0.8, 0.86)); }
+  else if(k === 'sniper'){ // ferrolho: levanta, puxa, cartucho entra, empurra e abaixa
+    if(fer){ const up = ASEG(t, 0.08, 0.18)*(1 - ASEG(t, 0.78, 0.88)), back = ASEG(t, 0.18, 0.3)*(1 - ASEG(t, 0.66, 0.76)); fer.rotation.z += 1.1*up; fer.position.z -= 0.075*back; }
+    if(cart && t > 0.32 && t < 0.66){ cart.visible = true; const ins = ASEG(t, 0.36, 0.6); cart.position.x += 0.07*(1 - ins); cart.position.y += 0.05*(1 - ins); O.hand = cart.position.clone(); }
+    O.w = ASEG(t, 0.28, 0.36)*(1 - ASEG(t, 0.6, 0.7)); }
+  else if(k === 'bazooka'){ const fg = kid('foguete'); if(fg){ fg.visible = t > 0.22; fg.position.z += 0.4*(1 - ASEG(t, 0.25, 0.72)); O.hand = fg.position.clone().add(new V3(0, -0.03, 0.12)); } O.w = ASEG(t, 0.15, 0.25)*(1 - ASEG(t, 0.72, 0.82)); }
+  else if(mag){ // pente sai, mão traz o novo, encaixa com um tapa e puxa o ferrolho
+    const out = ASEG(t, 0.1, 0.3), inn = ASEG(t, 0.44, 0.64), slap = APULSE(t, 0.64, 0.7); mag.visible = !(t > 0.3 && t < 0.42);
+    mag.position.y -= t < 0.38 ? 0.3*out : 0.3*(1 - inn) - 0.012*slap; mag.position.z -= t < 0.38 ? 0.04*out : 0.04*(1 - inn); mag.rotation.x -= t < 0.38 ? 0.35*out : 0.35*(1 - inn);
+    O.hand = mag.position.clone().add(new V3(0.015, -0.06, 0));
+    const tp = kid('tampa'); if(tp) tp.rotation.x -= 1.05*ASEG(t, 0.02, 0.1)*(1 - ASEG(t, 0.72, 0.8));
+    if(fer) fer.position.z -= (k === 'pistol' ? 0.035*(1 - ASEG(t, 0.72, 0.77)) : 0.06*APULSE(t, 0.76, 0.9)); }
+  return O; }
 function vmBuild(p, it){ const k = it.k, att = it.att || {}, sg = sightOf(it), look = myLook(), key = k + sg + attKey(att) + JSON.stringify(look) + !!ARMA.lib; if(VM.key === key) return VM.g; if(VM.g) vmScene.remove(VM.g); VM.key = key;
   const L = ARMA.lib; if(!L || !L[k]) return vmBuild0(p, it, key);
   const root = new THREE.Group(), g = armaBuild(k, att, sg), optic = g.userData.optic;
   // luvas do feijão (cópia das mãos do seu boneco, com o que a skin põe nelas) no cabo e abraçando o lado do guarda-mão, pra aparecer mirando
   const src = p.m && p.m.arms; ['s_mao_d', 's_mao_e'].forEach((sk, i) => { const s = vmKid(g, sk); if(!s) return;
     const h = src && src[i] ? src[i].clone() : new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 14), new THREE.MeshPhongMaterial({color:look.color}));
-    h.traverse(o => { o.visible = true; o.castShadow = false; }); h.scale.setScalar(i ? 0.5 : 0.6); h.position.copy(s.position).add(new V3(i ? 0.05 : -0.04, i ? 0.012 : 0.004, i ? 0.05 : -0.012)); h.rotation.set(i ? -0.1 : -0.3, i ? -0.9 : 0.5, i ? -1.0 : 1.2); g.add(h); });
+    h.traverse(o => { o.visible = true; o.castShadow = false; }); h.scale.setScalar(i ? 0.5 : 0.6); h.position.copy(s.position).add(new V3(i ? 0.05 : -0.04, i ? 0.012 : 0.004, i ? 0.05 : -0.012)); h.rotation.set(i ? -0.1 : -0.3, i ? -0.9 : 0.5, i ? -1.0 : 1.2); g.add(h); if(i) g.userData.handL = h; });
   // olho: atrás da mira (red dot e holo), colado na luneta (lente enche o meio da tela) ou na linha da alça e massa
   const Z = VM_ZOOM[sg] || 1.25, scope = optic && Z >= 2; let eye; VM.lens = null; VM.fov = scope ? 46 : 46/Z;
   if(optic){ const ln = vmKid(optic, 's_lente'), R = sg === 'reddot' ? 0.016 : sg === 'holo' ? 0.019 : {mira2x:0.018, mira4x:0.024, mira8x:0.026}[sg] || 0.02;
@@ -6797,10 +6823,14 @@ function vmStep(c, me, dt){ const sK = c.scK || 0, it = me.inv && me.inv[me.sel]
   const g = vmBuild(me, it); VM.kick = Math.max(0, VM.kick - dt*9); VM.rel += ((me.relT > 0 ? 1 : 0) - VM.rel)*Math.min(1, dt*10);
   const mv = Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6); VM.bob += dt*(6 + mv*5); VM.up = Math.min(1, (VM.up || 0) + dt*(WI(it).ads || 1)/0.16); const u = Math.min(VM.up, sK), e = u*u*(3 - 2*u), b = mv*(1 - e*0.7); // subida da arma até o olho
   g.visible = !(g.userData.sn && e > 0.92 && me.relT <= 0); VM.e = e; VM.zs = VM.lens ? (e > 0.8 ? VM.lens.Z : 1) : 0;
-  g.position.set(0.22*(1 - e) + Math.sin(VM.bob)*0.008*b, -0.3*(1 - e) - Math.abs(Math.cos(VM.bob))*0.01*b - VM.rel*0.07, 0.06*(1 - e) + VM.kick*0.045);
-  g.rotation.set(VM.kick*0.07 - VM.rel*0.3 - 0.18*(1 - e)*e, 0.12*(1 - e), -0.22*(1 - e) + VM.rel*0.35); }
+  const rb = VM.bl ? VM.rel : 0, rn = VM.rel - rb; // Blender: a arma desce um tico e deita de lado (gira em volta dela mesma) pra mostrar o pente
+  g.position.set(0.22*(1 - e) + Math.sin(VM.bob)*0.008*b - rb*0.02, -0.3*(1 - e) - Math.abs(Math.cos(VM.bob))*0.01*b - rn*0.07 + rb*0, 0.06*(1 - e) + VM.kick*0.045 - rb*0.2);
+  g.rotation.set(VM.kick*0.07 - rn*0.3 - 0.18*(1 - e)*e, 0.12*(1 - e), -0.22*(1 - e) + rn*0.35);
+  if(g.children[0]){ const q = AE(rb); g.children[0].rotation.order = 'YZX'; g.children[0].rotation.set(0.1*q, Math.PI + 0.55*q, 1.1*q); }
+  const gi = g.children[0]; if(gi && gi.userData.bl){ const w = WI(it), t = me.relT > 0 ? 1 - me.relT/w.rel : -1, o = armaAnim(gi, it.k, t, Math.min(w.mag - it.mag, it.ammo)), hL = gi.userData.handL;
+    if(o && o.hand && hL){ hL.position.lerp(o.hand.add(new V3(0.01, -0.02, 0)), o.w); hL.rotation.x += 0.8*o.w; } } }
 const vmPip = new THREE.PerspectiveCamera(10, 1, 0.1, 600), _la = new V3(), _lb = new V3(), _lq = new THREE.Quaternion();
-function vmRender(W, H){ if(!VM.on) return; vmCam.aspect = W/H; vmCam.fov = VM.fov || 50; vmCam.updateProjectionMatrix(); const ac = renderer.autoClear; renderer.autoClear = false;
+function vmRender(W, H){ if(!VM.on) return; vmCam.aspect = W/H; vmCam.fov = (VM.fov || 50) + (60 - (VM.fov || 50))*(VM.bl ? VM.rel : 0); vmCam.updateProjectionMatrix(); const ac = renderer.autoClear; renderer.autoClear = false;
   const Ls = VM.lens; if(Ls && VM.g && VM.g.visible && (VM.e || 0) > 0.5){ vmScene.updateMatrixWorld(); Ls.grp.getWorldPosition(_la); _lb.set(Ls.R, 0, 0); Ls.grp.localToWorld(_lb); _la.project(vmCam); _lb.project(vmCam);
     const r = Math.hypot((_lb.x - _la.x)*W/H, _lb.y - _la.y); // raio da lente na tela (em meia altura)
     vmPip.fov = 2*Math.atan(r*Math.tan(CFG.fov*Math.PI/360)/Ls.Z)*180/Math.PI; vmPip.aspect = 1; vmPip.updateProjectionMatrix();
