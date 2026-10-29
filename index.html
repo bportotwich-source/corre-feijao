@@ -7798,6 +7798,55 @@ function fjBeanShadow(p){ const m = p.m, mine = !p.isBot && (p.i === 0 || (twoP 
     if(mine || o === m.body){ o.castShadow = o === m.body ? !m.far : true; return; } const g = o.geometry; if(!g.boundingSphere) g.computeBoundingSphere();
     o.castShadow = !m.far && g.boundingSphere.radius*Math.max(o.scale.x, o.scale.y, o.scale.z) > FJ_SH_R; }); }
 let fjShI = 0;
+// cenário das provas e do menu: peças paradas com o mesmo material (e perto umas das outras) viram 1 malha só = 1 desenho.
+// As peças originais continuam no mundo (colisão, código das provas), só saem da tela (camada 30). Se alguma mexer
+// (andar, girar, sumir, trocar material ou cor por vértice), o grupo dela é desfeito na hora e volta a ser como antes.
+const FJBT = {w:null, n:0, snap:null, list:[], on:true}, FJBT_L = 30, FJBT_CELL = 40;
+const fjBtM = new THREE.Matrix4(), fjBtV = new THREE.Vector3();
+function fjBtVis(o){ for(let p = o; p && p !== world; p = p.parent){ if(!p.visible) return false; if(!p.parent) return false; } return true; }
+function fjBtDyn(){ const S = new Set(), add = x => { if(x && x.isObject3D) x.traverse(o => S.add(o)); };
+  const arrs = []; try{ arrs.push(bars, doors, itemBoxes, OBS, hammers, hazards); }catch(e){} try{ arrs.push(spinners); }catch(e){}
+  arrs.forEach(a => Array.isArray(a) && a.forEach(e => { if(!e) return; add(e); if(typeof e === 'object' && !e.isObject3D) for(const k in e) add(e[k]); }));
+  return S; }
+function fjBtOk(o, dyn){ if(!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || o.morphTargetInfluences || dyn.has(o)) return false;
+  const m = o.material, g = o.geometry; if(!m || Array.isArray(m) || m.transparent || !m.visible || o.layers.mask !== 1 || !o.frustumCulled) return false;
+  if(o.onBeforeRender !== THREE.Object3D.prototype.onBeforeRender || !g || !g.attributes.position || g.attributes.position.itemSize !== 3 || !g.attributes.normal || g.morphAttributes.position) return false;
+  if(g.drawRange.start !== 0 || g.drawRange.count !== Infinity) return false;
+  return fjBtVis(o) && o.matrixWorld.determinant() > 0; }
+function fjBtKey(o){ const g = o.geometry, a = g.attributes; if(!g.boundingSphere) g.computeBoundingSphere(); fjBtV.copy(g.boundingSphere.center).applyMatrix4(o.matrixWorld);
+  return [o.material.uuid, o.castShadow ? 1 : 0, o.receiveShadow ? 1 : 0, o.renderOrder, a.uv ? 1 : 0, a.color ? a.color.itemSize : 0, Math.floor(fjBtV.x/FJBT_CELL), Math.floor(fjBtV.z/FJBT_CELL)].join('|'); }
+function fjBtGeo(objs){ const uv = !!objs[0].geometry.attributes.uv, cs = objs[0].geometry.attributes.color ? objs[0].geometry.attributes.color.itemSize : 0; let nv = 0, ni = 0;
+  objs.forEach(o => { const g = o.geometry; nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; });
+  const P = new Float32Array(nv*3), N = new Float32Array(nv*3), U = uv ? new Float32Array(nv*2) : null, C = cs ? new Float32Array(nv*cs) : null, I = nv > 65535 ? new Uint32Array(ni) : new Uint16Array(ni);
+  const inv = fjBtM.copy(world.matrixWorld).invert(), mw = new THREE.Matrix4(), nm = new THREE.Matrix3(), v = new THREE.Vector3(); let ov = 0, oi = 0;
+  objs.forEach(o => { const g = o.geometry, pa = g.attributes.position, na = g.attributes.normal, n = pa.count; mw.multiplyMatrices(inv, o.matrixWorld); nm.getNormalMatrix(mw);
+    for(let i=0; i<n; i++){ v.fromBufferAttribute(pa, i).applyMatrix4(mw); P[(ov+i)*3] = v.x; P[(ov+i)*3+1] = v.y; P[(ov+i)*3+2] = v.z;
+      v.fromBufferAttribute(na, i).applyMatrix3(nm).normalize(); N[(ov+i)*3] = v.x; N[(ov+i)*3+1] = v.y; N[(ov+i)*3+2] = v.z;
+      if(U){ const ua = g.attributes.uv; U[(ov+i)*2] = ua.getX(i); U[(ov+i)*2+1] = ua.getY(i); }
+      if(C){ const ca = g.attributes.color; C[(ov+i)*cs] = ca.getX(i); C[(ov+i)*cs+1] = ca.getY(i); C[(ov+i)*cs+2] = ca.getZ(i); if(cs === 4) C[(ov+i)*cs+3] = ca.getW(i); } }
+    if(g.index){ const ia = g.index.array; for(let k=0; k<ia.length; k++) I[oi+k] = ia[k] + ov; oi += ia.length; } else { for(let k=0; k<n; k++) I[oi+k] = ov + k; oi += n; }
+    ov += n; });
+  const r = new THREE.BufferGeometry(); r.setAttribute('position', new THREE.BufferAttribute(P, 3)); r.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+  if(U) r.setAttribute('uv', new THREE.BufferAttribute(U, 2)); if(C) r.setAttribute('color', new THREE.BufferAttribute(C, cs)); r.setIndex(new THREE.BufferAttribute(I, 1)); r.computeBoundingSphere(); return r; }
+function fjBtSnap(o){ return {o, e:o.matrixWorld.elements.slice(), m:o.material, g:o.geometry, pv:o.geometry.attributes.position.version, cv:o.geometry.attributes.color ? o.geometry.attributes.color.version : -1}; }
+function fjBtSame(s){ const o = s.o; if(o.material !== s.m || o.geometry !== s.g || !fjBtVis(o) || o.geometry.attributes.position.version !== s.pv || (o.geometry.attributes.color ? o.geometry.attributes.color.version : -1) !== s.cv) return false;
+  const e = o.matrixWorld.elements, f = s.e; for(let i=0; i<16; i++) if(Math.abs(e[i] - f[i]) > 1e-4) return false; return true; }
+function fjBtUndo(b){ if(b.mesh){ b.mesh.parent && b.mesh.parent.remove(b.mesh); b.mesh.geometry.dispose(); b.mesh = null; } b.objs.forEach(s => { if(s.o.layers.mask === 1 << FJBT_L) s.o.layers.mask = 1; }); }
+function fjBatch(){
+  if(FJBT.w !== world){ FJBT.w = world; FJBT.n = 0; FJBT.snap = null; FJBT.list = []; }
+  if(BIG || !FJBT.on){ if(FJBT.list.length){ FJBT.list.forEach(fjBtUndo); FJBT.list = []; } return; }
+  const n = ++FJBT.n;
+  // quadro 4: fotografa as candidatas; 0,7 s depois (e pelo menos 8 quadros) junta só as que ficaram paradas desde então
+  if(n === 4){ const dyn = fjBtDyn(), S = []; world.updateMatrixWorld(true); world.traverse(o => { if(fjBtOk(o, dyn)) S.push(fjBtSnap(o)); }); FJBT.snap = S; FJBT.t = performance.now(); return; }
+  if(FJBT.snap && n >= 12 && performance.now() - FJBT.t > 700){ world.updateMatrixWorld(true); const by = new Map();
+    FJBT.snap.forEach(s => { if(!fjBtSame(s) || s.o.layers.mask !== 1) return; const k = fjBtKey(s.o); if(!by.has(k)) by.set(k, []); by.get(k).push(s); });
+    for(const list of by.values()){ if(list.length < 2) continue; const o0 = list[0].o, mesh = new THREE.Mesh(fjBtGeo(list.map(s => s.o)), o0.material);
+      mesh.castShadow = o0.castShadow; mesh.receiveShadow = o0.receiveShadow; mesh.renderOrder = o0.renderOrder; mesh.userData.fjBatch = true; mesh.matrixAutoUpdate = false; world.add(mesh);
+      list.forEach(s => s.o.layers.mask = 1 << FJBT_L); FJBT.list.push({mesh, objs:list}); }
+    FJBT.snap = null; return; }
+  // de 6 em 6 quadros: se uma peça de um grupo mexeu, o grupo inteiro volta a ser peças soltas
+  if(!FJBT.snap && n % 6 === 0 && FJBT.list.length){ for(let i = FJBT.list.length - 1; i >= 0; i--){ const b = FJBT.list[i]; if(!b.objs.every(fjBtSame)){ fjBtUndo(b); FJBT.list.splice(i, 1); } } }
+}
 // feijões longe da câmera ficam sem olhos, braços e roupas (pesa bem menos com 100)
 function lodBeans(){
   if(players.length){ const n = Math.max(1, Math.ceil(players.length/60)); for(let k = 0; k < n; k++){ fjShI = (fjShI + 1) % players.length; fjBeanShadow(players[fjShI]); } }
@@ -10390,7 +10439,7 @@ let fpsN = 0, fpsT = 0;
 function frame(now){
   if(CFG.fps && now - last < 1000/CFG.fps - 2){ requestAnimationFrame(frame); return; }
   const dt = Math.min(0.05, (now - last)/1000); last = now;
-  if(!PAUSED) tick(dt); view(dt); fjCull(camera); fjLod(camera); fjLootFx(); fjGrass(PAUSED ? 0 : dt); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
+  if(!PAUSED) tick(dt); view(dt); fjCull(camera); fjLod(camera); fjBatch(); fjLootFx(); fjGrass(PAUSED ? 0 : dt); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
   if(TOON){ toonT += dt; if(toonT > 1.5) applyToon(); }
   fpsN++; fpsT += dt; if(fpsT >= 0.5){ if(CFG.showFps) $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS'; fpsN = 0; fpsT = 0; }
   if(pv && !$('shop').hidden){ pv.rot += dt*0.9; pv.m.g.rotation.y = Math.sin(pv.rot)*0.75 + pv.off; if(pv.m.spin) pv.m.spin.rotation.y += dt*8; SKINS.tick(pv.m, pv.rot*2, dt); SKINS.tickCos(pv.m, pv.rot*2); pv.r.render(pv.sc, pv.cam); }
