@@ -3110,7 +3110,7 @@ function buildLanes(fn, n, w){
   solids = solids.filter(b => b.mesh || b.max.x - b.min.x > 0.35 || !seams.some(s => Math.abs((b.min.x + b.max.x)/2 - s) < 0.4));
 }
 // sorteia a prova na hora, pelo número de vivos (só as que aguentam essa quantidade)
-const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26];
+const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27];
 const ROUND_OFF = [8, 16, 17, 19]; // provas tiradas do jogo (Frutas, Apagão, Cabo de Guerra, Domínio)
 // Sorteio (parte 6): cada partida tem um roteiro de tipos. Começa com corrida (todo mundo junto),
 // depois mistura sobrevivência, times e rodadas do Round 6 (Ponte de Vidro, Salas) sem repetir o tipo seguido.
@@ -4080,7 +4080,7 @@ const LOOKS = {
   manha:{top:0x58b8f5, hor:0xd8f4ff, sun:0xfffbe8, si:0.66, hs:0xf0fbff, hg:0x7fa0c0, hi:0.55, off:[-10, 22, 14], dir:[-0.35, 0.32, 0.88], wc:0xf2fbff},
   tarde:{top:0x4a8ee0, hor:0xffe2b8, sun:0xffdcaa, si:0.7, hs:0xfff2e2, hg:0x9a7a9a, hi:0.54, off:[20, 16, -12], dir:[0.6, 0.16, -0.78], wc:0xfff8f0},
   rosa:{top:0x7a6ae0, hor:0xffc4da, sun:0xffd0dc, si:0.64, hs:0xffeef6, hg:0x9a84cc, hi:0.58, off:[-18, 16, -12], dir:[-0.6, 0.14, -0.78], wc:0xfff4f8}};
-const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa'};
+const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde'};
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
@@ -4159,7 +4159,7 @@ function buildField(color, stripe){
   [[-9, -16], [9, 16], [-16, 9], [16, -9], [0, -19.5], [0, 19.5]].forEach(([x, z]) => box(x - 1.2, x + 1.2, 0, 1.6, z - 1.2, z + 1.2, 0xff4fa3));
   robot = null;
 }
-const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira'};
+const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde'};
 const RACE = r => r === 1 || r === 6 || r === 9 || r === 10 || r === 11 || r === 12 || r === 21;
 
 // Gangorras: corrida por gangorras que inclinam com o peso
@@ -5010,6 +5010,238 @@ function botFlags(p, dt, inp){ if(!pb) return inp; const s = pbSide(p.team), W =
   if(p.grounded && Math.random() < dt*0.25) inp.jump = true;
   return inp; }
 
+// ---------- Pique-Esconde (prova 27) ----------
+// Prop Hunt no quintal da vovó: uns poucos feijões são CAÇADORES, o resto se ESCONDE. Os caçadores ficam presos na gaiola do meio
+// enquanto os outros correm e se disfarçam: F perto de um objeto (vaso, caixote, anão de jardim...) vira uma cópia dele.
+// Depois a gaiola abre e os caçadores atiram bolinhas de tinta (em arco, nunca reto) com F ou clique: acertou um escondido, ele está fora;
+// acertou um objeto de verdade, o caçador perde fôlego. A cada 20 s os escondidos assobiam. Se os caçadores acharem a meta, eles passam;
+// se o tempo acabar antes, os caçadores saem. Quem não foi achado sempre passa.
+let pq = null;
+const PQ_G = 16, PQ_V = 23, PQ_HIDE = [20, 24, 28], PQ_PLAY = [80, 95, 115];
+// objetos do cenário: altura, raio (pra acertar e pra encostar) e como montar
+const PQ_KINDS = [
+  {k:'caixote', n:'caixote', h:0.9, r:0.48}, {k:'barril', n:'barril', h:1.05, r:0.45}, {k:'vaso', n:'vaso de planta', h:1.15, r:0.45},
+  {k:'abobora', n:'abóbora', h:0.85, r:0.52}, {k:'lixeira', n:'lixeira', h:1.05, r:0.4}, {k:'hidrante', n:'hidrante', h:0.85, r:0.32},
+  {k:'cogumelo', n:'cogumelo', h:1.0, r:0.5}, {k:'bola', n:'bola de praia', h:0.9, r:0.45}, {k:'cadeira', n:'cadeira', h:1.05, r:0.38},
+  {k:'anao', n:'anão de jardim', h:1.1, r:0.38}, {k:'pneus', n:'pneus', h:0.75, r:0.5}, {k:'garrafao', n:'garrafão', h:0.95, r:0.33},
+  {k:'regador', n:'regador', h:0.7, r:0.38}, {k:'melancia', n:'melancia', h:0.7, r:0.48}];
+const PQ_BY = Object.fromEntries(PQ_KINDS.map(o => [o.k, o]));
+let PQ_GEO = null;
+function pqGeo(){ if(PQ_GEO) return PQ_GEO; const G = THREE;
+  return PQ_GEO = {box:rbox(0.9, 0.9, 0.9), plank:new G.BoxGeometry(0.94, 0.12, 0.08), cyl:new G.CylinderGeometry(0.45, 0.45, 1, 16), ring:new G.TorusGeometry(0.45, 0.04, 6, 20),
+    pot:new G.CylinderGeometry(0.34, 0.26, 0.5, 14), sph:new G.SphereGeometry(0.5, 16, 12), sphLo:new G.SphereGeometry(0.5, 10, 8), stem:new G.CylinderGeometry(0.05, 0.07, 0.2, 6),
+    cone:new G.ConeGeometry(0.3, 0.55, 12), tor:new G.TorusGeometry(0.34, 0.15, 8, 18), small:new G.CylinderGeometry(0.2, 0.2, 1, 12), leg:new G.BoxGeometry(0.07, 0.5, 0.07),
+    seat:new G.BoxGeometry(0.62, 0.08, 0.6), back:new G.BoxGeometry(0.62, 0.5, 0.07), spout:new G.CylinderGeometry(0.04, 0.06, 0.55, 6), cap:new G.SphereGeometry(0.5, 16, 8, 0, Math.PI*2, 0, Math.PI/2), dot:new G.SphereGeometry(0.07, 6, 4)}; }
+// monta o objeto (v = variação de cor); o disfarce usa exatamente a mesma função, então a cópia fica igualzinha
+function pqMake(k, v){ const g = new THREE.Group(), G = pqGeo(), M = (geo, c, x, y, z, sx, sy, sz) => { const o = mesh(geo, mat(c), g); o.position.set(x, y, z); if(sx) o.scale.set(sx, sy, sz); return o; };
+  const pick = L => L[v % L.length];
+  switch(k){
+    case 'caixote': M(G.box, pick([0xc98a4b, 0xb87a3f, 0xd9a066]), 0, 0.45, 0); [-0.3, 0, 0.3].forEach(y => { M(G.plank, 0x8a5a2b, 0, 0.45 + y, 0.46); M(G.plank, 0x8a5a2b, 0, 0.45 + y, -0.46); }); break;
+    case 'barril': M(G.cyl, pick([0xd94a3a, 0x3a7bd9, 0x4caf50]), 0, 0.52, 0, 1, 1.05, 1); [0.15, 0.9].forEach(y => { const r = M(G.ring, 0x5a4a5a, 0, y, 0, 1.02, 1.02, 1.02); r.rotation.x = Math.PI/2; }); M(G.cap, 0x5a4a5a, 0, 1.04, 0, 0.8, 0.12, 0.8); break;
+    case 'vaso': M(G.pot, 0xd9764a, 0, 0.25, 0); M(G.sphLo, pick([0x3fae5a, 0x5cc46a, 0x2f9a4a]), 0, 0.75, 0, 0.95, 0.8, 0.95); M(G.sphLo, pick([0xff6fae, 0xffd23f, 0xffffff]), 0.18, 0.98, 0.12, 0.25, 0.25, 0.25); M(G.sphLo, pick([0xffd23f, 0xff6fae, 0xb48cff]), -0.2, 0.92, -0.1, 0.22, 0.22, 0.22); break;
+    case 'abobora': M(G.sph, pick([0xff8a2a, 0xffa53f, 0xf07a1f]), 0, 0.4, 0, 1.05, 0.8, 1.05); M(G.stem, 0x5a8a2a, 0, 0.85, 0); break;
+    case 'lixeira': M(G.cyl, pick([0x3f8f5a, 0x4a6fd9, 0x8a8a9a]), 0, 0.47, 0, 0.85, 0.94, 0.85); M(G.cap, pick([0x2f7f4a, 0x3a5fc9, 0x6a6a7a]), 0, 0.94, 0, 0.9, 0.25, 0.9); M(G.dot, 0x2b1846, 0, 1.08, 0); break;
+    case 'hidrante': M(G.small, 0xe8343a, 0, 0.35, 0, 1, 0.7, 1); M(G.cap, 0xe8343a, 0, 0.7, 0, 0.42, 0.3, 0.42); M(G.small, 0xffd23f, 0, 0.42, 0, 1.4, 0.08, 0.6).rotation.z = Math.PI/2; M(G.small, 0xb0202a, 0, 0.04, 0, 1.4, 0.08, 1.4); break;
+    case 'cogumelo': M(G.small, 0xf4ead8, 0, 0.3, 0, 0.9, 0.6, 0.9); M(G.cap, pick([0xe8343a, 0xb48cff, 0xff8a2a]), 0, 0.55, 0, 1.05, 0.85, 1.05); [[0.25, 0.85, 0.2], [-0.28, 0.8, 0.12], [0.05, 0.98, -0.2], [-0.1, 0.75, 0.38]].forEach(([x, y, z]) => M(G.dot, 0xffffff, x, y, z)); break;
+    case 'bola': { const b = M(G.sph, pick([0xff4fa3, 0x3ec7ff, 0xffd23f]), 0, 0.45, 0, 0.9, 0.9, 0.9); const r1 = M(G.ring, 0xffffff, 0, 0.45, 0, 1, 1, 2.2); r1.rotation.y = 0.6; const r2 = M(G.ring, 0xffffff, 0, 0.45, 0, 1, 1, 2.2); r2.rotation.y = -0.9; b.castShadow = true; break; }
+    case 'cadeira': { const c = pick([0xffd23f, 0x3ec7ff, 0xff6f6f, 0xffffff]); [[-0.25, -0.25], [0.25, -0.25], [-0.25, 0.25], [0.25, 0.25]].forEach(([x, z]) => M(G.leg, 0x8a5a2b, x, 0.25, z)); M(G.seat, c, 0, 0.53, 0); M(G.back, c, 0, 0.82, -0.27); break; }
+    case 'anao': M(G.cyl, pick([0x3a7bd9, 0x4caf50, 0x8a5ad9]), 0, 0.32, 0, 0.75, 0.62, 0.75); M(G.sphLo, 0xffcf9e, 0, 0.72, 0, 0.5, 0.5, 0.5); M(G.cone, 0xe8343a, 0, 1.0, 0, 0.75, 0.75, 0.75); M(G.cone, 0xffffff, 0, 0.55, 0.12, 0.7, -0.55, 0.45); M(G.dot, 0xff8a8a, 0, 0.72, 0.25); break;
+    case 'pneus': [0.15, 0.42, 0.68].slice(0, 2 + v % 2).forEach(y => { const t = M(G.tor, 0x2b2b33, 0, y, 0, 1, 1, 0.9); t.rotation.x = Math.PI/2; }); break;
+    case 'garrafao': M(G.small, pick([0x7fc8ff, 0x9ad8ff]), 0, 0.42, 0, 1.6, 0.84, 1.6); M(G.cap, 0x7fc8ff, 0, 0.84, 0, 0.32, 0.12, 0.32); M(G.small, 0x3a7bd9, 0, 0.92, 0, 0.45, 0.12, 0.45); break;
+    case 'regador': M(G.small, pick([0x4caf50, 0xff8a2a, 0x3ec7ff]), 0, 0.27, 0, 1.4, 0.54, 1.4); const s = M(G.spout, 0x4caf50, 0.36, 0.42, 0); s.rotation.z = -0.9; M(G.ring, 0x2b2b33, 0, 0.62, 0, 0.45, 0.45, 0.45); break;
+    case 'melancia': M(G.sph, 0x2f9a4a, 0, 0.34, 0, 1.15, 0.7, 0.9); M(G.ring, 0x7fd36a, 0, 0.34, 0, 1.05, 1.0, 1.05).rotation.x = Math.PI/2; break;
+  }
+  return g; }
+function buildPique(n){ clearWorld(); const W = [15, 22, 31][SZ], C = [2.4, 3.4, 4.8][SZ], occ = [], props = [];
+  // grama, caminhos de terra e cerca de madeira em volta
+  box(-W, W, -1, 0, -W, W, 0x8fd16a);
+  const plane = (x0, x1, z0, z1, col, y = 0.015) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), mat(col)); m.rotation.x = -Math.PI/2; m.position.set((x0 + x1)/2, y, (z0 + z1)/2); m.receiveShadow = true; world.add(m); return m; };
+  plane(-W, W, -0.9, 0.9, 0xe6c98f); plane(-0.9, 0.9, -W, W, 0xe6c98f, 0.017);
+  [[-W - 0.4, -W, -W - 0.4, W + 0.4], [W, W + 0.4, -W - 0.4, W + 0.4], [-W, W, -W - 0.4, -W], [-W, W, W, W + 0.4]].forEach(([x0, x1, z0, z1]) => { box(x0, x1, -1, 1.2, z0, z1, 0xc98a4b); box(x0, x1, 1.2, 9, z0, z1, 0, {invisible:true}); });
+  for(let k = -W; k <= W; k += 1.6) [[k, -W - 0.2], [k, W + 0.2], [-W - 0.2, k], [W + 0.2, k]].forEach(([x, z]) => { const s = mesh(new THREE.BoxGeometry(0.22, 1.55, 0.22), mat(0xe8b070), world); s.position.set(x, 0.78, z); s.castShadow = false; });
+  const free = (x, z, r) => Math.abs(x) < W - r - 0.6 && Math.abs(z) < W - r - 0.6 && Math.hypot(x, z) > C + 2.2 + r && occ.every(o => x + r < o[0] || x - r > o[1] || z + r < o[2] || z - r > o[3]);
+  const spot = (r, tries = 40) => { for(let i = 0; i < tries; i++){ const x = rand(-W, W), z = rand(-W, W); if(free(x, z, r)) return [x, z]; } return null; };
+  // casinhas sem teto (pra câmera ver dentro), com duas portas largas e janela; dentro tem objeto pra se esconder
+  const rooms = [];
+  for(let i = 0; i < [2, 3, 5][SZ]; i++){ const hw = rand(3, 3.8), hd = rand(2.6, 3.2), s = spot(Math.max(hw, hd) + 1.5, 60); if(!s) continue; const [x, z] = s, t = 0.25, h = 2.5, col = [0xffc98a, 0xff9ec4, 0x9ecbff, 0xb6ec8e, 0xffe07a][i % 5], dr = 1.0;
+    occ.push([x - hw - 1.2, x + hw + 1.2, z - hd - 1.2, z + hd + 1.2]); plane(x - hw, x + hw, z - hd, z + hd, 0xc9a27a, 0.02);
+    [-1, 1].forEach(sd => { box(x - hw, x - dr, 0, h, z + sd*hd - t, z + sd*hd + t, col); box(x + dr, x + hw, 0, h, z + sd*hd - t, z + sd*hd + t, col); box(x - dr, x + dr, 2.0, h, z + sd*hd - t, z + sd*hd + t, col);
+      box(x + sd*hw - t, x + sd*hw + t, 0, 0.9, z - hd, z + hd, col); box(x + sd*hw - t, x + sd*hw + t, 1.9, h, z - hd, z + hd, col);
+      [-1, 1].forEach(e => box(x + sd*hw - t, x + sd*hw + t, 0.9, 1.9, z + e*hd*0.55 - (e > 0 ? 0 : 0.01), z + e*hd, col)); });
+    [-1, 1].forEach(sd => box(x - hw - 0.05, x + hw + 0.05, h, h + 0.15, z + sd*hd - 0.32, z + sd*hd + 0.32, 0xe8343a));
+    rooms.push({x, z, hw, hd}); }
+  // galpões: três paredes e a frente aberta
+  for(let i = 0; i < [1, 2, 3][SZ]; i++){ const s = spot(4.2, 60); if(!s) continue; const [x, z] = s, hw = 3, hd = 2.2, h = 2.4, col = 0xb87a3f, f = Math.random() < 0.5 ? 1 : -1;
+    occ.push([x - hw - 1, x + hw + 1, z - hd - 1, z + hd + 1]); plane(x - hw, x + hw, z - hd, z + hd, 0xa8a8a8, 0.02);
+    box(x - hw, x + hw, 0, h, z - f*hd - 0.2, z - f*hd + 0.2, col); box(x - hw - 0.2, x - hw + 0.2, 0, h, z - hd, z + hd, col); box(x + hw - 0.2, x + hw + 0.2, 0, h, z - hd, z + hd, col);
+    rooms.push({x, z, hw, hd, shed:f}); }
+  // árvores (copa alta, o tronco é sólido) e cercas vivas pra cobrir
+  const crownM = [0x3fae5a, 0x2f9a4a, 0x5cc46a];
+  for(let i = 0; i < [7, 13, 24][SZ]; i++){ const s = spot(1.4); if(!s) continue; const [x, z] = s; occ.push([x - 0.9, x + 0.9, z - 0.9, z + 0.9]); box(x - 0.3, x + 0.3, 0, 3.0, z - 0.3, z + 0.3, 0x8a5a2b);
+    const c = mesh(pqGeo().sphLo, mat(crownM[i % 3]), world); c.position.set(x, 3.6, z); c.scale.set(4.2, 3.2, 4.2); const c2 = mesh(pqGeo().sphLo, mat(crownM[(i + 1) % 3]), world); c2.position.set(x + 0.6, 4.6, z - 0.3); c2.scale.set(2.8, 2.4, 2.8); }
+  for(let i = 0; i < [6, 12, 22][SZ]; i++){ const L = rand(2.4, 4.2), v = Math.random() < 0.5, s = spot(L/2 + 0.6); if(!s) continue; const [x, z] = s, hx = v ? 0.55 : L/2, hz = v ? L/2 : 0.55;
+    occ.push([x - hx - 0.6, x + hx + 0.6, z - hz - 0.6, z + hz + 0.6]); box(x - hx, x + hx, 0, 1.35, z - hz, z + hz, 0x3f9a4f, {kind:'crate'}); }
+  // varal, balanço e piscininha de enfeite
+  { const s = spot(2.5); if(s){ const [x, z] = s; occ.push([x - 2.5, x + 2.5, z - 0.6, z + 0.6]); [-2.2, 2.2].forEach(o => box(x + o - 0.08, x + o + 0.08, 0, 2.2, z - 0.08, z + 0.08, 0xf4ead8));
+    const L = mesh(new THREE.BoxGeometry(4.4, 0.03, 0.03), mat(0xffffff), world); L.position.set(x, 2.1, z); [0xff6fae, 0x3ec7ff, 0xffd23f, 0x7ee05a].forEach((c, k) => { const r = mesh(new THREE.BoxGeometry(0.7, 0.8, 0.03), mat(c), world); r.position.set(x - 1.5 + k, 1.65, z); }); } }
+  { const s = spot(2.2); if(s){ const [x, z] = s; occ.push([x - 2, x + 2, z - 2, z + 2]); const p = mesh(new THREE.CylinderGeometry(1.8, 1.8, 0.5, 24), mat(0x3ec7ff), world); p.position.set(x, 0.25, z); const w = mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.06, 24), mat(0x9adcff), world); w.position.set(x, 0.48, z); box(x - 1.3, x + 1.3, 0, 0.5, z - 1.3, z + 1.3, 0, {invisible:true}); } }
+  // objetos: alguns dentro das casinhas e galpões, encostados nas paredes; o resto espalhado (às vezes em grupinhos iguais)
+  const addProp = (k, x, z, v) => { const K = PQ_BY[k], g = pqMake(k, v); g.position.set(x, 0, z); g.rotation.y = rand(0, Math.PI*2); world.add(g);
+    const col = box(x - K.r*0.8, x + K.r*0.8, 0, K.h, z - K.r*0.8, z + K.r*0.8, 0, {invisible:true, kind:'prop'});
+    const o = {k, v, x, z, g, r:K.r, h:K.h, col, i:props.length}; props.push(o); return o; };
+  const roll = () => PQ_KINDS[Math.floor(Math.random()*PQ_KINDS.length)].k, N = [42, 110, 230][SZ];
+  rooms.forEach(R => { for(let k = 0; k < (R.shed ? 4 : 5); k++){ const a = k % 4, x = R.x + (a < 2 ? (a ? 1 : -1)*(R.hw - 0.7) : rand(-R.hw + 1.4, R.hw - 1.4)), z = R.z + (a >= 2 ? (a === 2 ? 1 : -1)*(R.hd - 0.7) : rand(-R.hd + 1, R.hd - 1));
+    if(props.every(o => Math.hypot(o.x - x, o.z - z) > 1.1)) addProp(roll(), x, z, Math.floor(Math.random()*4)); } });
+  let tries = 0; while(props.length < N && tries++ < N*30){ const s = spot(0.7, 1); if(!s) continue; const [x, z] = s; if(props.some(o => Math.hypot(o.x - x, o.z - z) < 1.3)) continue;
+    const k = roll(), v = Math.floor(Math.random()*4); addProp(k, x, z, v);
+    if(Math.random() < 0.3){ const a = rand(0, 6.3), x2 = x + Math.sin(a)*1.25, z2 = z + Math.cos(a)*1.25; if(free(x2, z2, 0.6) && props.every(o => Math.hypot(o.x - x2, o.z - z2) > 1.1)) addProp(k, x2, z2, v); } }
+  // gaiola dos caçadores no meio: grades que somem quando a contagem acaba
+  const cage = new THREE.Group(), bars = []; world.add(cage); plane(-C, C, -C, C, 0xffd23f, 0.025);
+  const pole = new THREE.CylinderGeometry(0.06, 0.06, 2.6, 6), pm = mat(0x6b4fd8);
+  for(let k = -C; k <= C + 0.01; k += 0.5) [[k, -C], [k, C], [-C, k], [C, k]].forEach(([x, z]) => { const b = mesh(pole, pm, cage); b.position.set(x, 1.3, z); b.castShadow = false; });
+  [[0, -C, 2*C + 0.2, 0.16], [0, C, 2*C + 0.2, 0.16], [-C, 0, 0.16, 2*C + 0.2], [C, 0, 0.16, 2*C + 0.2]].forEach(([x, z, w, d]) => { const t = mesh(new THREE.BoxGeometry(w, 0.16, d), mat(0xffd23f), cage); t.position.set(x, 2.65, z); t.castShadow = false; });
+  [[-C - 0.1, -C + 0.1, -C, C], [C - 0.1, C + 0.1, -C, C], [-C, C, -C - 0.1, -C + 0.1], [-C, C, C - 0.1, C + 0.1]].forEach(([x0, x1, z0, z1]) => bars.push(box(x0, x1, 0, 9, z0, z1, 0, {invisible:true})));
+  pq = {W, C, props, rooms, cage, bars, shots:[], t:0, hideT:PQ_HIDE[SZ], open:false, found:0, quota:1, hunters:0, hiders:0, whT:0, notes:[]}; }
+function pqSetup(alive){ const sh = alive.slice().sort(() => Math.random() - 0.5), nh = Math.max(1, Math.round(alive.length*(alive.length > 50 ? 0.12 : alive.length > 20 ? 0.15 : 0.2))), {C} = pq;
+  sh.forEach((p, k) => { p.pqHunt = k < nh; p.pqD = null; p.pqHp = 100; p.pqTired = 0; p.pqMv = 0; p.pqLoud = 0; p.pqSpot = null; p.pqTgt = null; p.pqThink = 0; p.pqSeen = new Set(); p.pqFinds = 0; p.pqScare = 0; p.pqStuck = 0; p.pqSide = 0; p.pqShots = 0; });
+  const H = sh.slice(0, nh), S = sh.slice(nh), cols = Math.ceil(Math.sqrt(H.length));
+  H.forEach((p, k) => { const c = k % cols, r = Math.floor(k/cols), st = (2*C - 1.2)/Math.max(1, cols - 1); p.pos.set(cols > 1 ? -C + 0.6 + c*st : 0, 0, cols > 1 ? -C + 0.6 + r*st : 0); p.face = rand(0, 6.3); pqArm(p); });
+  S.forEach((p, k) => { const a = k/S.length*Math.PI*2 + rand(-0.05, 0.05), r = C + 1.4 + (k % 3)*0.9; p.pos.set(Math.sin(a)*r, 0, Math.cos(a)*r); p.face = a; });
+  pq.hunters = H.length; pq.hiders = S.length; pq.quota = Math.max(1, Math.ceil(S.length*0.5)); }
+// lança-tinta na mão do caçador
+function pqArm(p){ if(p.pqGun) return; const g = new THREE.Group(), G = pqGeo();
+  const b = mesh(G.small, mat(0x6b4fd8), g); b.scale.set(0.55, 0.62, 0.55); b.rotation.x = Math.PI/2; b.position.z = 0.22;
+  const t = mesh(G.sphLo, mat(0xff4fa3), g); t.scale.setScalar(0.34); t.position.set(0, 0.17, 0.02); const m = mesh(G.small, mat(0x2b1846), g); m.scale.set(0.4, 0.12, 0.4); m.rotation.x = Math.PI/2; m.position.z = 0.55;
+  g.position.set(0.42, 0.78, 0.25); p.m.tilt.add(g); p.pqGun = g; }
+function pqReset(){ players.forEach(p => { if(p.pqGun){ p.m.tilt.remove(p.pqGun); p.pqGun = null; } if(p.pqD){ world.remove(p.pqD.g); p.pqD = null; } p.m.tilt.visible = true; if(p.m.g.userData.marker) p.m.g.userData.marker.visible = true; p.pqHunt = false; });
+  const el = document.getElementById('pqBlind'); if(el) el.hidden = true; }
+// disfarce: vira uma cópia do objeto (mesmo tipo e cor); o feijão some e o objeto anda com ele
+function pqDisguise(p, o){ if(p.pqD && p.pqD.k === o.k && p.pqD.v === o.v) return; if(p.pqD) world.remove(p.pqD.g);
+  const K = PQ_BY[o.k], g = pqMake(o.k, o.v); g.rotation.y = o.g.rotation.y + (Math.random() < 0.5 ? 0 : Math.PI/2); world.add(g); p.pqD = {k:o.k, v:o.v, g, r:K.r, h:K.h};
+  p.m.tilt.visible = false; if(p.m.g.userData.marker) p.m.g.userData.marker.visible = false;
+  if(near(p, 30)) puff(p.pos.x, p.pos.y + 0.5, p.pos.z, 10, 0xffffff, 0.16, 3); sfxNear(p, 'pickup', 12);
+  if(!p.isBot) banner(tag(p) + 'Disfarçado!', `Você virou ${/a$|ão$/.test(K.n) && !/^(anão|garrafão)/.test(K.n) ? 'uma' : 'um'} ${K.n}. Fique paradinho perto de um igual`, 1600); }
+function pqReveal(p){ if(p.pqD){ world.remove(p.pqD.g); p.pqD = null; if(near(p, 40)) puff(p.pos.x, p.pos.y + 0.6, p.pos.z, 12, 0xff4fa3, 0.18, 4); } p.m.tilt.visible = true; if(p.m.g.userData.marker) p.m.g.userData.marker.visible = true; }
+const pqNearProp = (p, R) => { let best = null, bd = R; for(const o of pq.props){ const d = Math.hypot(o.x - p.pos.x, o.z - p.pos.z) - o.r; if(d < bd){ bd = d; best = o; } } return best; };
+// F: escondido se disfarça; caçador atira
+function pqPush(p){ p.pushAnim = 0.25; if(R1.phase !== 'play' || !pq) { p.pushCD = 0.3; return; }
+  if(!p.pqHunt){ p.pushCD = 0.4; const o = pqNearProp(p, 1.8); if(o) pqDisguise(p, o); else if(!p.isBot) banner(tag(p) + 'Chegue mais perto de um objeto', 'Vaso, caixote, anão de jardim... aperte F do lado dele', 1300); return; }
+  if(!pq.open){ p.pushCD = 0.3; return; }
+  if(p.pqTired > 0){ p.pushCD = 0.3; if(!p.isBot) sfx('beep'); return; }
+  const pt = p.isBot ? p.pqAim : pqAimPt(p); if(!pt) return; pqShoot(p, pt); }
+// o que está embaixo da mira (objetos e escondidos contam, mesmo sem colisão de parede)
+function pqAimPt(p){ const c = p.i === 0 ? cam1 : cam2, dir = crossRay(c), o = c.pos.clone(), skip = o.distanceTo(p.pos) + 0.6; let pt = rayHit(o, dir, 45, p, skip), bt = o.distanceTo(pt);
+  const test = (x, y, z, r) => { const oc = new V3(o.x - x, o.y - y, o.z - z), b = oc.dot(dir), h = b*b - (oc.lengthSq() - r*r); if(h < 0) return; const t = -b - Math.sqrt(h); if(t > skip && t < bt){ bt = t; pt = o.clone().addScaledVector(dir, t); } };
+  for(const q of pq.props) test(q.x, q.h/2, q.z, Math.max(q.r, q.h/2)); for(const q of players) if(q.pqD && q.alive) test(q.pos.x, q.pos.y + q.pqD.h/2, q.pos.z, Math.max(q.pqD.r, q.pqD.h/2));
+  return pt; }
+function pqShoot(p, pt){ p.pushCD = p.isBot ? 0.7 : 0.55; p.pqShots++;
+  const from = p.pos.clone().add(new V3(0, 1.2, 0)), d = pt.clone().sub(from), hd = Math.hypot(d.x, d.z), t = Math.max(0.08, hd/PQ_V);
+  from.x += d.x/Math.max(hd, 0.01)*0.5; from.z += d.z/Math.max(hd, 0.01)*0.5;
+  const vel = new V3((pt.x - from.x)/t, (pt.y - from.y)/t + PQ_G*t/2, (pt.z - from.z)/t);
+  const cols = [0xff4fa3, 0x3ec7ff, 0xffd23f, 0x7ee05a], col = cols[p.i % 4], m = mesh(pqGeo().sphLo, mat(col), world); m.scale.setScalar(0.32); m.position.copy(from); m.castShadow = false;
+  pq.shots.push({pos:from, vel, m, owner:p, t:0, col}); p.face = Math.atan2(d.x, d.z); sfxNear(p, 'throw', 22); }
+function pqFound(q, by){ pq.found++; by.pqFinds++; by.pqHp = Math.min(100, by.pqHp + 25); const was = q.pqD ? PQ_BY[q.pqD.k].n : null;
+  if(near(q, 45)){ puff(q.pos.x, q.pos.y + 0.6, q.pos.z, 18, 0xff4fa3, 0.2, 5); ringFx(q.pos.x, q.pos.y, q.pos.z, 0xffd23f, 2.6); } sfxNear(q, 'zap', 40); pqReveal(q);
+  if(!by.isBot){ banner(tag(by) + 'Achou!', `${q.isBot ? q.name : 'Seu amigo'} ${was ? 'era ' + (/a$|ão$/.test(was) && !/^(anão|garrafão)/.test(was) ? 'a ' : 'o ') + was : 'estava escondido'}! (${pq.found}/${pq.quota})`, 1300); sfx('ding'); bump('pqFinds'); reward(4, 6); }
+  if(!q.isBot || !by.isBot || Math.random() < (players.length > 16 ? 0.12 : 0.45)) say(`${nm(by)} achou ${nm(q)}${was ? ' (era ' + was + ')' : ''}!`, !q.isBot || !by.isBot);
+  eliminate(q, `${by.isBot ? by.name : 'O caçador'} te achou${was ? ' disfarçado de ' + was : ''}`);
+  if(pq.found === pq.quota && R1.phase === 'play'){ const mine = humans().some(h => h.alive && h.pqHunt); banner(mine ? 'Meta batida!' : 'Os caçadores bateram a meta!', mine ? 'Os caçadores passam. Quem ainda está escondido também passa' : 'Quem ainda está escondido passa', 2200); pq.endT = 0.9; } }
+function pqBlind(){ let el = document.getElementById('pqBlind'); if(!el){ el = document.createElement('div'); el.id = 'pqBlind';
+    el.style.cssText = 'position:fixed;top:0;bottom:0;z-index:4;pointer-events:none;background:radial-gradient(circle at 50% 45%, rgba(43,24,70,0.9), rgba(16,8,30,0.97));display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;font:700 22px "Lilita One","Arial Black",sans-serif;text-align:center;text-shadow:0 3px 0 #2b1846';
+    el.innerHTML = '<div style="font-size:15px;letter-spacing:2px;opacity:.85">VOCÊ É CAÇADOR · OLHOS FECHADOS</div><b style="font-size:96px;line-height:1.1">20</b><div style="font-size:17px;opacity:.9;max-width:520px">Os outros estão se escondendo e virando objetos. Quando abrir, atire com F ou clique. Errar num objeto de verdade cansa!</div>';
+    document.body.appendChild(el); } return el; }
+// olhos fechados pros caçadores de verdade (roda junto com a HUD, então some no menu e na pausa)
+function pqHud(){ const on = round === 27 && pq && !PAUSED && !pq.open && ['intro', 'count', 'play'].includes(R1.phase), hs = on ? humans().filter(h => h.pqHunt && h.alive) : [];
+  let el = document.getElementById('pqBlind'); if(!hs.length){ if(el && !el.hidden) el.hidden = true; return; } el = pqBlind(); el.hidden = false;
+  const sp = splitOn && hs.length === 1; el.style.left = sp && hs[0].i === 1 ? '50%' : '0'; el.style.right = sp && hs[0].i === 0 ? '50%' : '0';
+  const n = String(Math.max(0, Math.ceil(R1.phase === 'play' ? pq.hideT - pq.t : pq.hideT))), b = el.querySelector('b'); if(b.textContent !== n) b.textContent = n; }
+function updatePique(dt){ if(!pq) return;
+  // disfarce acompanha o feijão; se mexer, os caçadores percebem
+  for(const p of players){ if(p.pqD){ if(!p.alive && !(p.dying > 0)){ world.remove(p.pqD.g); p.pqD = null; continue; } p.pqD.g.position.set(p.pos.x, p.pos.y, p.pos.z); p.m.tilt.visible = false; }
+    if(p.pqMv > 0) p.pqMv -= dt; if(p.pqLoud > 0) p.pqLoud -= dt; if(p.pqScare > 0) p.pqScare -= dt; if(p.pqTired > 0) p.pqTired -= dt;
+    if(p.alive && !p.pqHunt && Math.hypot(p.vel.x, p.vel.z) > 1.2) p.pqMv = 1.5; }
+  // tiros de tinta (em arco)
+  for(let i = pq.shots.length - 1; i >= 0; i--){ const s = pq.shots[i]; let done = false; s.t += dt;
+    for(let k = 0; k < 3 && !done; k++){ const sd = dt/3; s.vel.y -= PQ_G*sd; s.pos.addScaledVector(s.vel, sd);
+      for(const q of players){ if(!q.alive || q.dying > 0 || q.pqHunt || q === s.owner) continue; const hh = q.pqD ? q.pqD.h : 1.3, rr = (q.pqD ? q.pqD.r : 0.5) + 0.2;
+        if(Math.hypot(q.pos.x - s.pos.x, q.pos.z - s.pos.z) < rr && s.pos.y > q.pos.y - 0.1 && s.pos.y < q.pos.y + hh + 0.15){ done = true; if(R1.phase === 'play') pqFound(q, s.owner); break; } }
+      if(done) break;
+      for(const o of pq.props){ if(Math.abs(o.x - s.pos.x) > 1 || Math.abs(o.z - s.pos.z) > 1) continue; if(Math.hypot(o.x - s.pos.x, o.z - s.pos.z) < o.r + 0.12 && s.pos.y < o.h + 0.1){ done = true; pqMiss(s, o); break; } }
+      if(done) break;
+      if(s.pos.y < 0.05 || solidPt(s.pos.x, s.pos.y, s.pos.z) || s.t > 3){ done = true; if(near({pos:s.pos}, 30)){ puff(s.pos.x, Math.max(0.1, s.pos.y), s.pos.z, 6, s.col, 0.12, 2.5); if(s.pos.y < 0.3) splat(s.pos, null, s.col); } pqScareAt(s.pos); } }
+    if(done){ world.remove(s.m); pq.shots.splice(i, 1); } else s.m.position.copy(s.pos); }
+  // notinhas de música do assobio
+  for(let i = pq.notes.length - 1; i >= 0; i--){ const n = pq.notes[i]; n.t += dt; n.m.position.y += dt*1.2; n.m.material.opacity = Math.max(0, 1 - n.t/1.6); if(n.t > 1.6){ world.remove(n.m); pq.notes.splice(i, 1); } }
+  if(R1.phase !== 'play') return; pq.t += dt; if(pq.endT > 0 && (pq.endT -= dt) <= 0){ endRound(); return; }
+  if(!pq.open && pq.t < pq.hideT){ for(const p of players) if(p.pqHunt && p.alive){ p.pos.x = clamp(p.pos.x, -pq.C + 0.5, pq.C - 0.5); p.pos.z = clamp(p.pos.z, -pq.C + 0.5, pq.C - 0.5); }
+    const left = Math.ceil(pq.hideT - pq.t); if(left <= 5 && left !== pq.lastBeep){ pq.lastBeep = left; sfx('beep'); } }
+  if(!pq.open && pq.t >= pq.hideT){ pq.open = true; pq.whT = 20; pq.bars.forEach(b => { b.min.y = -60; b.max.y = -59; }); world.remove(pq.cage); sfx('go'); shake = 0.3;
+    const me = humans().filter(h => h.alive); banner(me.some(h => h.pqHunt) ? 'Lá vou eu!' : 'Os caçadores saíram!', me.some(h => h.pqHunt) ? `Ache ${pq.quota} escondidos. Mire e atire com F ou clique` : 'Fique paradinho! Se mexer, o objeto anda e eles percebem', 2000);
+    for(const p of players) if(p.alive && !p.pqHunt && !p.pqD && p.isBot){ const o = pqNearProp(p, 1.8); if(o) pqDisguise(p, o); } }
+  // assobio: a cada 20 s todo escondido faz barulho (ajuda os caçadores a achar)
+  if(pq.open){ pq.whT -= dt; if(pq.whT <= 0){ pq.whT = 20; let k = 0; for(const p of players){ if(!p.alive || p.pqHunt) continue; p.pqLoud = 2.5; k++;
+        if(near(p, 40) && pq.notes.length < 60){ const m = new THREE.Mesh(pqGeo().dot, new THREE.MeshBasicMaterial({color:0xffd23f, transparent:true})); m.scale.setScalar(2.2); m.position.set(p.pos.x, p.pos.y + (p.pqD ? p.pqD.h : 1.5) + 0.4, p.pos.z); world.add(m); pq.notes.push({m, t:0}); }
+        if(k < 12) sfxAt(p.pos, 'ding', 26); }
+      if(humans().some(h => h.alive && !h.pqHunt)) say('Todo mundo escondido assobiou! 🎵', true); } }
+  const hidersLeft = players.filter(p => p.alive && !p.pqHunt).length, huntersLeft = players.filter(p => p.alive && p.pqHunt).length;
+  if(!hidersLeft || !huntersLeft) endRound(); }
+// tinta num objeto de verdade: o caçador cansa um pouco
+function pqMiss(s, o){ const p = s.owner; if(near({pos:s.pos}, 30)){ puff(s.pos.x, s.pos.y, s.pos.z, 8, s.col, 0.12, 2.5); o.g.scale.setScalar(1.12); setTimeout(() => o.g.scale.setScalar(1), 120); }
+  pqScareAt(s.pos); if(!p || !p.alive || R1.phase !== 'play') return; p.pqSeen.add(o); p.pqHp -= 12;
+  if(p.pqHp <= 0){ p.pqHp = 55; p.pqTired = 7; if(!p.isBot){ banner(tag(p) + 'Cansou!', 'Errou demais: 7 segundos sem atirar', 1600); sfx('lose'); } }
+  else if(!p.isBot && Math.random() < 0.6) banner(tag(p) + `Era só ${/a$|ão$/.test(PQ_BY[o.k].n) && !/^(anão|garrafão)/.test(PQ_BY[o.k].n) ? 'uma' : 'um'} ${PQ_BY[o.k].n}`, `Fôlego ${Math.max(0, Math.round(p.pqHp))}`, 800); }
+// tiro que cai perto assusta os escondidos (bots podem sair correndo)
+function pqScareAt(pos){ for(const q of players) if(q.alive && !q.pqHunt && Math.hypot(q.pos.x - pos.x, q.pos.z - pos.z) < 3.2) q.pqScare = 2; }
+const pqInfo = p => { if(!pq) return ''; const left = players.filter(q => q.alive && !q.pqHunt).length;
+  if(!pq.open) return p && p.pqHunt ? `Contando... ${Math.max(0, Math.ceil(pq.hideT - (R1.phase === 'play' ? pq.t : 0)))} s` : `Esconda-se! Caçadores saem em ${Math.max(0, Math.ceil(pq.hideT - (R1.phase === 'play' ? pq.t : 0)))} s · F perto de um objeto = disfarce`;
+  return p && p.pqHunt ? `Achados ${pq.found}/${pq.quota} · Escondidos ${left} · Fôlego ${Math.max(0, Math.round(p.pqHp))}${p.pqTired > 0 ? ' (cansado)' : ''}` : `${p && p.pqD ? 'Você é ' + PQ_BY[p.pqD.k].n : 'Sem disfarce! F perto de um objeto'} · Achados ${pq.found}/${pq.quota} · Escondidos ${left}`; };
+// fim: se os caçadores não bateram a meta, eles saem; todo mundo aparece
+function pqEnd(){ if(!pq) return; players.forEach(p => { if(p.pqD) pqReveal(p); });
+  if(pq.found < pq.quota) players.forEach(p => { if(p.alive && p.pqHunt) eliminate(p, `Os caçadores acharam só ${pq.found} de ${pq.quota}`); });
+  else if(humans().some(h => h.alive && !h.pqHunt)) banner('Ninguém te achou!', 'Você passou escondidinho', 1600); }
+// ---------- bots ----------
+function pqGo(p, inp, tx, tz, run = 1){ const dx = tx - p.pos.x, dz = tz - p.pos.z, d = Math.hypot(dx, dz); if(d < 0.25){ inp.mx = inp.mz = 0; return d; }
+  let mx = dx/d*Math.min(1, d*1.2)*run, mz = dz/d*Math.min(1, d*1.2)*run;
+  // emperrou numa parede: pula e escorrega pro lado por um tempinho
+  const sp = Math.hypot(p.vel.x, p.vel.z); if(d > 1 && sp < 0.6*run*SPEED*0.3) p.pqStuck += 1/60; else p.pqStuck = Math.max(0, p.pqStuck - 1/30);
+  if(p.pqStuck > 0.5){ p.pqStuck = 0; p.pqSide = rand(0.5, 1.1)*(Math.random() < 0.5 ? -1 : 1); if(p.grounded) inp.jump = true; }
+  if(p.pqSide){ const s = Math.sign(p.pqSide); mx += -dz/d*s*0.9; mz += dx/d*s*0.9; p.pqSide -= Math.sign(p.pqSide)/60; if(Math.abs(p.pqSide) < 0.02) p.pqSide = 0; }
+  inp.mx = mx; inp.mz = mz; return d; }
+function botPique(p, dt, inp){ if(!pq) return inp; return p.pqHunt ? botHunt(p, dt, inp) : botHide(p, dt, inp); }
+function pqPickSpot(p, avoid){ const hunters = players.filter(q => q.alive && q.pqHunt); let best = null, bs = -1e9;
+  for(let i = 0; i < 14; i++){ const o = pq.props[Math.floor(Math.random()*pq.props.length)]; if(!o) break; const taken = players.filter(q => q !== p && q.pqSpot && q.pqSpot.o === o).length;
+    const dh = pq.open ? Math.min(99, ...hunters.map(h => Math.hypot(h.pos.x - o.x, h.pos.z - o.z))) : Math.hypot(o.x, o.z), da = avoid ? Math.hypot(avoid.x - o.x, avoid.z - o.z) : 20;
+    const sc = Math.min(dh, 18) + Math.min(da, 14)*0.6 - taken*9 - Math.hypot(o.x - p.pos.x, o.z - p.pos.z)*(pq.open ? 0.35 : 0.12) + rand(0, 6); if(sc > bs){ bs = sc; best = o; } }
+  if(!best) return null; const a = rand(0, Math.PI*2), r = best.r + 0.55; return {o:best, x:best.x + Math.sin(a)*r, z:best.z + Math.cos(a)*r}; }
+function botHide(p, dt, inp){ const sk = p.skill || 0.8;
+  if(!p.pqSpot) p.pqSpot = pqPickSpot(p);
+  const S = p.pqSpot; if(!S) return inp;
+  // caçador chegando perto ou tinta caindo do lado: às vezes foge pra outro objeto
+  if(pq.open && p.pqScare > 0 && !p.pqFlee && Math.random() < dt*(0.6 + sk*1.4)){ const h = nearest(p, q => q.pqHunt); if(h && h.d < 7 && Math.random() < 0.35 + sk*0.3){ p.pqSpot = pqPickSpot(p, h.q.pos); p.pqFlee = 4; } }
+  if(p.pqFlee > 0) p.pqFlee -= dt;
+  const d = pqGo(p, inp, p.pqSpot.x, p.pqSpot.z, p.pqFlee > 0 ? 1 : pq.open ? 0.75 : 1);
+  if(d < 0.45){ inp.mx = inp.mz = 0; if(!p.pqD || p.pqD.k !== p.pqSpot.o.k || p.pqD.v !== p.pqSpot.o.v){ if(p.pushCD <= 0) pqDisguise(p, p.pqSpot.o); } p.pqFlee = 0; }
+  // parado e disfarçado: fica quietinho (só gira de vez em quando)
+  if(d >= 0.45 && !pq.open && pq.t > pq.hideT - 2.5 && !p.pqD){ const o = pqNearProp(p, 1.8); if(o) pqDisguise(p, o); }
+  return inp; }
+function botHunt(p, dt, inp){ if(!pq.open) return inp; const sk = p.skill || 0.8;
+  p.pqThink -= dt;
+  if(!p.pqTgt || p.pqThink <= 0 || (p.pqTgt.q && !p.pqTgt.q.alive) || (p.pqTgt.o && p.pqSeen.has(p.pqTgt.o))){ p.pqThink = rand(2.4, 4.2)/sk; p.pqTgt = null; p.pqAimT = 0;
+    // olha em volta: objetos que ele ainda não testou e escondidos (que parecem objetos!) — os que se mexem ou assobiaram chamam atenção
+    const R = 12, c = []; for(const o of pq.props){ if(p.pqSeen.has(o)) continue; const dd = Math.hypot(o.x - p.pos.x, o.z - p.pos.z); if(dd < R) c.push({o, d:dd, w:1}); }
+    for(const q of players){ if(!q.alive || q.pqHunt || q.dying > 0) continue; const dd = Math.hypot(q.pos.x - p.pos.x, q.pos.z - p.pos.z); if(dd > R + (q.pqLoud > 0 ? 8 : 0)) continue;
+      const w = !q.pqD ? 5 : q.pqMv > 0 ? 3 : q.pqLoud > 0 ? 2.2 : 1; c.push({q, d:dd, w}); }
+    let tot = 0; c.forEach(e => { e.w /= 1 + e.d/5; tot += e.w; }); let r = Math.random()*tot; for(const e of c){ r -= e.w; if(r <= 0){ p.pqTgt = e; break; } }
+    if(!p.pqTgt){ if(!p.pqRoam || Math.hypot(p.pqRoam[0] - p.pos.x, p.pqRoam[1] - p.pos.z) < 2 || Math.random() < 0.15){ const o = pq.props.filter(o => !p.pqSeen.has(o)); const t = o.length ? o[Math.floor(Math.random()*o.length)] : null; p.pqRoam = t ? [t.x, t.z] : [rand(-pq.W + 2, pq.W - 2), rand(-pq.W + 2, pq.W - 2)]; } } }
+  const T = p.pqTgt; if(!T){ pqGo(p, inp, p.pqRoam[0], p.pqRoam[1], 0.85); return inp; }
+  const tx = T.q ? T.q.pos.x : T.o.x, tz = T.q ? T.q.pos.z : T.o.z, ty = T.q ? T.q.pos.y + (T.q.pqD ? T.q.pqD.h*0.5 : 0.8) : T.o.h*0.5, d = Math.hypot(tx - p.pos.x, tz - p.pos.z);
+  if(d > 8) pqGo(p, inp, tx, tz, 0.9); else if(d < 3.5) pqGo(p, inp, p.pos.x - (tx - p.pos.x), p.pos.z - (tz - p.pos.z), 0.4); else { inp.mx = inp.mz = 0; }
+  if(d < 13){ p.face = Math.atan2(tx - p.pos.x, tz - p.pos.z); p.pqAimT = (p.pqAimT || 0) + dt;
+    if(p.pqAimT > 0.5/sk && p.pushCD <= 0 && p.pqTired <= 0){ const e = (1.25 - sk)*0.9 + d*0.03, lv = T.q ? T.q.vel : null, lead = d/PQ_V;
+      p.pqAim = new V3(tx + (lv ? lv.x*lead : 0) + rand(-e, e), ty + rand(-e*0.5, e*0.5), tz + (lv ? lv.z*lead : 0) + rand(-e, e)); inp.push = true; p.pqAimT = 0.5/sk - rand(0.6, 1.4);
+      if(T.o && Math.random() < 0.5) p.pqThink = Math.min(p.pqThink, 0.4); } }
+  return inp; }
+
 // Guerra de Tomate: battle royale. Cada tomate tira vida, a zona fecha e quem zerar a vida sai
 // mira do Modo 100: sem acessório dá um zoom leve no ombro; luneta e sniper viram lente em primeira pessoa
 let AIMY1 = 0.42, scopeOn = false; const FP_VM = [0.02, 0.18, -0.14, 62]; const fpOn = me => !!(CFG.fpp && BIG && round === 20 && !twoP && me && me.alive && !me.down && !me.glide && !me.car && R1.phase !== 'podium'); const adsScope = p => { const it = p.inv && p.inv[p.sel]; return !it ? null : it.k === 'sniper' ? 'sniper' : WI(it).scope ? 'luneta' : null; }, adsFov = p => { if(typeof ARMA !== 'undefined' && ARMA.lib){ const it = p.inv && p.inv[p.sel], z = VM_ZOOM[sightOf(it)] || 1.25; return CFG.fov/(z >= 2 ? 1.2 : z); } const s = adsScope(p); return s === 'sniper' ? 13 : s === 'luneta' ? 22 : CFG.fov/1.3; };
@@ -5068,9 +5300,9 @@ function updateRev(dt){
 }
 function buildShoot(){
   clearWorld(); shots = []; smokes = []; utils = []; pings = []; pingMarks.forEach(m => m.visible = false); hearts = []; hpBars = []; bushes = []; FJ_MOITA.clear();
-  const FJ = BIG && BIGMAP === 'feijoada', VL = BIG && BIGMAP === 'vale', PB = BIG && BIGMAP === 'ilha', MT = BIG && BIGMAP === 'mata', TT = FJ || VL || PB || MT; FJBIG = FJ; setTM(VL ? 'vale' : PB ? 'pb' : MT ? 'mt' : 'fj'); BIG_W = FJ ? 225 : (VL || PB || MT) ? 70 : 64; TER = null; RX0 = FJ ? 520 : (VL || PB || MT) ? 300 : 230; farIsles.visible = !TT; bigMapOn = false;
+  const FJ = BIG && BIGMAP === 'feijoada', VL = BIG && BIGMAP === 'vale', PB = BIG && BIGMAP === 'ilha', MT = BIG && BIGMAP === 'mata', TT = FJ || VL || PB || MT; FJBIG = FJ; setTM(VL ? 'vale' : PB ? 'pb' : MT ? 'mt' : 'fj'); BIG_W = FJ ? 270 : (VL || PB || MT) ? 70 : 64; TER = null; RX0 = FJ ? 640 : (VL || PB || MT) ? 300 : 230; farIsles.visible = !TT; bigMapOn = false;
   scene.fog.near = FJ ? 90 : (VL || PB || MT) ? 75 : 60; scene.fog.far = FJ ? 330 : (VL || PB || MT) ? 210 : 160; camera.far = FJ ? 700 : 400; camera.updateProjectionMatrix();
-  const W = BIG ? BIG_W : BR_W, R0 = FJ ? 260 : BIG ? 92 : 30*BRK, WX = BIG ? W : BRX, WZ = BIG ? W : BRZ;
+  const W = BIG ? BIG_W : BR_W, R0 = FJ ? 312 : BIG ? 92 : 30*BRK, WX = BIG ? W : BRX, WZ = BIG ? W : BRZ;
   spinners = []; if(!TT) box(-WX, WX, -1, 0, -WZ, WZ, BIG && BIGMAP === 'lego' ? 0x8d8f8a : BIG && BIGMAP === 'vale' ? 0x86cf6a : BIG && BIGMAP === 'serra' ? 0xe3ecf6 : 0xf3d9a4); if(!BIG) for(let z=-WZ + 2; z<WZ; z+=4) stripes(-WX, WX, z, 0xe8c98a);
   if(!TT){ if(BIG) arenaWalls(W, 10); else arenaWalls2(WX, WZ, 10); }
   if(!(BIG && (BIGMAP === 'serra' || TT))) (BIG ? [[0, 0]] : FT).forEach(([ox, oz], k) => brCore(ox, oz, k % 2 ? -1 : 1, k > 1 ? -1 : 1));
@@ -5092,16 +5324,17 @@ let BIG_W = 64;
 var TER = null;
 const FJ_WL = 1.6, FJ_SWIM = 1.0, TERB = {kind:'terr', active:true, delta:new V3(), min:new V3(), max:new V3()};
 // nome, x, z, raio da área plana, altura do chão (0 = sem área plana), cor do chão, quente
+const FJ_K = 1.2, fjKs = L => L.map(([x, z]) => [x*FJ_K, z*FJ_K]); // Ilha Feijoada 20% maior: espalha regiões, rio e estradas
 let FJ_REG, FJ_REG0 = [['Grão Capital', 0, 0, 44, 5, 0xb9a98c, 1], ['Porto Fradinho', 150, 112, 36, 2.6, 0xa9a8a2, 1], ['Usina Feijão Preto', 150, -60, 32, 15, 0x8f8a7d, 1], ['Base Azuki', -190, -142, 16, 10, 0x8b8f6a, 1],
-  ['Morro Rajado', 0, -128, 0, 0, 0x9a8466, 0], ['Vila Carioca', -128, 98, 32, 5, 0xc9b48e, 0], ['Fazenda Jalo', -160, -6, 38, 4.2, 0xc8c36a, 0], ['Resort Manteiga', 22, 124, 26, 20, 0xe0d2a8, 0], ['Floresta Vagem', 128, 26, 0, 0, 0x4f7a3a, 0]];
-let FJ_RIV, FJ_RIV0 = [[-40, -86], [-70, -40], [-72, 10], [-82, 60], [-72, 110], [-84, 190]];
+  ['Morro Rajado', 0, -128, 0, 0, 0x9a8466, 0], ['Vila Carioca', -128, 98, 32, 5, 0xc9b48e, 0], ['Fazenda Jalo', -160, -6, 38, 4.2, 0xc8c36a, 0], ['Resort Manteiga', 22, 124, 26, 20, 0xe0d2a8, 0], ['Floresta Vagem', 128, 26, 0, 0, 0x4f7a3a, 0]].map(g => { g = g.slice(); g[1] *= FJ_K; g[2] *= FJ_K; return g; });
+let FJ_RIV, FJ_RIV0 = fjKs([[-40, -86], [-70, -40], [-72, 10], [-82, 60], [-72, 110], [-84, 190]]);
 function fjNoise(){ const P = new Uint8Array(512); let s = 1234567; for(let i=0;i<256;i++) P[i] = i; for(let i=255;i>0;i--){ s = s*16807 % 2147483647; const j = s % (i + 1); [P[i], P[j]] = [P[j], P[i]]; } for(let i=0;i<256;i++) P[i + 256] = P[i];
   const v = (i, j) => P[(P[i & 255] + j) & 255]/255, sm = t => t*t*(3 - 2*t);
   const n = (x, z) => { const i = Math.floor(x), j = Math.floor(z), fx = sm(x - i), fz = sm(z - j); const a = v(i, j), b = v(i + 1, j), c = v(i, j + 1), d = v(i + 1, j + 1); return (a + (b - a)*fx + (c - a)*fz + (a - b - c + d)*fx*fz)*2 - 1; };
   return (x, z, o=4) => { let t = 0, f = 1, a = 1, m = 0; for(let k=0;k<o;k++){ t += n(x*f + k*17.3, z*f - k*9.1)*a; m += a; f *= 2.03; a *= 0.5; } return t/m; }; }
 const sstep = (a, b, x) => { const t = clamp((x - a)/(b - a), 0, 1); return t*t*(3 - 2*t); };
 function segDist(x, z, L){ let best = 1e9; for(let i=0;i<L.length - 1;i++){ const [ax, az] = L[i], [bx, bz] = L[i + 1], dx = bx - ax, dz = bz - az, t = clamp(((x - ax)*dx + (z - az)*dz)/(dx*dx + dz*dz), 0, 1); best = Math.min(best, Math.hypot(x - ax - dx*t, z - az - dz*t)); } return best; }
-function fjHeight(x, z, fb){
+function fjHeight(x, z, fb){ const X0 = x, Z0 = z; x /= FJ_K; z /= FJ_K;
   // contorno: elipse torta com baías e penínsulas
   const th = Math.atan2(z, x), r = 1 + 0.07*Math.sin(3*th + 1.1) + 0.045*Math.sin(5*th + 0.4) + 0.03*Math.sin(9*th + 2.2) + 0.02*fb(x*0.02, z*0.02, 2) + 0.09*Math.exp(-((((th - 0.64 + 3*Math.PI) % (2*Math.PI) - Math.PI)/0.22)**2));
   const e = Math.hypot(x/205, z/165)/r;
@@ -5128,6 +5361,7 @@ function fjHeight(x, z, fb){
   // ilhota rochosa
   if(isl > 0) h = Math.max(h, -6 + isl*(8 + 8 + fb(x*0.09, z*0.09, 2)*3));
   // áreas planas das regiões (reservadas pros prédios)
+  x = X0; z = Z0;
   for(const [, rx, rz, R, H] of FJ_REG){ if(!R) continue; const w = sstep(R + 16, R, Math.hypot(x - rx, z - rz)); if(w > 0) h = h*(1 - w) + H*w; }
   // rio: leito 0,6 m abaixo da água, barrancos dos lados
   if(e < 1.08){ const d = segDist(x, z, FJ_RIV) + fb(x*0.05, z*0.05, 2)*3; if(d < 18){ const k = sstep(18, 7, d); h = h*(1 - k) + Math.min(h, 1.0)*k; } }
@@ -5136,7 +5370,7 @@ function fjHeight(x, z, fb){
 // estradas de terra (parte 2): ligam as regiões em curvas suaves, passam pelos desfiladeiros da serra; pontes de madeira onde cruzam o rio
 let FJ_ROADS, FJ_ROADS0 = [[[0, 0], [55, 38], [108, 80], [150, 112]], [[0, 0], [58, -22], [108, -46], [150, -60]], [[0, 0], [-38, 28], [-76, 58], [-104, 84], [-128, 98]],
   [[0, 0], [-40, -4], [-76, 2], [-118, -6], [-160, -6]], [[0, 0], [8, 58], [20, 98], [22, 124]], [[150, 112], [146, 64], [128, 26], [146, -20], [150, -60]],
-  [[-128, 98], [-152, 52], [-160, -6]], [[150, -60], [104, -76], [76, -96], [60, -118], [24, -126]], [[-160, -6], [-118, -46], [-72, -86], [-36, -118], [-12, -128]], [[22, 124], [70, 120], [108, 116], [150, 112]]];
+  [[-128, 98], [-152, 52], [-160, -6]], [[150, -60], [104, -76], [76, -96], [60, -118], [24, -126]], [[-160, -6], [-118, -46], [-72, -86], [-36, -118], [-12, -128]], [[22, 124], [70, 120], [108, 116], [150, 112]]].map(fjKs);
 let FJ_RP = null, ROADD = null, FJ_BR = [];
 // ---------- Vale do Feijão (Modo 100): vale cercado de serra, riacho que cruza de oeste pra leste e vira a Lagoa Azul, morro do mirante ----------
 const VL_REG = [['Praça do Moinho', 0, 2, 24, 5, 0xd8c39a, 1], ['Fazenda Rosinha', 29, 29, 22, 5, 0xc8c36a, 0], ['Vila Quindim', -34, 33, 18, 5, 0xc9b48e, 0], ['Pomar Doce', -38, -38, 12, 6.5, 0x8fb85a, 0],
@@ -5158,8 +5392,8 @@ function vlHeight(x, z, fb){
   return h; }
 // perfil de cada mapa com relevo (o resto do jogo lê daqui)
 const TMS = {
-  fj:{X:256, Z:192, N:32, h:(x, z, fb) => fjHeight(x, z, fb), reg:() => FJ_REG0, riv:() => FJ_RIV0, roads:() => FJ_ROADS0, ax:215, az:175, sx:205, sz:165, forest:[128, 26, 80, 30], nTree:2100, nRock:360, rivD:9, roadW:4.4, rockH:33,
-    st:[[30, 32], [118, 88], [-138, 18]], nCar:9, carD:45, rivBoats:3, coast:['Porto', 'Resort', 'Vila', 'Fazenda', 'Base'], towns:() => fjTowns(), life:() => fjLifeBuild()},
+  fj:{X:320, Z:224, N:32, h:(x, z, fb) => fjHeight(x, z, fb), reg:() => FJ_REG0, riv:() => FJ_RIV0, roads:() => FJ_ROADS0, ax:258, az:210, sx:246, sz:198, forest:[154, 31, 96, 36], nTree:2150, nRock:400, rivD:9, roadW:4.4, rockH:33,
+    st:fjKs([[30, 32], [118, 88], [-138, 18]]), nCar:10, carD:54, rivBoats:3, coast:['Porto', 'Resort', 'Vila', 'Fazenda', 'Base'], towns:() => fjTowns(), life:() => fjLifeBuild()},
   vale:{X:128, Z:128, N:48, h:(x, z, fb) => vlHeight(x, z, fb), reg:() => VL_REG, riv:() => VL_RIV, roads:() => VL_ROADS, ax:68, az:68, sx:64, sz:64, forest:null, nTree:1400, nRock:140, valT:0.3, rivD:6, roadW:3.2, rockH:30,
     st:[[24, -13], [-24, 14], [-16, -40]], nCar:4, carD:30, rivBoats:0, coast:['Lagoa'], towns:() => vlTowns(), life:() => vlLife()},
   pb:{X:128, Z:128, N:48, h:(x, z, fb) => pbHeight(x, z, fb), reg:() => PB_REG, riv:() => PB_RIV, roads:() => PB_ROADS, ax:66, az:66, sx:62, sz:62, forest:null, nTree:110, nRock:40, valT:0.5, rivD:6, roadW:3.4, rockH:30,
@@ -5649,7 +5883,7 @@ const FJ_POIT = {
     [-2, 2].forEach(a => { box(x + a - 0.4, x + a + 0.4, Y, Y + 1.6, z + 0.8, z + 1.3, 0xd9503f); fjD(x + a - 0.3, x + a + 0.3, Y + 1.0, Y + 1.4, z + 0.75, z + 0.8, 0xf6f1e6); });
     const ty = fjSmall(x, z - 6.2, 8, 5.4, 1, {c:0xf6f1e6, c2:0xd8cfc0, door:'z1', roof:'flat', tc:0xd9503f}); fjD(x + 5.2, x + 5.4, Y, Y + 6, z + 5, z + 5.2, 0x5a5f68); fjD(x + 4.3, x + 6.3, Y + 5, Y + 6.4, z + 4.95, z + 5.25, 0xe8b43a);
     bonusLoot.push(['heal', x, Y + 0.2, z - 6]); bonusLoot.push(['smg', x + 3, ty, z - 6]); return 'Posto'; },
-  ruina(x, z, r){ const Y = fjPad(x, z, 10, 8, 0x8f8c86), c = 0xa49c8c, T = 0.5, W = (a, b, e, f) => { let u = a; const al = f - e < 1; while(u < (al ? b : f) - 0.2){ const L = 0.8 + r()*1.8, h = r() < 0.2 ? 0 : 0.8 + r()*2.6, u1 = Math.min(al ? b : f, u + L); if(h > 0) al ? box(u, u1, Y, Y + h, e, f, c) : box(a, b, Y, Y + h, u, u1, c); u = u1 + (r() < 0.3 ? 0.9 : 0); } };
+  ruina(x, z, r){ const Y = fjPad(x, z, 10, 8, 0x8f8c86), c = 0xa49c8c, T = 0.5, W = (a, b, e, f) => { const al = f - e < 1; let u = al ? a : e; while(u < (al ? b : f) - 0.2){ const L = 0.8 + r()*1.8, h = r() < 0.2 ? 0 : 0.8 + r()*2.6, u1 = Math.min(al ? b : f, u + L); if(h > 0) al ? box(u, u1, Y, Y + h, e, f, c) : box(a, b, Y, Y + h, u, u1, c); u = u1 + (r() < 0.3 ? 0.9 : 0); } };
     W(x - 5, x + 5, z - 4, z - 4 + T); W(x - 5, x + 5, z + 4 - T, z + 4); W(x - 5, x - 5 + T, z - 4 + T, z + 4 - T); W(x + 5 - T, x + 5, z - 4 + T, z + 4 - T);
     for(let i=0; i<6; i++){ const a = x - 3.5 + r()*7, b = z - 2.5 + r()*5, s = 0.4 + r()*0.6; box(a - s, a + s, Y, Y + s*0.9, b - s, b + s, 0x8f8c86); }
     box(x + 1, x + 2.6, Y, Y + 0.9, z - 0.5, z + 0.5, 0x8a5a2b); bonusLoot.push([r() < 0.5 ? 'rifle' : 'sniper', x + 1.8, Y + 0.9, z]); return 'Ruína'; },
@@ -5666,14 +5900,14 @@ const FJ_POIT = {
     box(x + 4, x + 5, y, y + 1, z + 1.5, z + 2.5, 0x9a7448); bonusLoot.push(['smg', x + 4.5, y + 1, z + 2]); return 'Acampamento'; } };
 
 // acha ~20 lugares bons e espalhados pros pontos pequenos
-function fjPOIs(){ let s = 6262; const r = () => (s = s*16807 % 2147483647)/2147483647, C = [], ST = [[30, 32], [118, 88], [-138, 18]];
-  for(let x=-205; x<=205; x+=5) for(let z=-165; z<=165; z+=5){ const h = TER.h(x, z); if(h < 3.2) continue; const [lo, hi] = fjVar(x, z, 6); if(hi - lo > 1.3 || lo < 2.8) continue;
+function fjPOIs(){ let s = 6262; const r = () => (s = s*16807 % 2147483647)/2147483647, C = [], ST = TM.st;
+  for(let x=-246; x<=246; x+=5) for(let z=-198; z<=198; z+=5){ const h = TER.h(x, z); if(h < 3.2) continue; const [lo, hi] = fjVar(x, z, 6); if(hi - lo > 1.3 || lo < 2.8) continue;
     if(FJ_REG.some(([, rx, rz, R]) => Math.hypot(x - rx, z - rz) < (R ? R + 10 : 26)) || ST.some(([a, b]) => Math.hypot(x - a, z - b) < 14) || segDist(x, z, FJ_RIV) < 13) continue;
     let rd = 1e9; for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) rd = Math.min(rd, roadD(x + i*7, z + j*7)); if(rd < 6.5) continue;
     let wet = null; for(let k=0; k<12 && !wet; k++){ const a = k*0.5236; if(TER.h(x + Math.cos(a)*22, z + Math.sin(a)*22) < FJ_WL) wet = Math.abs(Math.cos(a)) > Math.abs(Math.sin(a)) ? (Math.cos(a) > 0 ? 'x1' : 'x0') : (Math.sin(a) > 0 ? 'z1' : 'z0'); }
     C.push({x, z, h, rd, wet, k:r()}); }
-  C.sort((a, b) => a.k - b.k); const pick = [], cnt = {}, cap = {posto:3, pesca:3, mirante:3, sitio:4, ruina:3, cabana:2, acamp:3}, cyc = ['sitio', 'ruina', 'acamp', 'cabana', 'sitio', 'ruina', 'acamp'];
-  for(const c of C){ if(pick.length >= 20) break; if(pick.some(p => Math.hypot(p.x - c.x, p.z - c.z) < 27)) continue;
+  C.sort((a, b) => a.k - b.k); const pick = [], cnt = {}, cap = {posto:4, pesca:4, mirante:3, sitio:6, ruina:4, cabana:3, acamp:4}, cyc = ['sitio', 'ruina', 'acamp', 'cabana', 'sitio', 'ruina', 'acamp'];
+  for(const c of C){ if(pick.length >= 27) break; if(pick.some(p => Math.hypot(p.x - c.x, p.z - c.z) < 27)) continue;
     let t = c.rd < 16 && (cnt.posto || 0) < cap.posto ? 'posto' : c.wet && (cnt.pesca || 0) < cap.pesca ? 'pesca' : c.h > 16 && (cnt.mirante || 0) < cap.mirante ? 'mirante' : null;
     if(!t){ for(let i=0; i<cyc.length; i++){ const k = cyc[(pick.length + i) % cyc.length]; if((cnt[k] || 0) < cap[k]){ t = k; break; } } } if(!t) continue;
     cnt[t] = (cnt[t] || 0) + 1; c.t = t; pick.push(c); }
@@ -7931,9 +8165,12 @@ const nearBox = p => { const L = nearLoot(p, 2.0, L => !!L.box); return L && L.b
 function spawnLoot(){
   loot = []; drops = []; let seed = 5 + Math.floor(Math.random()*1000); const sr = () => (seed = seed*16807 % 2147483647)/2147483647;
   const pickW = () => { const r = sr(); return r < 0.22 ? 'smg' : r < 0.4 ? 'shotgun' : r < 0.6 ? 'rifle' : r < 0.66 ? 'sniper' : r < 0.7 ? 'bazooka' : r < 0.78 ? 'banana' : r < 0.86 ? 'lmg' : r < 0.9 ? 'flame' : 'pistol'; };
-  const NL = FJBIG ? 760 : 280, NC = FJBIG ? 150 : TER ? 60 : TWR() ? 90 : 50, NG = FJBIG ? 190 : TER ? 70 : TWR() ? 110 : 80; let nc = 0, ng = 0;   // baús e itens soltos
+  const NL = FJBIG ? 900 : 280, NC = FJBIG ? 175 : TER ? 60 : TWR() ? 90 : 50, NG = FJBIG ? 225 : TER ? 70 : TWR() ? 110 : 80; let nc = 0, ng = 0;   // baús e itens soltos
   const FJ_RW = {l:TER /* o porto é metade água: pesa mais pra sobrar o mesmo tanto */ ? FJ_REG.map(g => [g, /Porto/.test(g[0]) ? 6 : fjTierOf(g) === 3 ? 3.2 : fjTierOf(g) === 2 ? 1.8 : 0.9]) : [], tot:0}; FJ_RW.l.forEach(([, k]) => FJ_RW.tot += k);
-  for(let n=0, tries=0; (nc < NC || ng < NG) && tries<NL*20; tries++){ let x = (sr()*2 - 1)*(BIG_W - 2), z = (sr()*2 - 1)*(BIG_W - 2);
+  if(TER){ const BB = FJ_BLD.filter(b => (b[1] - b[0])*(b[3] - b[2]) > 18).map(b => [sr(), b]).sort((a, b) => a[0] - b[0]).map(a => a[1]);   // baú mora dentro de casa e prédio
+    for(let pass=0; pass<3 && nc < NC*0.7; pass++) for(const b of BB){ if(nc >= NC*0.7) break; for(let k=0; k<5; k++){ const x = b[0] + 1.2 + sr()*(b[1] - b[0] - 2.4), z = b[2] + 1.2 + sr()*(b[3] - b[2] - 2.4), S = surfacesAt(x, z).filter(y => lootCovered(x, y, z)); if(!S.length) continue;
+      const y = S[Math.floor(sr()*S.length)]; if(loot.some(L => Math.abs(L.pos.x - x) < 5 && Math.abs(L.pos.z - z) < 5 && Math.abs(L.pos.y - y) < 2)) continue; LOOT_TIER = fjTier(x, z); fillChest(x, y, z, sr, pickW); nc++; break; } } LOOT_TIER = null; }
+  for(let n=0, tries=0; (nc < NC || ng < NG) && tries<NL*30; tries++){ let x = (sr()*2 - 1)*(BIG_W - 2), z = (sr()*2 - 1)*(BIG_W - 2);
     const u0 = TER ? sr() : 1;
     if(u0 < 0.66){ let w = sr()*FJ_RW.tot, g = FJ_REG[0]; for(const [G, k] of FJ_RW.l){ w -= k; if(w <= 0){ g = G; break; } } const a = sr()*6.283, d = Math.sqrt(sr())*((g[3] || 34) + 14); x = g[1] + Math.sin(a)*d; z = g[2] + Math.cos(a)*d; } // mais coisa nas regiões (quentes pesam mais)
     else if(u0 < 0.76 && FJ_POI.length){ const q = FJ_POI[Math.floor(sr()*FJ_POI.length)], a = sr()*6.283, d = Math.sqrt(sr())*11; x = q[1] + Math.sin(a)*d; z = q[2] + Math.cos(a)*d; } // pontos pequenos
@@ -7941,9 +8178,9 @@ function spawnLoot(){
     if(TER && TER.h(x, z) < 2.6) continue; const S = surfacesAt(x, z); if(!S.length) continue;
     const y = S[Math.floor(sr()*S.length)]; if(!TER && y < 0.5 && sr() < 0.5) continue; // mais coisa dentro e em cima dos prédios
     if(loot.some(L => Math.abs(L.pos.x - x) < 2.5 && Math.abs(L.pos.z - z) < 2.5 && Math.abs(L.pos.y - y) < 1)) continue;
-    const cov = lootCovered(x, y, z); let isChest = sr() < (cov ? 0.25 : 0.7);   // dentro: mais item solto; fora: quase só baú
+    const cov = lootCovered(x, y, z), nearB = cov || !TER || FJ_BLD.some(b => x > b[0] - 5 && x < b[1] + 5 && z > b[2] - 5 && z < b[3] + 5); let isChest = sr() < (cov ? 0.45 : nearB ? 0.3 : 0.02);   // baú mora em casa e prédio (zonas de interesse); no mato quase nunca
     if(isChest && nc >= NC) isChest = false; if(!isChest && (ng >= NG || !cov && sr() > 0.12)) continue;
-    if(isChest){ if(loot.some(L => L.box && Math.hypot(L.pos.x - x, L.pos.z - z) < (TWR() ? 7 : 9) && (!TWR() || Math.abs(L.pos.y - y) < 2))) continue; fillChest(x, y, z, sr, pickW); nc++; continue; }
+    if(isChest){ if(loot.some(L => L.box && Math.hypot(L.pos.x - x, L.pos.z - z) < (TWR() ? 7 : cov && TER ? 5 : 9) && (!TWR() && !(cov && TER) || Math.abs(L.pos.y - y) < 2))) continue; fillChest(x, y, z, sr, pickW); nc++; continue; }
     ng++;
     const r = sr() < 0.5 ? sr() : 0.47 + sr()*0.53; addLoot(r < 0.47 ? pickW() : r < 0.515 ? attRoll(sr) : r < 0.548 ? 'band' : r < 0.562 ? 'pdq' : r < 0.569 ? 'cha' : r < 0.575 ? 'turbo' : r < 0.62 ? 'heal' : r < 0.635 ? 'med' : r < 0.72 ? 'shield' : r < 0.765 ? 'ammo' : r < 0.775 ? 'pao' : r < 0.783 ? 'mola' : r < 0.79 ? 'radar' : r < 0.835 ? 'nade' : r < 0.855 ? 'pimenta' : r < 0.875 ? 'impacto' : r < 0.925 ? 'vest' : r < 0.965 ? 'helm' : 'pack', x, y, z); n++; }
   LOOT_TIER = null;
@@ -8110,7 +8347,7 @@ function dropAll(p){ if(!p.inv) return; const y = Math.max(0, groundBelow(p)), l
   list.forEach(([k, a, r, at], i) => { const ang = i/list.length*Math.PI*2, L = addLoot(k, p.pos.x + Math.sin(ang)*0.3, y + 0.62, p.pos.z + Math.cos(ang)*0.22, a, r, at); L.box = B; L.s.scale.setScalar(0.55); if(L.glow) L.glow.scale.setScalar(0.6); }); p.inv = null; }
 // avião que cruza o mapa
 function startPlane(){
-  const a = rand(0, Math.PI*2), off = FJBIG ? rand(-110, 110) : rand(-28, 28), dir = new V3(Math.sin(a), 0, Math.cos(a)), side = new V3(dir.z, 0, -dir.x), L = FJBIG ? 235 : TER ? 120 : 100, Y = FJBIG ? 118 : 92;
+  const a = rand(0, Math.PI*2), off = FJBIG ? rand(-132, 132) : rand(-28, 28), dir = new V3(Math.sin(a), 0, Math.cos(a)), side = new V3(dir.z, 0, -dir.x), L = FJBIG ? 282 : TER ? 120 : 100, Y = FJBIG ? 118 : 92;
   const from = dir.clone().multiplyScalar(-L).addScaledVector(side, off).setY(Y), to = dir.clone().multiplyScalar(L).addScaledVector(side, off).setY(Y);
   const g = BRE.plane(); // FEIJÃO AIR: cargueiro gordinho com hélices que giram
   g.position.copy(from); g.lookAt(to); world.add(g);
@@ -8121,7 +8358,7 @@ const ZP_S = [[35, 30, 50, 2], [22, 25, 30, 3], [18, 20, 16, 5], [14, 15, 7, 8],
 // Ilha Feijoada: 7 fases, partida de uns 9 minutos
 // Vale do Feijão: 5 fases, uns 5 minutos
 const ZP_V = [[45, 35, 60, 1], [35, 30, 38, 2], [30, 25, 22, 4], [25, 20, 11, 6], [20, 20, 0.5, 10]];
-const ZP_F = [[90, 60, 135, 1], [60, 45, 82, 2], [50, 40, 52, 4], [40, 30, 30, 6], [30, 25, 16, 8], [25, 20, 7, 10], [20, 20, 0.5, 12]];
+const ZP_F = [[95, 70, 160, 1], [60, 50, 92, 2], [50, 40, 52, 4], [40, 30, 30, 6], [30, 25, 16, 8], [25, 20, 7, 10], [20, 20, 0.5, 12]];
 let ZP = ZP_S;
 function nextZone(){ const z = zoneP; z.i++; z.st = 'wait'; z.t = 0; z.r0 = z.r; z.c0 = z.c.slice(); if(z.i >= ZP.length){ z.st = 'done'; return; }
   const [, , nr, dps] = ZP[z.i], room = Math.max(0, z.r - nr), lim = BIG_W - nr*0.6; let x, y, k = 0;
@@ -8620,7 +8857,7 @@ let earn = null;
 const newEarn = () => ({coins:0, xp:0, done:false, res:null});
 function reward(c, x){ if(!earn || earn.done) return; earn.coins += Math.round(c*[0.7, 1, 1.4][DIFF]); earn.xp += x; }
 function rec(k, t){ const old = SAVE.st[k]; if(!old || t < old){ SAVE.st[k] = Math.round(t*10)/10; if(old) say(`<b>Novo recorde!</b> ${t.toFixed(1)}s`, true); } }
-const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26];
+const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
 const ACH = [
   ['a1', 'Primeira coroa', 'Vença uma partida completa', () => st('crowns') >= 1, 50],
   ['a2', 'Tricampeão', 'Ganhe 3 coroas', () => st('crowns') >= 3, 150],
@@ -8931,7 +9168,7 @@ function stepPlayer(p, dt, inp){
   if(control && inp.dive){ const fx = Math.sin(p.face), fz = Math.cos(p.face); p.vel.x = fx*12; p.vel.z = fz*12; p.vel.y = p.grounded ? 2 : Math.max(p.vel.y, 1); p.dive = 0.6; p.grounded = false; sfxNear(p, 'dive'); if(!p.isBot) bump('dives'); }
   if(control && inp.push && p.pushCD <= 0) doPush(p);
   if(control && inp.item && p.power && R1.phase === 'play') usePower(p);
-  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play') doGrab(p);
+  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && round !== 27) doGrab(p);
   if(p.dive > 0 && (p.grounded || p.dive > 0.3)) p.dive -= dt;
   if(p.grounded && p.ground && p.ground.kind === 'seesaw') p.pos.x -= Math.sin(p.ground.ang)*11*dt; // escorrega pro lado mais baixo
   p.vel.y += GRAV*dt;
@@ -8949,6 +9186,7 @@ function stepPlayer(p, dt, inp){
 function doPush(p){
   if(round === 25 && qz){ qzPush(p); return; }
   if(round === 26 && pb && pbPush(p)) return;
+  if(round === 27 && pq){ pqPush(p); return; }
   p.pushCD = 0.9; p.pushAnim = 0.25; const fx = Math.sin(p.face), fz = Math.cos(p.face);
   let any = false;
   for(const q of players){ if(q === p || !q.alive || q.dying > 0) continue;
@@ -8967,7 +9205,7 @@ function separate(){
 }
 
 // ---------- Bots ----------
-function botInput(p, dt){ const inp = botInput0(p, dt); botPower(p, dt, inp); return inp; }
+function botInput(p, dt){ const inp = botInput0(p, dt); if(round !== 27) botPower(p, dt, inp); return inp; }
 function botInput0(p, dt){
   const inp = {mx:0, mz:0, jump:false, dive:false, push:false};
   if(R1.phase !== 'play' || p.done || !p.alive) return inp;
@@ -8986,6 +9224,7 @@ function botInput0(p, dt){
   if(round === 24) return botBomb(p, dt, inp);
   if(round === 25) return botQueimada(p, dt, inp);
   if(round === 26) return botFlags(p, dt, inp);
+  if(round === 27) return botPique(p, dt, inp);
   if(round === 20) return botShoot(p, dt, inp);
   if(round === 8) return botFruit(p, dt, inp);
   if(round === 4 || round === 5) return botTag(p, dt, inp);
@@ -9176,8 +9415,8 @@ function startGame(){
 function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round]) : null;
   if(PTS){ const back = players.filter(p => !p.alive).length; players.forEach(p => { p.alive = true; p.elT = 0; }); if(back && stage) say(`<b>${back}</b> feijões voltaram pra essa prova`, true); }
   const alive = players.filter(p => p.alive); SZ = szFor(alive.length); LX = [0]; LW = 14; RBIG = round === 1 && (BIG || SZ === 2); setTiles([[0, 0]]); TUPS = TAG_UPS; SPOTF = null; setNests(12.5);
-  if([7, 17, 18, 19, 25, 26].includes(round) && alive.length < 4){ round = 2; plan[stage] = 2; }
-  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
+  if([7, 17, 18, 19, 25, 26, 27].includes(round) && alive.length < 4){ round = 2; plan[stage] = 2; }
+  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; pqReset(); pq = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
   alive.forEach(p => { p.item = false; p.passCD = 0; p.done = false; p.place = 0; p.vel.set(0,0,0); p.dive = 0; p.stun = 0; p.dying = 0; p.m.g.visible = true; p.m.g.scale.setScalar(1); p.redPos = null; });
   players.filter(p => !p.alive).forEach(p => p.m.g.visible = false);
   rev = null; players.forEach(p => { p.rev = false; p.revWait = 0; p.revUsed = false; p.card = false; p.cardUsed = false; p.stT = 0; }); R1.finished = 0; R1.t = 0; curLook = lookFor(round); setDark(false); mingle = null; tug = null; paint = null; zones = []; shots = []; hearts = []; hpBars = []; brZone = null; zoneP = null; plane = null; loot = []; drops = []; cars = []; players.forEach(p => p.car = null);
@@ -9207,6 +9446,10 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   } else if(round === 22){
     setupTeams(alive, 2); buildFut(alive.length); R1.timeLeft = fut.A.t; futSpawn(alive);
     banner('Futebol Arena', `${youTeamTxt()} Chute com F, mergulhe na bola pra bater forte e pule pra cabecear. A bola sobe nas paredes curvas! Pise nos círculos laranja pra correr mais. O time com menos gols sai!`, 3800);
+  } else if(round === 27){
+    buildPique(alive.length); pqSetup(alive); R1.timeLeft = pq.hideT + PQ_PLAY[SZ];
+    const hs = humans().filter(h => h.alive), hh = hs.filter(h => h.pqHunt);
+    banner('Pique-Esconde', hh.length === hs.length ? `Você é CAÇADOR! Fique de olhos fechados ${pq.hideT} s. Depois ache ${pq.quota} escondidos: eles viraram objetos do quintal. Atire tinta com F ou clique` : hh.length ? hh.map(h => h.name).join(' e ') + ' é caçador, o resto se esconde!' : `Corra e se esconda! F perto de um objeto vira uma cópia dele. Os ${pq.hunters} caçadores saem em ${pq.hideT} s`, 4200);
   } else if(round === 26){
     setupTeams(alive, 2); buildFlags(alive.length); R1.timeLeft = [70, 80, 90][SZ]; pbSpawn(alive);
     banner('Pega-Bandeira', `${youTeamTxt()} Encoste na bandeira do outro time e leve pra sua base. No seu lado do campo, F num invasor manda ele de volta!`, 3800);
@@ -9223,9 +9466,9 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
     banner('Memória de Frutas', 'Decore as frutas dos pisos. Depois o telão mostra uma: corra pro piso dela antes que os outros caiam!', 3600);
   } else if(round === 20){
     if(!BIG){ setTiles(tilesFor(22)); BRX = 22*FNX; BRZ = 22*FNZ; BRK = Math.hypot(BRX, BRZ)/Math.hypot(22, 22); } else { BRX = BRZ = 22; BRK = 1; }
-    (BIG && CAMPO ? cpBuild() : buildShoot()); R1.timeLeft = BIG ? (BR_TEST ? 1e9 : TWR() ? 480 : FJBIG ? 720 : TER ? 420 : single ? 300 : 240) : isFinal() ? 120 : 90; R1.brKeep = alive.length > 3 && !isFinal() && !BIG ? Math.ceil(alive.length*0.4) : 1;
+    (BIG && CAMPO ? cpBuild() : buildShoot()); R1.timeLeft = BIG ? (BR_TEST ? 1e9 : TWR() ? 480 : FJBIG ? 780 : TER ? 420 : single ? 300 : 240) : isFinal() ? 120 : 90; R1.brKeep = alive.length > 3 && !isFinal() && !BIG ? Math.ceil(alive.length*0.4) : 1;
     const base = {}; if(BIG){ alive.forEach(p => { p.squad = Math.floor(p.i/BR_SQ); base[p.squad] = base[p.squad] || [rand(-54, 54), rand(-54, 54)]; }); markMates(); }
-    if(BIG && CAMPO) cpStart(alive); else if(BIG && TWR()) twStart(alive); else if(BIG){ startPlane(); ZP = FJBIG ? ZP_F : TER ? ZP_V : ZP_S; zoneP = {i:-1, c:[0, 0], r:FJBIG ? 260 : TER ? 96 : alive.length > 40 || BR_TEST ? 92 : 62, dps:1}; nextZone(); R1.supT = FJBIG ? [150, 260, 360, 450] : TER ? [80, 160, 240] : [70, 105]; if(BR_TEST){ zoneP.st = 'done'; zoneP.r = 999; zoneP.dps = 0; }
+    if(BIG && CAMPO) cpStart(alive); else if(BIG && TWR()) twStart(alive); else if(BIG){ startPlane(); ZP = FJBIG ? ZP_F : TER ? ZP_V : ZP_S; zoneP = {i:-1, c:[0, 0], r:FJBIG ? 312 : TER ? 96 : alive.length > 40 || BR_TEST ? 92 : 62, dps:1}; nextZone(); R1.supT = FJBIG ? [150, 260, 360, 450] : TER ? [80, 160, 240] : [70, 105]; if(BR_TEST){ zoneP.st = 'done'; zoneP.r = 999; zoneP.dps = 0; }
       alive.forEach(p => { p.pos.copy(plane.pos).y -= 4; p.skyY = p.pos.y; p.vel.set(0, 0, 0); p.face = Math.atan2(plane.dir.x, plane.dir.z); p.grounded = false; p.glide = 'plane'; p.wantJump = false; p.wantChute = false;
         p.jumpU = rand(0.2, 0.8); p.openAt = rand(16, 34); p.land = null; if(TER && p.isBot) fjPlanJump(p); p.hp = 100; p.kills = 0; p.zoneD = 0; p.shotCD = 0; p.foe = null; giveStart(p); chute(p); p.m.chute.visible = false; p.m.g.visible = false; });
       alive.forEach(p => { const L = players.find(q => q.alive && mates(p, q) && q.isBot); if(L && L !== p) p.jumpU = L.jumpU + rand(-0.02, 0.02); }); }
@@ -9306,6 +9549,7 @@ function endRound(){ stopRev(); players.forEach(p => p.revWait = 0);
   else if(round === 18) elimLowest(paintScore, 'Seu time pintou menos chão');
   else if(round === 19) elimLowest(zoneScore, 'Seu time fez menos pontos nas zonas');
   else if(round === 22) elimLowest(futScore, 'Seu time fez menos gols');
+  else if(round === 27) pqEnd();
   else if(round === 26){ players.forEach(p => { if(p.pbF) pbDrop(p); }); elimLowest(pbRank, pb && pb.score.a === pb.score.b ? 'Empate nas bandeiras: seu time ficou menos tempo com a bandeira do outro' : 'Seu time trouxe menos bandeiras'); }
   else if(round === 25) elimLowest(qzScore, 'Seu time ficou com menos gente na quadra');
   else if(round === 4){ sfx('hit'); shake = 0.6; players.forEach(p => { if(p.alive && p.item){ p.item = false; eliminate(p, 'A batata explodiu na sua mão'); } }); }
@@ -9371,6 +9615,7 @@ function showResult(won){
     : round === 13 ? 'O vidro quebrou ou o tempo acabou na Ponte de Vidro. Dica: espere alguém testar a fileira da frente. Quando um vidro quebra, o outro é seguro.'
     : round === 14 ? 'Você ficou fora de uma sala com o número certo nas Salas. Dica: corra pra uma sala mais vazia assim que o número aparecer, e empurre quem sobrar (F).'
     : round === 15 ? 'O chão sumiu embaixo de você nos Blocos Caindo. Dica: não fique parado, fuja dos blocos piscando em vermelho e guarde um cantinho seguro.'
+    : round === 27 ? 'Acharam você no Pique-Esconde. Dica: vire um objeto que tem outro igual do lado, fique parado (objeto que anda chama atenção) e fuja quando a tinta cair perto.'
     : round === 26 ? 'Seu time trouxe menos bandeiras. Dica: entre no campo do outro pelos cantos, use os caixotes pra se esconder, e no seu lado aperte F perto de quem invadir.'
     : round === 25 ? 'Seu time perdeu a Queimada. Dica: fique no fundo da quadra quando estiver sem bola, aperte F quando a bola vier pra agarrar, e jogue de perto da linha.'
     : round === 24 ? 'Uma bomba te jogou pra fora. Dica: fique longe da borda e dos pisos rachados, e corra assim que o anel vermelho aparecer.'
@@ -9581,7 +9826,7 @@ const SONGS = {
   menu:{bpm:96, bass:[131,0,0,0,110,0,0,0,87,0,0,0,98,0,0,0], lead:[659,0,784,0,659,0,523,0,587,0,523,0,494,0,392,0], wave:'triangle', kick:[0,10], snare:[], soft:true},
   battle:{bpm:124, bass:[110,0,110,131,0,110,0,98,87,0,87,104,0,87,98,0], lead:[440,0,523,587,0,523,440,0,349,0,440,523,0,659,587,0], wave:'sawtooth', kick:[0,3,8,10], snare:[4,12], minor:true},
 };
-const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper'};
+const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky'};
 let mStep = 0, mNext = 0, mTimer = null;
 const mKick = (w, d) => { tone(150, 0.16, 'sine', 0.5, 0.3, w, d); noise(0.02, 0.08, 3000, 0, 'highpass', 1, w, d); };
 const mSnare = (w, d) => { noise(0.14, 0.22, 1900, 1200, 'bandpass', 0.8, w, d); tone(190, 0.08, 'triangle', 0.12, 0.7, w, d); };
@@ -9675,7 +9920,7 @@ function animateBean(p, dt){
   if(p.pushAnim > 0) m.arms.forEach(a => a.position.z += 0.45);
   if(R1.phase === 'podium' && p.rank === 0) m.arms.forEach((a, k) => a.position.y += 0.35 + Math.sin(clock*8 + k*3)*0.12);
   if(p.climb){ const s = Math.sin(p.climbPh || 0); m.arms.forEach((a, k) => { a.position.y = 1.2 + (k ? -s : s)*0.16; a.position.z = 0.3; }); m.legs[0].position.y = 0.2 + Math.max(0, -s)*0.16; m.legs[1].position.y = 0.2 + Math.max(0, s)*0.16; m.legs[0].position.z = m.legs[1].position.z = 0.12; }
-  m.hat.visible = [7, 17, 18, 19, 22, 25, 26].includes(round) && R1.phase !== 'podium' && R1.phase !== 'menu'; if(m.hat.visible) m.hat.material = mat((TEAMS[p.team] || TEAMS.a).col);
+  m.hat.visible = [7, 17, 18, 19, 22, 25, 26].includes(round) && R1.phase !== 'podium' && R1.phase !== 'menu'; if(m.hat.visible) m.hat.material = mat((TEAMS[p.team] || TEAMS.a).col); if(round === 27 && pq){ m.hat.visible = !!p.pqHunt && R1.phase !== 'podium'; if(m.hat.visible) m.hat.material = mat(0xff3b4e); }
   if(m.cos.hat) m.cos.hat.visible = !m.hat.visible; if(m.spin) m.spin.rotation.y += dt*(p.grounded ? 5 : 22); if(!m.far){ if(m.skin) SKINS.tick(m, clock + p.i, dt); if(m.cosFx) SKINS.tickCos(m, clock + p.i); }
   m.bomb.visible = round === 4 && p.item; m.tail.visible = round === 5 && p.item;
   if(m.bomb.visible) m.spark.scale.setScalar(0.7 + Math.random()*0.8);
@@ -9710,11 +9955,11 @@ function teamHUD(){
   return true;
 }
 function updateHUD(){
-  if(R1.phase === 'menu') return;
+  pqHud(); if(R1.phase === 'menu') return;
   const alive = players.filter(p => p.alive).length;
   teamHUD(); invHUD(); brHUD();
-  { const on = round === 20 && (R1.phase === 'play' || R1.phase === 'count'), sp = splitOn, top = (1 - AIM_Y)/2*100;
-    [0, 1].forEach(i => { const el = $('cross' + (i + 1)), h = players[i], show = on && h && !h.isBot && h.alive && (i === 0 || sp) && !(i === 0 && scopeOn); el.hidden = !show; if(show){ el.style.left = (sp ? (i ? 75 : 25) : 50) + '%'; el.style.top = (i === 0 && !sp ? (1 - AIMY1)/2*100 : top) + '%'; } }); const sc = $('scope'), me = players[0]; sc.hidden = !(on && scopeOn && me && me.alive && adsScope(me) && VM.up > 0.85); if(!sc.hidden){ const k = adsScope(me) || ''; const kc = k + (VM.bl ? ' bl' : ''), zt = VM.bl ? (VM.zm || 4) + 'x' : k === 'sniper' ? '8x' : '4x'; if(sc.className !== kc) sc.className = kc; if(sc.lastChild.textContent !== zt) sc.lastChild.textContent = zt; const B = cam1.brt, ar = sc.querySelector('.ar'); if(B && k === 'sniper'){ ar.classList.toggle('on', B.hold || B.v < 1); ar.classList.toggle('hold', B.hold); ar.classList.toggle('tired', B.tired > 0); ar.firstChild.style.width = (B.v*100).toFixed(0) + '%'; } else ar.classList.remove('on'); } }
+  { const on = (round === 20 || round === 27 && pq && pq.open) && (R1.phase === 'play' || R1.phase === 'count'), sp = splitOn, top = (1 - AIM_Y)/2*100;
+    [0, 1].forEach(i => { const el = $('cross' + (i + 1)), h = players[i], show = on && h && !h.isBot && h.alive && (round !== 27 || !!h.pqHunt) && (i === 0 || sp) && !(i === 0 && scopeOn); el.hidden = !show; if(show){ el.style.left = (sp ? (i ? 75 : 25) : 50) + '%'; el.style.top = (i === 0 && !sp ? (1 - AIMY1)/2*100 : top) + '%'; } }); const sc = $('scope'), me = players[0]; sc.hidden = !(on && scopeOn && me && me.alive && adsScope(me) && VM.up > 0.85); if(!sc.hidden){ const k = adsScope(me) || ''; const kc = k + (VM.bl ? ' bl' : ''), zt = VM.bl ? (VM.zm || 4) + 'x' : k === 'sniper' ? '8x' : '4x'; if(sc.className !== kc) sc.className = kc; if(sc.lastChild.textContent !== zt) sc.lastChild.textContent = zt; const B = cam1.brt, ar = sc.querySelector('.ar'); if(B && k === 'sniper'){ ar.classList.toggle('on', B.hold || B.v < 1); ar.classList.toggle('hold', B.hold); ar.classList.toggle('tired', B.tired > 0); ar.firstChild.style.width = (B.v*100).toFixed(0) + '%'; } else ar.classList.remove('on'); } }
   if(RACE(round)){ $('hInfo').textContent = `Classificados ${R1.finished}/${R1.quota}`; }
   else if(round === 3){ $('hInfo').textContent = `Vivos ${alive}`; }
   else if(round === 4){ $('hInfo').textContent = `Vivos ${alive} · Bombas ${players.filter(p => p.alive && p.item).length}` + (twoP ? humans().filter(h => h.alive && h.item).map(h => ' · ' + h.name + ' TEM').join('') : you().item ? ' · ESTÁ COM VOCÊ' : ''); }
@@ -9730,6 +9975,7 @@ function updateHUD(){
   else if(round === 24){ $('hInfo').textContent = cbInfo(); }
   else if(round === 25){ $('hInfo').textContent = qzInfo(you()); }
   else if(round === 26){ $('hInfo').textContent = pbInfo(you()); }
+  else if(round === 27){ $('hInfo').textContent = pqInfo(you()); }
   else if(round === 13){ $('hInfo').textContent = `Atravessaram ${players.filter(p => p.alive && p.done).length} · Vivos ${alive}`; }
   else if(round === 14 && mingle){ $('hInfo').textContent = mingle.state === 'run' ? `Grupos de ${mingle.n}! · Vivos ${alive}` : `Vivos ${alive} · Rodada ${Math.min(mingle.cycle + 1, mingle.cycles)} de ${mingle.cycles}`; }
   else if(round === 5){ $('hInfo').textContent = `Com rabo ${players.filter(p => p.alive && p.item).length}/${alive}` + (twoP ? humans().filter(h => h.alive).map(h => ` · ${h.name} ${h.item ? 'tem' : 'NÃO tem'}`).join('') : you().alive ? (you().item ? ' · você tem' : ' · você NÃO tem') : ''); }
@@ -9754,7 +10000,7 @@ function tick(dt){
   R1.t += dt;
   if(R1.phase === 'intro' && R1.t > 2.8){ R1.phase = 'count'; R1.t = 0; countN = 4; }
   if(R1.phase === 'count'){ const n = 3 - Math.floor(R1.t); if(n !== countN && n >= 1){ countN = n; banner(String(n), '', 800); sfx('beep'); } if(R1.t >= 3){ R1.phase = 'play'; R1.t = 0; banner('Vai!', '', 700); sfx('go'); if(round === 16){ setDark(true); banner('Apagão!', 'Empurre e não caia', 1200); } if(round === 2){ lightT = 0; light = 'green'; } } }
-  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
+  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 27) updatePique(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
   if(R1.phase === 'play'){
     R1.timeLeft -= dt; if(round === 2) updateLight(dt);
     if(round === 4){
@@ -9792,12 +10038,12 @@ function tick(dt){
       if(p.grounded && p.ground && p.ground.kind !== 'mover' && p.ground.kind !== 'lift'){ if(LX.length > 1) p.lx = laneAt(p.pos.x); for(const [th, rz, rx, ry] of course.cps){ if(p.pos.z > th){ if(rz > p.cp.z){ p.cp.set(0, ry || 0, rz); p.cpX = rx; } break; } } }
       if(p.pos.y < -5){ if(!p.isBot || Math.random() < (players.length > 16 ? 0.05 : 0.3)) say(`${nm(p)} caiu na água!`, !p.isBot); DBG.falls[Math.round(p.pos.z/4)*4] = (DBG.falls[Math.round(p.pos.z/4)*4]||0) + 1; { const g = round === 6 ? solidAt(p.lx || 0, p.cp.z + 0.6, 0, 2) : null; p.pos.set((g && g.kind === 'seesaw' ? g.cx : RBIG ? RTX[raceTrack(p)] : (p.lx || 0)) + rand(-p.cpX, p.cpX), p.cp.y + 0.5, p.cp.z + rand(-0.5, 0.5)); } p.vel.set(0, 0, 0); p.stun = 0; p.dive = 0; if(p.isBot && Math.random() < 0.4) p.route = null; if(!p.isBot){ sfx('dive'); bump('falls'); } }
       if(!p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) { finishPlayer(p); if(R1.finished >= R1.quota) endRound(); }
-    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26].includes(round)){
+    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27].includes(round)){
       if(p.pos.y < -4){ p.alive = false; p.elT = R1.t; elimOrder.push(p); say(`${nm(p)} caiu e está fora!`, true); p.m.g.visible = false; sfxNear(p, 'zap', 40);
         if(!p.isBot){ bump('falls'); banner(tag(p) + 'Caiu!', `${twoP ? p.name : 'Você'} foi parar na água`, 2000); sfx('lose'); if(!anyHumanAlive()) setTimeout(() => showResult(false), 2200); } }
       if(round === 13 && p.alive && !p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) finishPlayer(p);
       if(R1.phase === 'play' && round === 13 && players.every(q => !q.alive || q.done)) endRound();
-      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
+      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22, 27].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
     } else {
       if(!p.done && p.pos.z > 130){ p.done = true; if(!p.isBot){ banner(tag(p) + 'Passou!', 'Agora é só esperar', 1600); sfx('win'); reward(8, 20); rec('t2', R1.t); } }
       if(R1.phase === 'play' && players.every(q => !q.alive || q.done)) endRound();
@@ -9948,7 +10194,7 @@ function aim(c, me, dt){
     const fpq = br && fpOn(me), aE = fpq ? Math.max(c.adsK, c.scK) : c.adsK, dist = br ? camDist + (3.3 - camDist)*aE + ((fpq ? 0.02 : 0.22) - 3.3)*c.scK : camDist;
     const pe = br ? c.pe : c.pitch, yE = br ? c.yE : c.yaw, tgt = new V3(lk.x + Math.sin(yE)*Math.cos(pe)*dist, lk.y + Math.sin(pe)*dist, lk.z + Math.cos(yE)*Math.cos(pe)*dist);
     if(tgt.y < (TWR() ? -6 : -3)) tgt.y = TWR() ? -6 : -3;
-    if(round === 4 || round === 5 || round === 20){ // arena com andares: aproxima a câmera se tiver plataforma no caminho
+    if(round === 4 || round === 5 || round === 20 || round === 27){ // arena com andares: aproxima a câmera se tiver plataforma no caminho
       const d = tgt.clone().sub(lk), q = new V3();
       for(let k=0.12; k<=1; k+=0.08){ q.copy(lk).addScaledVector(d, k);
         if(solidsAt(q.x, q.z).some(b => b.mesh && b.kind !== 'ramp' && q.x > b.min.x - 0.25 && q.x < b.max.x + 0.25 && q.y > b.min.y - 0.35 && q.y < b.max.y + 0.35 && q.z > b.min.z - 0.25 && q.z < b.max.z + 0.25)){ tgt.copy(lk).addScaledVector(d, Math.max(0.12, k - 0.1)); break; } } }
@@ -10022,13 +10268,14 @@ const MAPS = [
   [24, 'Bombas caem do céu: fuja dos anéis vermelhos. A explosão arremessa e racha os pisos', '#ff6f3c'],
   [25, 'Em times: queimada. Pegue a bola e queime os adversários. Do cemitério dá pra voltar', '#3ec7ff'],
   [26, 'Em times: pegue a bandeira do outro time e leve pra sua base. No seu lado, F pega o invasor', '#38d16a'],
+  [27, 'Pique-esconde: os caçadores atiram tinta, os outros viram objetos do quintal (F perto de um objeto)', '#ff4fa3'],
   [22, 'Em times: futebol numa arena fechada com paredes curvas e bola gigante. O time com menos gols sai', '#ff9f1c'],
   [20, 'Battle royale: jogue tomates, a zona fecha e quem zerar a vida sai', '#ff3b4e'],
   [3, 'A final: seja o último em cima da arena', '#ffd23f'],
 ];
-const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
+const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
 const CAT_NAME = {race:'Corrida', surv:'Sobrevivência', team:'Equipe', crab:'Crab Game', final:'Final'};
-const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩'};
+const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈'};
 function renderMaps(cat='all'){
   $('maps').innerHTML = '';
   MAPS.filter(([id]) => !ROUND_OFF.includes(id)).filter(([id]) => cat === 'all' || (cat === 'final' ? FINALS.includes(id) : MAP_CAT[id] === cat)).forEach(([id, desc, col]) => { const b = document.createElement('button'); b.className = 'map' + (cat === 'final' || id === 3 ? ' final' : ''); b.id = 'map-' + id;
