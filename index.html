@@ -10433,13 +10433,22 @@ function updateHUD(){
   if(updateHUD.it !== its){ updateHUD.it = its; $('hItem').innerHTML = its; $('hItem').hidden = !its; }
 }
 
+// resolução automática: mede o tempo real entre quadros (sem o limite de 0,05 s do dt) e mexe só na escala da tela
+const FJAR = {k:1, base:0, ema:16.7, ln:0, t:0, hold:0};
+function fjArSet(k){ if(!FJAR.base) FJAR.base = renderer.getPixelRatio(); FJAR.k = k; renderer.setPixelRatio(Math.max(0.35, FJAR.base*k)); resize(); }
+function fjAutoRes(now){ const iv = now - FJAR.ln; FJAR.ln = now; FJAR.iv = Math.min(1000, Math.max(0, iv)); if(iv <= 0 || iv > 1000) return;
+  if(CFG.autoRes === false){ if(FJAR.k < 1) fjArSet(1); return; } if(PAUSED || (CFG.fps && CFG.fps < 48)) return;
+  FJAR.ema += (iv - FJAR.ema)*0.05; FJAR.t += iv; if(FJAR.t < 1500) return;
+  if(FJAR.ema > 22.2 && FJAR.k > 0.61){ fjArSet(Math.max(0.6, FJAR.k - 0.1)); FJAR.t = 0; FJAR.hold = now + 20000; }
+  else if(FJAR.ema < 17.8 && FJAR.k < 1 && now > FJAR.hold && FJAR.t > 4000){ fjArSet(Math.min(1, FJAR.k + 0.1)); FJAR.t = 0; } }
+{ const _av = applyVideo; applyVideo = function(...a){ const r = _av(...a); FJAR.base = renderer.getPixelRatio(); if(FJAR.k < 1) fjArSet(FJAR.k); return r; }; }
 let fpsN = 0, fpsT = 0;
 function frame(now){
   if(CFG.fps && now - last < 1000/CFG.fps - 2){ requestAnimationFrame(frame); return; }
   const dt = Math.min(0.05, (now - last)/1000); last = now;
   if(!PAUSED) tick(dt); view(dt); fjCull(camera); fjLod(camera); fjBatch(); fjLootFx(); fjGrass(PAUSED ? 0 : dt); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
   if(TOON){ toonT += dt; if(toonT > 1.5) applyToon(); }
-  fpsN++; fpsT += dt; if(fpsT >= 0.5){ if(CFG.showFps) $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS'; fpsN = 0; fpsT = 0; }
+  fjAutoRes(now); fpsN++; fpsT += FJAR.iv/1000; if(fpsT >= 0.5){ if(CFG.showFps) $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS' + (FJAR.k < 0.99 ? ' · resolução ' + Math.round(FJAR.k*100) + '%' : ''); fpsN = 0; fpsT = 0; }
   if(pv && !$('shop').hidden){ pv.rot += dt*0.9; pv.m.g.rotation.y = Math.sin(pv.rot)*0.75 + pv.off; if(pv.m.spin) pv.m.spin.rotation.y += dt*8; SKINS.tick(pv.m, pv.rot*2, dt); SKINS.tickCos(pv.m, pv.rot*2); pv.r.render(pv.sc, pv.cam); }
   requestAnimationFrame(frame);
 }
@@ -10747,7 +10756,7 @@ const Platform = {
   copy(text){ try{ if(navigator.clipboard) return navigator.clipboard.writeText(text).catch(() => {}); }catch(e){} },
   online:null, // ainda não existe servidor: salas e convites são só interface
 };
-const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, occ:true, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true, fpp:false};
+const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, occ:true, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true, fpp:false, autoRes:true};
 const CFG = Object.assign({}, CFG_DEF, Platform.load('feijao-cfg') || {});
 let PAUSED = false, returnTo = 'menu', setTab = 'video';
 function applyAudio(){ if(!ac) return; master.gain.value = 0.7*CFG.vol/100*(CFG.muteBlur && !document.hasFocus() ? 0 : 1); musicGain.gain.value = 0.32*CFG.music/100; sfxGain.gain.value = CFG.sfx/100; }
@@ -10767,7 +10776,7 @@ document.addEventListener('fullscreenchange', () => { CFG.full = !!document.full
 addEventListener('blur', applyAudio); addEventListener('focus', applyAudio);
 const SET_UI = {
   video:[['full', 'Modo de tela', 'seg', [[false, 'Janela'], [true, 'Tela cheia']]], ['quality', 'Qualidade gráfica', 'seg', [[0, 'Baixa'], [1, 'Média'], [2, 'Alta'], [3, 'Ultra']]],
-    ['scale', 'Escala de renderização', 'range', [50, 100, 5, '%']], ['shadows', 'Sombras', 'tog'], ['toon', 'Visual de desenho (contorno e luz em faixas)', 'tog'], ['fov', 'Campo de visão', 'range', [50, 90, 1, '°']],
+    ['scale', 'Escala de renderização', 'range', [50, 100, 5, '%']], ['autoRes', 'Resolução automática (baixa um pouco quando o FPS cai)', 'tog'], ['shadows', 'Sombras', 'tog'], ['toon', 'Visual de desenho (contorno e luz em faixas)', 'tog'], ['fov', 'Campo de visão', 'range', [50, 90, 1, '°']],
     ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['occ', 'Deixar transparente o que cobre o feijão', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
   audio:[['vol', 'Volume geral', 'range', [0, 100, 1, '%']], ['music', 'Música', 'range', [0, 100, 1, '%']], ['sfx', 'Efeitos', 'range', [0, 100, 1, '%']], ['muteBlur', 'Silenciar quando a janela perde o foco', 'tog']],
   ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['fpp', 'Modo 100 em primeira pessoa (tecla P troca na partida)', 'tog'], ['keys']],
