@@ -11126,7 +11126,7 @@ function wdRideStep(p, dt, inp){ const c = p.ride; if(!cars.includes(c) || c.dea
   const P = wdvSeat(c, p.seat); p.pos.set(P[0], P[1], P[2]); p.vel.set(0, 0, 0); p.grounded = true; p.ground = null; p.stun = 0; p.dive = 0;
   if(inp.item && !p.isBot){ inp.item = false; wdUnride(p, c.heli && c.y - gY(c.x, c.z) > 5); } }
 // voo: o helicóptero vira pra onde a câmera olha, WASD anda pros lados, Espaço sobe, Shift/C desce. Sem motor ele cai
-function wdGround(c, x, z){ let g = Math.max(gY(x, z), typeof FJ_WL === 'number' ? FJ_WL : -99);
+function wdGround(c, x, z){ let g = Math.max(gY(x, z), TER && typeof FJ_WL === 'number' ? FJ_WL : -99);
   for(const b of solidsAt(x, z)){ if(b.active && x > b.min.x - 0.5 && x < b.max.x + 0.5 && z > b.min.z - 0.5 && z < b.max.z + 0.5 && b.max.y <= c.y + 0.6 && b.max.y > g) g = b.max.y; } return g; }
 function wdHeliMove(c, dt){ const ox = c.x, oz = c.z; c.x += c.vx*dt; c.z += c.vz*dt; c.y += c.vy*dt; const RX = TER ? TER.X - 6 : BIG_W, RZ = TER ? TER.Z - 6 : BIG_W; c.x = clamp(c.x, -RX, RX); c.z = clamp(c.z, -RZ, RZ);
   for(const b of solidsAt(c.x, c.z)){ if(!b.active || b.max.y <= c.y + 0.6 || b.min.y > c.y + 3) continue; const R = c.rad*0.6;
@@ -11778,6 +11778,11 @@ const FJ_ZK = (A, k) => A.map(r => [r[0]*k, r[1]*k, ...r.slice(2)]), FJ_ZPV = FJ
 function fjZoneSlow(){ if(!BIG || WAR || BR_TEST) return; if(ZP === ZP_V) ZP = FJ_ZPV; else if(ZP === ZP_S) ZP = FJ_ZPS; else if(ZP === TW_ZP) ZP = FJ_ZPT; }
 { const _nz = nextZone; nextZone = function(...a){ fjZoneSlow(); return _nz(...a); }; }
 { const _tz = twNextZone; twNextZone = function(...a){ fjZoneSlow(); return _tz(...a); }; }
+// jipe do Blender: roda da frente dentro de um pivô (o pivô vira com o volante, a roda só gira no eixo)
+{ const _wm = wdvModel; wdvModel = function(...a){ const g = _wm(...a), U = g.userData;
+  if(U && U.front) U.front = U.front.map(o => { if(!o.parent || (o.parent.userData && o.parent.userData.fjPiv)) return o.parent || o; const p = new THREE.Group(); p.userData.fjPiv = true;
+    p.position.copy(o.position); o.parent.add(p); p.add(o); o.position.set(0, 0, 0); return p; });
+  return g; }; }
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
