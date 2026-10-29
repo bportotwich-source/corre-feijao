@@ -7791,8 +7791,16 @@ function finishStuds(){ const n = studList.length/4; if(!n) return;
   im.instanceMatrix.needsUpdate = true; if(im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.keep = true; im.receiveShadow = true; world.add(im); studList = []; }
 const CHUTE_G = new THREE.SphereGeometry(1, 10, 6, 0, Math.PI*2, 0, Math.PI/2);
 function chute(p){ if(!p.m.chute){ const c = BRE.chute(COLORS[(p.i*7 + 3) % COLORS.length]); p.m.g.add(c); p.m.chute = c; } p.m.chute.visible = true; }
+// sombra só das peças grandes dos outros feijões (o seu continua com todas). Revisto a cada ~1 s por feijão, porque skin, chapéu e colete trocam peças
+const FJ_SH_R = 0.3;
+function fjBeanShadow(p){ const m = p.m, mine = !p.isBot && (p.i === 0 || (twoP && p.i === 1)) && !p.netH;
+  m.g.traverse(o => { if(!o.isMesh || o === m.line) return; if(o.userData.sh0 === undefined) o.userData.sh0 = o.castShadow; if(!o.userData.sh0) return;
+    if(mine || o === m.body){ o.castShadow = o === m.body ? !m.far : true; return; } const g = o.geometry; if(!g.boundingSphere) g.computeBoundingSphere();
+    o.castShadow = !m.far && g.boundingSphere.radius*Math.max(o.scale.x, o.scale.y, o.scale.z) > FJ_SH_R; }); }
+let fjShI = 0;
 // feijões longe da câmera ficam sem olhos, braços e roupas (pesa bem menos com 100)
 function lodBeans(){
+  if(players.length){ const n = Math.max(1, Math.ceil(players.length/60)); for(let k = 0; k < n; k++){ fjShI = (fjShI + 1) % players.length; fjBeanShadow(players[fjShI]); } }
   const cs = twoP ? [cam1.pos, cam2.pos] : [cam1.pos];
   for(const p of players){ const m = p.m; if(!m.g.visible) continue; const far = R1.phase !== 'podium' && cs.every(c => c.distanceTo(p.pos) > 30);
     syncGun(p, far); if(m.far !== far){ m.far = far; [...m.eyes, m.mouth, ...m.legs, ...m.arms].forEach(o => o.visible = !far); if(m.hd) m.body.geometry = FEIJAO_HD.bodyGeo(far ? [14, 10] : [34, 24]); if(m.line) m.line.visible = TOON && !far; Object.values(m.cos).forEach(g => g.visible = !far); if(m.skinG) m.skinG.visible = !far; m.body.castShadow = !far; } syncArmor(p, far); }
