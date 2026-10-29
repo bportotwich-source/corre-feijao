@@ -3972,7 +3972,7 @@ function botZones(p, dt, inp){
 
 // Guerra de Tomate: battle royale. Cada tomate tira vida, a zona fecha e quem zerar a vida sai
 // mira do Modo 100: sem acessório dá um zoom leve no ombro; luneta e sniper viram lente em primeira pessoa
-let AIMY1 = 0.42, scopeOn = false; const adsScope = p => { const it = p.inv && p.inv[p.sel]; return !it ? null : it.k === 'sniper' ? 'sniper' : WI(it).scope ? 'luneta' : null; }, adsFov = p => { if(typeof ARMA !== 'undefined' && ARMA.lib){ const it = p.inv && p.inv[p.sel], z = VM_ZOOM[sightOf(it)] || 1.25; return CFG.fov/(z >= 2 ? 1.2 : z); } const s = adsScope(p); return s === 'sniper' ? 13 : s === 'luneta' ? 22 : CFG.fov/1.3; };
+let AIMY1 = 0.42, scopeOn = false; const FP_VM = [0.02, 0.18, -0.14, 62]; const fpOn = me => !!(CFG.fpp && BIG && round === 20 && !twoP && me && me.alive && !me.down && !me.glide && !me.car && R1.phase !== 'podium'); const adsScope = p => { const it = p.inv && p.inv[p.sel]; return !it ? null : it.k === 'sniper' ? 'sniper' : WI(it).scope ? 'luneta' : null; }, adsFov = p => { if(typeof ARMA !== 'undefined' && ARMA.lib){ const it = p.inv && p.inv[p.sel], z = VM_ZOOM[sightOf(it)] || 1.25; return CFG.fov/(z >= 2 ? 1.2 : z); } const s = adsScope(p); return s === 'sniper' ? 13 : s === 'luneta' ? 22 : CFG.fov/1.3; };
 const AIM_Y = 0.42, SHOT_V = 32, SHOT_G = -9, BR_W = 22, BR_DMG = 10;
 let shots = [], hearts = [], hpBars = [], brZone = null, bushes = [];
 // parede da zona: listras diagonais que sobem devagar
@@ -8024,7 +8024,7 @@ addEventListener('keydown', e => {
     else if((twoP ? ['ShiftLeft','KeyC','KeyQ'] : ['ShiftLeft','ShiftRight','KeyC','KeyQ']).includes(e.code)) Q[0].dive = true;
     if(e.code === 'KeyR') Q[0].reload = true;
     if(['Digit1', 'Digit2', 'Digit3'].includes(e.code)) Q[0].slot = +e.code[5] - 1;
-    if(e.code === 'KeyF') Q[0].push = true; if(e.code === 'KeyE') Q[0].item = true; if(e.code === 'KeyG') Q[0].grab = true; if(brK && e.code === 'KeyT') whHold('t'); if(brK && e.code === 'Digit4') Q[0].nadeNext = true; if(brK && e.code === 'KeyH') Q[0].holster = true;
+    if(e.code === 'KeyF') Q[0].push = true; if(e.code === 'KeyE') Q[0].item = true; if(e.code === 'KeyG') Q[0].grab = true; if(brK && e.code === 'KeyT') whHold('t'); if(brK && e.code === 'Digit4') Q[0].nadeNext = true; if(brK && e.code === 'KeyH') Q[0].holster = true; if(brK && e.code === 'KeyP'){ CFG.fpp = !CFG.fpp; Platform.save('feijao-cfg', CFG); banner(CFG.fpp ? 'Primeira pessoa' : 'Terceira pessoa', 'Aperte P pra trocar', 800); }
     if(twoP){ if(['Enter','NumpadEnter','Numpad0'].includes(e.code)) Q[1].jump = true; if(['ShiftRight','Numpad1'].includes(e.code)) Q[1].dive = true; if(['ControlRight','Numpad2','Slash'].includes(e.code)) Q[1].push = true; if(['End','Numpad3'].includes(e.code)) Q[1].item = true; if(['PageDown','Numpad5'].includes(e.code)) Q[1].grab = true; }
     if(e.code === 'KeyM'){ if(BIG && round === 20 && TER && R1.phase !== 'podium') bigMapOn = !bigMapOn; else toggleMusic(); } }
   keys[e.code] = true;
@@ -8043,7 +8043,7 @@ canvas.addEventListener('mousedown', e => {
   else if(document.pointerLockElement === canvas && e.button === 0) Q[0].push = true;
 });
 addEventListener('mouseup', () => dragging = false);
-addEventListener('mousemove', e => { if(WH.on){ whMove(e); return; } if(document.pointerLockElement === canvas || dragging){ const me = players[0], ads = BIG && me && me.ads, k = CFG.sens/100*(ads ? (VM.on && VM.zs ? 1/VM.zs : camera.fov/CFG.fov)*CFG.adsSens/100 : 1); yaw -= e.movementX*0.0024*k; pitch = clamp(pitch + e.movementY*0.0024*k*(CFG.invY ? -1 : 1), ads ? -0.55 : 0.05, 1.1); } });
+addEventListener('mousemove', e => { if(WH.on){ whMove(e); return; } if(document.pointerLockElement === canvas || dragging){ const me = players[0], ads = BIG && me && me.ads, k = CFG.sens/100*(ads ? (VM.on && VM.zs ? 1/VM.zs : camera.fov/CFG.fov)*CFG.adsSens/100 : 1); yaw -= e.movementX*0.0024*k; pitch = clamp(pitch + e.movementY*0.0024*k*(CFG.invY ? -1 : 1), fpOn(me) ? -1.2 : ads ? -0.55 : 0.05, 1.1); } });
 canvas.addEventListener('wheel', e => { camDist = clamp(camDist + e.deltaY*0.01, 5, 14); e.preventDefault(); }, {passive:false});
 // controle: no modo 2 jogadores o primeiro controle é do J2 (o J1 fica no teclado e mouse)
 function padOf(i){ let ps = []; try{ ps = [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(g => g && g.connected); }catch(e){} return (twoP ? (i === 1 ? ps[0] : ps[1]) : i === 0 ? ps[0] : null) || null; }
@@ -8793,18 +8793,20 @@ function vmBuild(p, it){ const k = it.k, att = it.att || {}, sg = sightOf(it), l
     ret.rotation.y = Math.PI; ret.position.z = scope ? -0.0005 : 0.001; ret.renderOrder = 2; grp.add(ret); if(scope) VM.lens = {grp, R, Z}; }
   else { const f = vmKid(g, 's_ferro'), bb = new THREE.Box3().setFromObject(g); eye = f ? f.position.clone().add(new V3(0, 0, -0.34)) : new V3(0, bb.max.y + 0.03, bb.min.z - 0.25); }
   g.rotation.y = Math.PI; g.position.set(eye.x, -eye.y, eye.z); root.add(g); root.userData.sn = false; VM.bl = true; VM.zm = Z; vmScene.add(root); return VM.g = root; }
-function vmStep(c, me, dt){ const sK = c.scK || 0, it = me.inv && me.inv[me.sel]; VM.on = !!(it && sK > 0.02 && me.alive && BIG && round === 20 && c === cam1 && !twoP); if(!VM.on){ VM.up = 0; if(VM.g) VM.g.visible = false; return; }
+function vmStep(c, me, dt){ const sK = c.scK || 0, it = me.inv && me.inv[me.sel]; const fp = fpOn(me); VM.on = !!(it && sK > 0.02 && me.alive && BIG && round === 20 && c === cam1 && !twoP && !(fp && (me.holster || me.climb || me.mantle || me.vault))); if(!VM.on){ VM.up = 0; if(VM.g) VM.g.visible = false; return; }
   const g = vmBuild(me, it); VM.kick = Math.max(0, VM.kick - dt*9); VM.rel += ((me.relT > 0 ? 1 : 0) - VM.rel)*Math.min(1, dt*10);
-  const mv = Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6); VM.bob += dt*(6 + mv*5); VM.up = Math.min(1, (VM.up || 0) + dt*(WI(it).ads || 1)/0.16); const u = Math.min(VM.up, sK), e = u*u*(3 - 2*u), b = mv*(1 - e*0.7); // subida da arma até o olho
+  const mv = Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6); VM.bob += dt*(6 + mv*5); VM.up = fp && !me.ads ? 0 : Math.min(1, (VM.up || 0) + dt*(WI(it).ads || 1)/0.16); const u = Math.min(VM.up, fp ? c.adsK || 0 : sK), e = u*u*(3 - 2*u), b = mv*(1 - e*0.7); // subida da arma até o olho
   g.visible = !(g.userData.sn && e > 0.92 && me.relT <= 0); VM.e = e; VM.zs = VM.lens ? (e > 0.8 ? VM.lens.Z : 1) : 0;
   const rb = VM.bl ? VM.rel : 0, rn = VM.rel - rb; // Blender: a arma desce um tico e deita de lado (gira em volta dela mesma) pra mostrar o pente
   g.position.set(0.22*(1 - e) + Math.sin(VM.bob)*0.008*b - rb*0.02, -0.3*(1 - e) - Math.abs(Math.cos(VM.bob))*0.01*b - rn*0.07 + rb*0, 0.06*(1 - e) + VM.kick*0.045 - rb*0.2);
   g.rotation.set(VM.kick*0.07 - rn*0.3 - 0.18*(1 - e)*e, 0.12*(1 - e), -0.22*(1 - e) + rn*0.35);
+  VM.fp = fp; if(fp){ const h = 1 - e; g.position.x += FP_VM[0]*h; g.position.y += FP_VM[1]*h; g.position.z += FP_VM[2]*h; }
+  VM.run = (VM.run || 0) + ((fp && me.sprinting && !me.ads && !(me.relT > 0) ? 1 : 0) - (VM.run || 0))*Math.min(1, dt*9); if(VM.run > 0.01){ const r = AE(VM.run); g.position.x += 0.02*r; g.position.y -= 0.03*r; g.rotation.x += 0.08*r; g.rotation.y += 0.3*r; g.rotation.z -= 0.15*r; }
   if(g.children[0]){ const q = AE(rb); g.children[0].rotation.order = 'YZX'; g.children[0].rotation.set(0.1*q, Math.PI + 0.55*q, 1.1*q); }
   const gi = g.children[0]; if(gi && gi.userData.bl){ const w = WI(it), t = me.relT > 0 ? 1 - me.relT/w.rel : -1, o = armaAnim(gi, it.k, t, Math.min(w.mag - it.mag, it.ammo)), hL = gi.userData.handL;
     if(o && o.hand && hL){ hL.position.lerp(o.hand.add(new V3(0.01, -0.02, 0)), o.w); hL.rotation.x += 0.8*o.w; } } }
 const vmPip = new THREE.PerspectiveCamera(10, 1, 0.1, 600), _la = new V3(), _lb = new V3(), _lq = new THREE.Quaternion();
-function vmRender(W, H){ if(!VM.on) return; vmCam.aspect = W/H; vmCam.fov = (VM.fov || 50) + (60 - (VM.fov || 50))*(VM.bl ? VM.rel : 0); vmCam.updateProjectionMatrix(); const ac = renderer.autoClear; renderer.autoClear = false;
+function vmRender(W, H){ if(!VM.on) return; vmCam.aspect = W/H; vmCam.fov = (VM.fov || 50) + (60 - (VM.fov || 50))*(VM.bl ? VM.rel : 0); if(VM.fp) vmCam.fov += (FP_VM[3] - vmCam.fov)*(1 - (VM.e || 0)); vmCam.updateProjectionMatrix(); const ac = renderer.autoClear; renderer.autoClear = false;
   const Ls = VM.lens; if(Ls && VM.g && VM.g.visible && (VM.e || 0) > 0.5){ vmScene.updateMatrixWorld(); Ls.grp.getWorldPosition(_la); _lb.set(Ls.R, 0, 0); Ls.grp.localToWorld(_lb); _la.project(vmCam); _lb.project(vmCam);
     const r = Math.hypot((_lb.x - _la.x)*W/H, _lb.y - _la.y); // raio da lente na tela (em meia altura)
     vmPip.fov = 2*Math.atan(r*Math.tan(CFG.fov*Math.PI/360)/Ls.Z)*180/Math.PI; vmPip.aspect = 1; vmPip.updateProjectionMatrix();
@@ -8818,15 +8820,15 @@ function aim(c, me, dt){
   else if(R1.phase === 'intro' && round === 1){ look.set(0, 0, 60 - R1.t*20); camPos.lerp(new V3(Math.sin(R1.t*0.5)*18, 16, look.z - 22), Math.min(1, dt*2)); }
   else {
     look.lerp(new V3(follow.pos.x, follow.pos.y + 1.2 - (follow.stance === 2 ? 0.75 : follow.stance === 1 ? 0.4 : 0), follow.pos.z), Math.min(1, dt*10));
-    const br = BIG && round === 20 && c === cam1 && !twoP, ad = br && me.ads && me.alive ? 1 : 0, sc = ad, lk = look.clone();
-    if(br){ if(!ad && c.pitch < 0.05) c.pitch = Math.min(0.05, c.pitch + dt*3); // mirando dá pra olhar pra cima; ao soltar volta
+    const br = BIG && round === 20 && c === cam1 && !twoP, ad = br && me.ads && me.alive ? 1 : 0, fp = br && fpOn(me), sc = ad || fp ? 1 : 0, lk = look.clone();
+    if(br){ if(!ad && !fp && c.pitch < 0.05) c.pitch = Math.min(0.05, c.pitch + dt*3); // mirando dá pra olhar pra cima; ao soltar volta
       c.adsK = (c.adsK || 0) + (ad - (c.adsK || 0))*Math.min(1, dt*24); c.scK = (c.scK || 0) + (sc - (c.scK || 0))*Math.min(1, dt*24); if(c.adsK < 0.01) c.adsK = 0; if(c.scK < 0.01) c.scK = 0;
-      const aK = c.adsK, sK = c.scK, sh = 0.95*aK*(1 - sK), a0 = Math.atan(Math.tan(CFG.fov*Math.PI/360)*AIM_Y); c.pe = c.pitch - a0*sK; AIMY1 = Math.tan(a0*(1 - sK))/Math.tan(camera.fov*Math.PI/360); scopeOn = sK > 0.8;
-      lk.x += Math.cos(c.yaw)*sh; lk.z -= Math.sin(c.yaw)*sh; if(sK > 0.5 && adsScope(me) === 'sniper'){ const B = c.brt || (c.brt = {v:1, tired:0, hold:false}), want = !!(keys.ShiftLeft || keys.ShiftRight); B.tired = Math.max(0, B.tired - dt); B.hold = want && B.tired <= 0 && B.v > 0; if(B.hold){ B.v = Math.max(0, B.v - dt/4); if(B.v === 0){ B.tired = 1.5; B.hold = false; sfx('beep'); } } else B.v = Math.min(1, B.v + dt/3);
-        const mv = Math.hypot(me.vel.x, me.vel.z) > 1 ? 3 : 1, a = 0.0007*mv*sK*(B.hold ? 0.08 : B.tired > 0 ? 2.5 : 1); lk.x += Math.sin(clock*1.3)*a*Math.cos(c.yaw); lk.z -= Math.sin(clock*1.3)*a*Math.sin(c.yaw); lk.y += Math.sin(clock*2.1 + 1)*a*0.7; } lk.y += 0.25*aK*(1 - sK) + 0.32*sK; c.lk = lk;
+      const aK = c.adsK, sK = c.scK, sh = 0.95*aK*(1 - sK), a0 = Math.atan(Math.tan(CFG.fov*Math.PI/360)*AIM_Y); c.pe = c.pitch - a0*sK; AIMY1 = Math.tan(a0*(1 - sK))/Math.tan(camera.fov*Math.PI/360); scopeOn = sK > 0.8 && aK > 0.8;
+      lk.x += Math.cos(c.yaw)*sh; lk.z -= Math.sin(c.yaw)*sh; if(aK > 0.5 && sK > 0.5 && adsScope(me) === 'sniper'){ const B = c.brt || (c.brt = {v:1, tired:0, hold:false}), want = !!(keys.ShiftLeft || keys.ShiftRight); B.tired = Math.max(0, B.tired - dt); B.hold = want && B.tired <= 0 && B.v > 0; if(B.hold){ B.v = Math.max(0, B.v - dt/4); if(B.v === 0){ B.tired = 1.5; B.hold = false; sfx('beep'); } } else B.v = Math.min(1, B.v + dt/3);
+        const mv = Math.hypot(me.vel.x, me.vel.z) > 1 ? 3 : 1, a = 0.0007*mv*sK*(B.hold ? 0.08 : B.tired > 0 ? 2.5 : 1); lk.x += Math.sin(clock*1.3)*a*Math.cos(c.yaw); lk.z -= Math.sin(clock*1.3)*a*Math.sin(c.yaw); lk.y += Math.sin(clock*2.1 + 1)*a*0.7; } lk.y += 0.25*aK*(1 - sK) + 0.32*sK - (fp && me.stance === 2 ? 0.3 : 0); c.lk = lk;
       const Ln = me.leanK || 0; if(Ln){ const o = Math.sin(Ln*LEAN_A)*1.45; lk.x += Math.cos(c.yaw)*o; lk.z -= Math.sin(c.yaw)*o; lk.y -= (1 - Math.cos(Ln*LEAN_A))*1.45; }
       const yo = v => Math.atan2(-v.x, -v.z), po = v => Math.asin(clamp(-v.y, -1, 1));
-      if(ad && !c.adsP && c.hipD){ const o = c.hipO; c.adsP = rayHit(o, c.hipD, 220, me, o.distanceTo(me.pos) + 0.6); // correção calculada uma vez, já para o olho da 1ª pessoa (ângulo fixo, não cresce durante a troca)
+      if(ad && !fp && !c.adsP && c.hipD){ const o = c.hipO; c.adsP = rayHit(o, c.hipD, 220, me, o.distanceTo(me.pos) + 0.6); // correção calculada uma vez, já para o olho da 1ª pessoa (ângulo fixo, não cresce durante a troca)
         const E = new V3(me.pos.x, look.y + 0.32, me.pos.z), v = c.adsP.clone().sub(E).normalize(); let dy = yo(v) - c.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); c.adsC = c.adsP.distanceTo(E) < 4 ? [0, 0] : [clamp(dy, -0.15, 0.15), clamp(po(v) - (c.pitch - a0), -0.15, 0.15)]; }
       if(!ad && sK === 0) c.adsP = c.adsC = null;
       if(c.adsC){ c.yE = c.yaw + c.adsC[0]*sK; c.pe += c.adsC[1]*sK; } else c.yE = c.yaw;
@@ -8930,7 +8932,7 @@ const Platform = {
   copy(text){ try{ if(navigator.clipboard) return navigator.clipboard.writeText(text).catch(() => {}); }catch(e){} },
   online:null, // ainda não existe servidor: salas e convites são só interface
 };
-const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true};
+const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true, fpp:false};
 const CFG = Object.assign({}, CFG_DEF, Platform.load('feijao-cfg') || {});
 let PAUSED = false, returnTo = 'menu', setTab = 'video';
 function applyAudio(){ if(!ac) return; master.gain.value = 0.7*CFG.vol/100*(CFG.muteBlur && !document.hasFocus() ? 0 : 1); musicGain.gain.value = 0.32*CFG.music/100; sfxGain.gain.value = CFG.sfx/100; }
@@ -8953,7 +8955,7 @@ const SET_UI = {
     ['scale', 'Escala de renderização', 'range', [50, 100, 5, '%']], ['shadows', 'Sombras', 'tog'], ['toon', 'Visual de desenho (contorno e luz em faixas)', 'tog'], ['fov', 'Campo de visão', 'range', [50, 90, 1, '°']],
     ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
   audio:[['vol', 'Volume geral', 'range', [0, 100, 1, '%']], ['music', 'Música', 'range', [0, 100, 1, '%']], ['sfx', 'Efeitos', 'range', [0, 100, 1, '%']], ['muteBlur', 'Silenciar quando a janela perde o foco', 'tog']],
-  ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['keys']],
+  ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['fpp', 'Modo 100 em primeira pessoa (tecla P troca na partida)', 'tog'], ['keys']],
   game:[['name', 'Nome do jogador', 'text'], ['cross', 'Mira (Modo 100 e Guerra de Tomate)', 'seg', [['cruz', 'Cruz'], ['ponto', 'Ponto'], ['circulo', 'Círculo']]], ['hudTheme', 'Cor da HUD do Modo 100', 'seg', [['tatico', 'Tático'], ['creme', 'Creme'], ['roxo', 'Roxo']]], ['autoQ', 'Tecla 5 escolhe a melhor cura quando o marcado acaba', 'tog'], ['tips', 'Mensagens no canto (quem caiu, quem pegou o quê)', 'tog'], ['lang', 'Idioma', 'seg', [['pt', 'Português (Brasil)']]], ['wipe']],
 };
 function renderSettings(){
@@ -9518,7 +9520,7 @@ NET.voice = VOICE;
 
 // ---------- Lobby 3D: quem está na sala anda junto numa praça, com mini-games, esperando o líder começar ----------
 // A praça é uma "partida" especial (rodada LB) sem bots e sem fim. Esc abre o painel da sala por cima (modo, mapa, voz, chat, Começar).
-const LB_OFF = true;   // p_online.py --sem-lobby desliga a praça (volta pro painel 2D)
+const LB_OFF = false;   // p_online.py --sem-lobby desliga a praça (volta pro painel 2D)
 const LB = 30; ROUND_INFO[LB] = 'Praça da sala';
 const LBY = {panel:false, ball:null, net:null, score:[0, 0], reset:0, sendT:0, board:null, bell:null, ring:0, climb0:null, best:{}, flag:null, flagT:0};
 const LB_F = {x:0, z:-13, hx:9, hz:6, mz:2};   // campo de futebol: centro, meia largura, meia altura e meia boca do gol
@@ -9531,10 +9533,10 @@ const lbCur = () => Object.assign({}, NET.match, {clock, members:NET.members.fil
 function lbStart(){ if(LB_OFF || !NET.host || !NET.on) return; const d = lbMsg(); netCtl(d); netBegin(d); }
 // ---- peças da praça ----
 function lbCanvas(w, h, draw){ const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); draw(g, w, h); const t = new THREE.CanvasTexture(c); t.anisotropy = 4; return {c, g, t}; }
-function lbRound(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function lbRR(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 function lbBoard(x, y, z, ry, W, H, draw){ const cw = 1024, ch = Math.round(cw*H/W), T = lbCanvas(cw, ch, draw);
   const m = new THREE.Mesh(new THREE.PlaneGeometry(W, H), new THREE.MeshBasicMaterial({map:T.t, transparent:true})); m.position.set(x, y, z); m.rotation.y = ry; world.add(m); return Object.assign(T, {m, draw}); }
-function lbSignDraw(title, sub, bg = '#fff6e6', fg = '#2b1846', ac = '#ff9f1c'){ return (g, w, h) => { g.clearRect(0, 0, w, h); lbRound(g, 6, 6, w - 12, h - 12, Math.min(60, h*0.25)); g.fillStyle = bg; g.fill(); g.lineWidth = 12; g.strokeStyle = ac; g.stroke();
+function lbSignDraw(title, sub, bg = '#fff6e6', fg = '#2b1846', ac = '#ff9f1c'){ return (g, w, h) => { g.clearRect(0, 0, w, h); lbRR(g, 6, 6, w - 12, h - 12, Math.min(60, h*0.25)); g.fillStyle = bg; g.fill(); g.lineWidth = 12; g.strokeStyle = ac; g.stroke();
   g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `${Math.round(h*(sub ? 0.36 : 0.5))}px "Lilita One", "Arial Black", sans-serif`; g.fillText(title, w/2, sub ? h*0.4 : h/2, w - 60);
   if(sub){ g.font = `700 ${Math.round(h*0.16)}px system-ui, sans-serif`; g.fillStyle = '#6b5a85'; g.fillText(sub, w/2, h*0.75, w - 60); } }; }
 function lbPost(x, z, h, col = 0xffffff, r = 0.14){ const m = mesh(new THREE.CylinderGeometry(r, r*1.15, h, 10), mat(col), world); m.position.set(x, h/2, z); return m; }
@@ -9563,7 +9565,7 @@ function lbField(){ const F = LB_F, W = F.hx*2, H = F.hz*2;
   const bt = lbCanvas(256, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.fillStyle = '#2b1846'; for(let i = 0; i < 8; i++) for(let j = 0; j < 3; j++){ const cx = (i + (j % 2)*0.5)*w/8, cy = (j + 0.5)*h/3; g.beginPath(); for(let k = 0; k < 5; k++){ const a = k/5*Math.PI*2; g.lineTo(cx + Math.cos(a)*11, cy + Math.sin(a)*11); } g.fill(); } });
   const bm = mesh(new THREE.SphereGeometry(LB_R, 18, 14), new THREE.MeshLambertMaterial({map:bt.t}), world);
   LBY.ball = {m:bm, pos:new V3(F.x, 1.5, F.z), vel:new V3(), spin:new V3()}; bm.position.copy(LBY.ball.pos); }
-function lbScoreDraw(g){ const w = g.canvas.width, h = g.canvas.height, [a, b] = LBY.score; g.clearRect(0, 0, w, h); lbRound(g, 6, 6, w - 12, h - 12, 50); g.fillStyle = '#2b1846'; g.fill();
+function lbScoreDraw(g){ const w = g.canvas.width, h = g.canvas.height, [a, b] = LBY.score; g.clearRect(0, 0, w, h); lbRR(g, 6, 6, w - 12, h - 12, 50); g.fillStyle = '#2b1846'; g.fill();
   g.textBaseline = 'middle'; g.font = `${Math.round(h*0.3)}px "Lilita One", "Arial Black", sans-serif`; g.textAlign = 'left'; g.fillStyle = '#7fa6ff'; g.fillText('AZUL', 50, h/2); g.textAlign = 'right'; g.fillStyle = '#ffb347'; g.fillText('LARANJA', w - 50, h/2);
   g.textAlign = 'center'; g.fillStyle = '#fff'; g.font = `${Math.round(h*0.5)}px "Lilita One", "Arial Black", sans-serif`; g.fillText(`${a}  x  ${b}`, w/2, h/2 + 4); }
 function lbScoreShow(){ if(!LBY.board) return; lbScoreDraw(LBY.board.g); LBY.board.t.needsUpdate = true; }
