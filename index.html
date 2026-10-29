@@ -859,6 +859,24 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
 #nadeHint b{color:#ffd23f}
 </style>
 
+<style id="hudCss">
+/* etapa 4: o mesmo tema de HUD em todos os modos */
+body:not(.brh) #top{gap:6px}
+body:not(.brh) #top .chip{background:var(--zpnl);color:var(--zink);border:1px solid var(--zline);box-shadow:var(--zshadow);border-radius:12px;font-size:19px;padding:6px 15px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+body:not(.brh) #top .chip.round{background:var(--zacc);border-color:transparent;color:#fff}
+body:not(.brh) #top #hItem{background:var(--zsel);color:#2a1a44;border-color:transparent}
+.feed div{background:var(--zpnl);color:var(--zink);border:1px solid var(--zline);box-shadow:var(--zshadow);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.feed div b{color:var(--zacc)}
+#wdHud .wdS{background:var(--zpnl)!important;color:var(--zink)!important;border-color:var(--zline)!important;box-shadow:var(--zshadow)}
+#wdHud .wdS.me{border-color:var(--zsel)!important}
+#wdHud .wdZ{background:var(--zpnl2)!important;color:var(--zink)!important;border:1px solid var(--zline);box-shadow:var(--zshadow)}
+#wdMoney{display:none!important}
+body.wdOn #brTop .bp.mode{display:none}
+#brTop .bp.wdm i{font-style:normal;font-size:1.15em;line-height:1}
+#brTop .bp.wdm kbd{font-family:var(--body);font-weight:800;font-size:.85em;background:var(--zacc);color:#fff;border-radius:4px;padding:0 4px;margin-right:3px}
+#cpHud{background:var(--zpnl)!important;color:var(--zink)!important;border:1px solid var(--zline)!important;box-shadow:var(--zshadow)!important;border-radius:12px!important;padding:5px 14px!important;font:700 13px var(--body),system-ui,sans-serif!important;top:calc(64px + env(safe-area-inset-top,0px))!important}
+#cpHud kbd{background:var(--zacc);color:#fff;border-radius:4px;padding:0 4px;font-family:var(--body)}
+</style>
 <canvas id="c" tabindex="0" aria-label="Arena do jogo"></canvas>
 <canvas id="mini" width="220" height="220" hidden></canvas><canvas id="bigmap" width="640" height="640" hidden></canvas>
 <div class="hud" id="pick" hidden></div><div class="hud" id="inv" hidden></div>
@@ -8826,12 +8844,12 @@ function brHUD(){
     const ar = c.querySelector('.ar'); if(ar){ const h = ['vest', 'helm'].map(k => { const lv = q.arm ? q.arm[k] : 0; return `<span class="${lv ? '' : 'off'}" title="${ITEMS[k].name}">${iconImg(k, lv || 1, ITEMS[k].ic)}${lv || '–'}</span>`; }).join(''); if(ar._h !== h){ ar._h = h; ar.innerHTML = h; } }
     const st = !q.alive ? (q.card ? '📡 pode voltar' : '✖ fora') : q.down ? '🆘 caído' : q.glide === 'plane' ? '✈️ no avião' : q.glide ? '🪂 caindo' : q.inv ? (WPN[q.inv[q.sel]?.k]?.ic || '') + ' 💥' + (q.kills || 0) : '💥' + (q.kills || 0), em = c.querySelector('em'); if(em.textContent !== st) em.textContent = st; });
   const mode = BIG ? MAPNAME() + ' · ' + (WAR ? 'Guerra' : ({1:'Solo', 2:'Dupla', 4:'Squad'})[BR_SQ]) : 'Guerra de Tomate';
-  const top = `<div class="bp mode">${mode}</div><div class="bp alive">${SVG_P}<b>${alive}</b><small>vivos</small></div>${sq ? `<div class="bp alive">${SVG_T}<b>${squadsAlive()}</b><small>times</small></div>` : ''}<div class="bp kill">${SVG_K}<b>${me.kills || 0}</b><small>elim.</small></div><div class="bp time">${SVG_C}<b>${BR_TEST ? 'teste' : mmss(R1.timeLeft)}</b></div>`;
+  const top = `<div class="bp mode">${mode}</div><div class="bp alive">${SVG_P}<b>${alive}</b><small>vivos</small></div>${sq ? `<div class="bp alive">${SVG_T}<b>${squadsAlive()}</b><small>times</small></div>` : ''}<div class="bp kill">${SVG_K}<b>${me.kills || 0}</b><small>elim.</small></div><div class="bp time">${SVG_C}<b>${BR_TEST ? '∞' : mmss(R1.timeLeft)}</b></div>`;
   if(brHUD.top !== top){ brHUD.top = top; $('brTop').innerHTML = top; }
   // zona
   const z = zoneP; let zh = '';
   if(z){ const ph = Math.min(z.i, ZP.length - 1), dots = ZP.map((_, k) => `<i class="${k < z.i ? 'd' : k === z.i && z.st !== 'done' ? 'c' : ''}"></i>`).join('');
-    const st = BR_TEST ? ['Sem zona', 'teste'] : z.st === 'done' ? ['Zona final', ''] : z.st === 'wait' ? ['Fecha em', mmss(ZP[z.i][0] - z.t)] : ['Fechando', mmss(ZP[z.i][1] - z.t)];
+    const st = BR_TEST ? ['Sem zona', '∞'] : z.st === 'done' ? ['Zona final', ''] : z.st === 'wait' ? ['Fecha em', mmss(ZP[z.i][0] - z.t)] : ['Fechando', mmss(ZP[z.i][1] - z.t)];
     const fr = z.st === 'done' ? 1 : z.st === 'wait' ? z.t/ZP[z.i][0] : (z.t - ZP[z.i][0])/(ZP[z.i][1] - ZP[z.i][0]);
     zh = `<div class="zt">⭕ Zona ${ph + 1}/${ZP.length}<span class="zp">${dots}</span></div><div class="zs"><span>${st[0]}</span><b>${st[1]}</b></div><div class="zb"><i style="width:${Math.round(clamp(fr, 0, 1)*100)}%"></i></div>`; $('brZoneBox').classList.toggle('shrink', z.st === 'shrink'); }
   else if(brZone) zh = `<div class="zt">⭕ Zona</div><div class="zs"><span>Fechando</span><b>${Math.round(brZone.r)} m</b></div>`;
@@ -11667,6 +11685,13 @@ mmRender();
   const fp = SET_UI.ctrl.find(r => r[0] === 'fpp'); if(fp) fp[1] = 'Battle Royale e Guerra em primeira pessoa (tecla P troca na partida)'; }
 { const _rs = renderShop; renderShop = function(){ const r = _rs.apply(this, arguments), S = $('shop'), on = shopTab === 'pass';
     S.classList.toggle('passOnly', on); const h2 = S.querySelector('.phead h2'); if(h2) h2.textContent = on ? 'Passe da temporada' : 'Loja'; return r; }; }
+
+// ---------- Etapa 4 dos HUDs: na Guerra os grãos (e o B da loja) viram uma ficha no topo, junto de vivos/times/elim./tempo ----------
+{ const _bh = brHUD; brHUD = function(){ const r = _bh.apply(this, arguments), T = $('brTop');
+    if(WAR && BIG && round === 20 && T && !$('brHud').hidden){ const me = typeof you === 'function' ? you() : players[0]; let p = T.querySelector('.bp.wdm');
+      if(!p){ p = document.createElement('div'); p.className = 'bp wdm'; T.insertBefore(p, T.querySelector('.bp.time')); }
+      const h = `<i>🫘</i><b>${me.wdM | 0}</b><small>${me.alive && wdAtHQ(me) ? '<kbd>B</kbd>loja' : 'grãos'}</small>`; if(p._h !== h){ p._h = h; p.innerHTML = h; } }
+    return r; }; }
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
