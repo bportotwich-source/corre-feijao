@@ -1059,6 +1059,44 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
+// Transparência do que cobre o feijão (estilo Fortnite): tudo que fica entre a câmera e o feijão vira uma "tela" de pontos
+// Vale pra qualquer material padrão (árvore instanciada, prédio do Blender, moita, pedra), sem mexer em cada objeto.
+// Teste no shader, em coordenadas da câmera: o pedaço fica no cilindro câmera -> feijão, antes do feijão e acima do pé dele.
+(function(){
+  const S = THREE.ShaderChunk;
+  window.FJ_OCC = {P:{x:0, y:0, z:0, w:0}, U:{x:0, y:1, z:0, w:0}, R:{x:0, y:0, z:0, w:0}};
+  S.common += '\nvarying vec3 vFjV;\n';
+  S.project_vertex += '\nvFjV = mvPosition.xyz;\n';
+  S.dithering_pars_fragment += '\nuniform vec4 fjOccP; uniform vec4 fjOccU; uniform vec4 fjOccR;\nfloat fjB2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y*0.75))); }\nfloat fjB4(vec2 a){ return fjB2(0.5*a)*0.25 + fjB2(a); }\n';
+  S.dithering_fragment += `
+if(fjOccR.x > 0.0){
+  float L = fjOccP.w, s = dot(vFjV, fjOccP.xyz)/L;
+  if(s > 0.05 && s < fjOccR.y){
+    vec3 q = vFjV - fjOccP.xyz*(s/L); float d = length(q), h = dot(vFjV - fjOccP.xyz, fjOccU.xyz) + fjOccU.w;
+    float r = fjOccR.x*max(s/L, 0.25); // cone: o furo tem o mesmo tamanho do feijão na tela
+    float a = max(smoothstep(r*0.55, r, d), smoothstep(fjOccR.y - 0.7, fjOccR.y, s));
+    a = max(a, 1.0 - smoothstep(0.1, 0.45, h)); a = max(a, fjOccR.z);
+    float b = fjB4(gl_FragCoord.xy) + 0.03;
+    if(a < 1.0 && b > a) discard;
+  }
+}
+`;
+  const O = window.FJ_OCC;
+  ['basic', 'lambert', 'phong', 'standard', 'physical', 'toon', 'matcap'].forEach(k => { const L = THREE.ShaderLib[k]; if(L) Object.assign(L.uniforms, {fjOccP:{value:O.P}, fjOccU:{value:O.U}, fjOccR:{value:O.R}}); });
+  const v = new THREE.Vector3(), u = new THREE.Vector3();
+  // c = câmera do jogador (cam1/cam2), chamado depois de aim(); on = false desliga (pódio, 1ª pessoa, opção desligada)
+  window.fjOccSet = function(c, cam, on){
+    const R = O.R; R.x = 0;
+    if(!on || !c || !c.look) return;
+    cam.updateMatrixWorld(); v.copy(c.look).applyMatrix4(cam.matrixWorldInverse); const L = v.length();
+    if(L < 1.6) return; // 1ª pessoa / mira colada: nada pra esconder
+    O.P.x = v.x; O.P.y = v.y; O.P.z = v.z; O.P.w = L;
+    u.set(0, 1, 0).transformDirection(cam.matrixWorldInverse); O.U.x = u.x; O.U.y = u.y; O.U.z = u.z; O.U.w = 1.05; // altura do pé abaixo do centro
+    R.x = 1.4; R.y = L - 0.75; R.z = 0.22; // raio do furo (m), até onde vai (para antes do feijão), opacidade mínima
+  };
+})();
+</script>
+<script>
 // This file is part of meshoptimizer library and is distributed under the terms of MIT License.
 // Copyright (C) 2016-2024, by Arseny Kapoulkine (arseny.kapoulkine@gmail.com)
 var MeshoptDecoder = (function () {
@@ -10279,12 +10317,12 @@ function view(dt){
   if(split){
     renderer.setScissorTest(true);
     [[cam1, players[0], 0], [cam2, players[1], W/2]].forEach(([c, p, x]) => {
-      aim(c, p, dt); camera.aspect = (W/2)/H; camera.updateProjectionMatrix();
+      aim(c, p, dt); camera.aspect = (W/2)/H; camera.updateProjectionMatrix(); fjOccSet(c, camera, CFG.occ !== false && R1.phase !== 'podium' && !(R1.phase === 'intro' && round === 1));
       renderer.setViewport(x, 0, W/2, H); renderer.setScissor(x, 0, W/2, H); renderer.render(scene, camera); });
     renderer.setScissorTest(false);
   } else {
-    aim(cam1, you(), dt); camera.aspect = W/H; camera.updateProjectionMatrix();
-    renderer.setViewport(0, 0, W, H); renderer.render(scene, camera); vmRender(W, H);
+    aim(cam1, you(), dt); camera.aspect = W/H; camera.updateProjectionMatrix(); fjOccSet(cam1, camera, CFG.occ !== false && R1.phase !== 'podium' && !(R1.phase === 'intro' && round === 1));
+    renderer.setViewport(0, 0, W, H); renderer.render(scene, camera); FJ_OCC.R.x = 0; vmRender(W, H);
   }
   if(shake > 0) shake -= dt;
 }
@@ -10358,7 +10396,7 @@ const Platform = {
   copy(text){ try{ if(navigator.clipboard) return navigator.clipboard.writeText(text).catch(() => {}); }catch(e){} },
   online:null, // ainda não existe servidor: salas e convites são só interface
 };
-const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true, fpp:false};
+const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, occ:true, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true, fpp:false};
 const CFG = Object.assign({}, CFG_DEF, Platform.load('feijao-cfg') || {});
 let PAUSED = false, returnTo = 'menu', setTab = 'video';
 function applyAudio(){ if(!ac) return; master.gain.value = 0.7*CFG.vol/100*(CFG.muteBlur && !document.hasFocus() ? 0 : 1); musicGain.gain.value = 0.32*CFG.music/100; sfxGain.gain.value = CFG.sfx/100; }
@@ -10379,7 +10417,7 @@ addEventListener('blur', applyAudio); addEventListener('focus', applyAudio);
 const SET_UI = {
   video:[['full', 'Modo de tela', 'seg', [[false, 'Janela'], [true, 'Tela cheia']]], ['quality', 'Qualidade gráfica', 'seg', [[0, 'Baixa'], [1, 'Média'], [2, 'Alta'], [3, 'Ultra']]],
     ['scale', 'Escala de renderização', 'range', [50, 100, 5, '%']], ['shadows', 'Sombras', 'tog'], ['toon', 'Visual de desenho (contorno e luz em faixas)', 'tog'], ['fov', 'Campo de visão', 'range', [50, 90, 1, '°']],
-    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
+    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['occ', 'Deixar transparente o que cobre o feijão', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
   audio:[['vol', 'Volume geral', 'range', [0, 100, 1, '%']], ['music', 'Música', 'range', [0, 100, 1, '%']], ['sfx', 'Efeitos', 'range', [0, 100, 1, '%']], ['muteBlur', 'Silenciar quando a janela perde o foco', 'tog']],
   ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['fpp', 'Modo 100 em primeira pessoa (tecla P troca na partida)', 'tog'], ['keys']],
   game:[['name', 'Nome do jogador', 'text'], ['cross', 'Mira (Modo 100 e Guerra de Tomate)', 'seg', [['cruz', 'Cruz'], ['ponto', 'Ponto'], ['circulo', 'Círculo']]], ['hudTheme', 'Cor da HUD do Modo 100', 'seg', [['tatico', 'Tático'], ['creme', 'Creme'], ['roxo', 'Roxo']]], ['autoQ', 'Tecla 5 escolhe a melhor cura quando o marcado acaba', 'tog'], ['tips', 'Mensagens no canto (quem caiu, quem pegou o quê)', 'tog'], ['lang', 'Idioma', 'seg', [['pt', 'Português (Brasil)']]], ['wipe']],
@@ -11784,7 +11822,7 @@ function wnSquads(){ const M = NET.members.length, S = [], cnt = [0, 0, 0, 0];
   for(let n=0;n<M;n++){ const t = WN.sq[n] ?? (n % 4); S[n] = t; cnt[t]++; }
   for(let n=M;n<players.length;n++){ let b = 0; for(let k=1;k<4;k++) if(cnt[k] < cnt[b]) b = k; S[n] = b; cnt[b]++; } return S; }
 const _wnStart = wdStart;
-wdStart = function(){ if(!(WAR && NET.match) || NET.host) return _wnStart();
+wdStart = function(){ if(!(WAR && NET.match) || NET.host) return _wnStart(); if(typeof wdsReset === 'function') wdsReset();
   if(plane){ world.remove(plane.g); plane = null; }
   zoneP = {i:99, st:'done', c:[0, 0], r:9999, nr:9999, nc:[0, 0], dps:0, t:0, r0:9999, c0:[0, 0]}; R1.supT = []; if(brZone && brZone.m) brZone.m.visible = false;
   R1.timeLeft = 900; Object.assign(WD, {pts:[0, 0, 0, 0], t:0, tk:0, zt:0, ht:0, own:-1, over:false, cz:null, prev:null, next:null, hq:[], zones:[]}); WD.vis && Object.values(WD.vis).forEach(o => world.remove(o));
@@ -11915,6 +11953,12 @@ stepPlayer = function(p, dt, inp){ const r = _wnSP(p, dt, inp); if(!wnOn() || ow
   else if(p.wdRN){ const c = p.wdRN.c; if(c.pass[p.wdRN.s] === p) c.pass[p.wdRN.s] = null; p.wdRN = null; }
   return r; };
 
+// ---- suprimentos (bolsa, engradado, drop aéreo): quem larga/chama avisa; usar avisa todo mundo; cada PC some com o próprio tempo ----
+const wnSup = id => (WD.sups || []).find(S => S.id === id);
+if(typeof wdsPlace === 'function'){
+  const _wsp = wdsPlace; wdsPlace = function(p, k){ const S = _wsp(p, k); if(wnOn() && S && own(p) && !NET.fromNet) netEv({t:'wsp', id:S.id, k, o:p.nid, tm:S.t, x:r2(S.x), y:r2(S.y), z:r2(S.z), n:S.n}); return S; };
+  const _wst = wdsTake; wdsTake = function(S){ if(wnOn() && !NET.fromNet) netEv({t:'wsu', id:S.id}); return _wst(S); };
+  const _wpl = wdsPlane; wdsPlane = function(id, o, t, x, z, a){ const P = _wpl(id, o, t, x, z, a); if(wnOn() && o && own(o) && !NET.fromNet) netEv({t:'wdp', id, o:o.nid, tm:t, x:r2(x), z:r2(z), a:r2(a)}); return P; }; }
 // ---- avisos que chegam ----
 const WN_EV = {
   wset(e){ if(NET.host) return; WN.set = e; if(wnOn() && !WD.hq.length) wnBuild(e); },
@@ -11926,6 +11970,9 @@ const WN_EV = {
   wvs(e){ const c = wnCar(e.id); if(!c || !Array.isArray(e.s) || e.s.length < 11 || wnAuth(c)) return; const s = e.s.map(Number); if(s.some(v => !Number.isFinite(v))) return; c._ns = {s, at:performance.now()}; c.hp = s[9]; },
   wve(e){ const p = NET.byNid[e.n], c = wnCar(e.id); if(!p || own(p) || !wnOn()) return;
     netDo(() => { const q = NET.quiet; NET.quiet = true; try{ if(p.car) leaveCar(p, true); if(e.on && c && p.alive && !c.dead){ if(c.driver && c.driver !== p) leaveCar(c.driver, true); enterCar(p, c); } } finally { NET.quiet = q; } }); },
+  wsp(e){ if(!wnOn() || typeof wdsMake !== 'function' || !WDS[e.k] || e.k === 'drop' || !e.id || wnSup(e.id)) return; wdsMake(String(e.id), e.k, NET.byNid[e.o] || null, clamp(e.tm | 0, 0, 3), +e.x, +e.y, +e.z, clamp(e.n | 0, 0, 30), false); },
+  wsu(e){ const S = wnSup(e.id); if(S) netDo(() => wdsTake(S)); },
+  wdp(e){ if(!wnOn() || typeof wdsPlane !== 'function' || !e.id || (WD.planes || []).some(P => P.id === e.id) || wnSup(e.id)) return; netDo(() => wdsPlane(String(e.id), NET.byNid[e.o] || null, clamp(e.tm | 0, 0, 3), +e.x, +e.z, +e.a || 0)); },
   wr(e){ const p = NET.byNid[e.n], c = wnCar(e.id), s = e.s | 0; if(!p || own(p) || !c || !wnOn() || s < 1 || s >= c.pass.length) return;
     if(e.on){ if(p.wdRN && p.wdRN.c.pass[p.wdRN.s] === p) p.wdRN.c.pass[p.wdRN.s] = null; c.pass[s] = p; p.wdRN = {c, s}; } else { if(c.pass[s] === p) c.pass[s] = null; p.wdRN = null; } } };
 const _wnEvIn = netEvIn;
