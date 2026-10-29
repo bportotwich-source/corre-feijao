@@ -3110,14 +3110,42 @@ function buildLanes(fn, n, w){
   solids = solids.filter(b => b.mesh || b.max.x - b.min.x > 0.35 || !seams.some(s => Math.abs((b.min.x + b.max.x)/2 - s) < 0.4));
 }
 // sorteia a prova na hora, pelo número de vivos (só as que aguentam essa quantidade)
-const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23];
+const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24];
 const ROUND_OFF = [8, 16, 17, 19]; // provas tiradas do jogo (Frutas, Apagão, Cabo de Guerra, Domínio)
+// Sorteio (parte 6): cada partida tem um roteiro de tipos. Começa com corrida (todo mundo junto),
+// depois mistura sobrevivência, times e rodadas do Round 6 (Ponte de Vidro, Salas) sem repetir o tipo seguido.
+// As finais (Rei da Colina, Blocos Caindo, Guerra de Tomate) só aparecem no fim. A prova de cada tipo é sorteada na hora, pelo número de vivos, evitando as que saíram na partida anterior.
+// O futebol (22) continua entrando pelo futPick quando sobram até 10 feijões, número par.
+let planCat = [], PLAN_LAST = [], PLAN_CUR = [];
+const PLAN_W = {race:0.8, surv:1.3, team:1, crab:0.8};
+const catOf = id => id === 15 || id === 13 || id === 14 ? 'crab' : (MAP_CAT[id] || 'surv');
+function planSeq(k, pts){
+  const seq = ['race'], cnt = {race:1, surv:0, team:0, crab:0};
+  const lim = {race:k > 4 ? 2 : 1, surv:2, team:pts || k > 3 ? 2 : 1, crab:1};
+  const need = pts ? ['surv', 'team'] : ['surv'];
+  while(seq.length < k){
+    const prev = seq[seq.length - 1], miss = need.filter(c => !cnt[c]);
+    let opts = Object.keys(PLAN_W).filter(c => c !== prev && cnt[c] < lim[c]);
+    if(miss.length >= k - seq.length && opts.some(c => miss.includes(c))) opts = opts.filter(c => miss.includes(c));
+    if(!opts.length) opts = ['surv', 'team'].filter(c => c !== prev);
+    let r = Math.random()*opts.reduce((a, c) => a + PLAN_W[c], 0), c = opts[0];
+    for(const o of opts){ r -= PLAN_W[o]; if(r <= 0){ c = o; break; } }
+    seq.push(c); cnt[c]++;
+  }
+  return seq;
+}
+function newPlan(k){ const fin = FINALS[Math.floor(Math.random()*FINALS.length)];
+  try{ PLAN_LAST = JSON.parse(localStorage.getItem('feijao-last-plan') || '[]'); }catch(e){ PLAN_LAST = PLAN_CUR.slice(); }
+  PLAN_CUR = []; planCat = planSeq(k, PTS); return Array(k).fill(0).concat([fin]); }
 function pickRound(){
   if(plan[stage]){ round = plan[stage]; return; }
-  const n = players.filter(p => p.alive).length, fin = plan[plan.length - 1];
-  let pool = ROUND_POOL.filter(id => id !== fin && !plan.includes(id) && MAXN(id) >= n && !ROUND_OFF.includes(id));
+  const n = PTS ? players.length : players.filter(p => p.alive).length, fin = plan[plan.length - 1], want = planCat[stage];
+  let pool = ROUND_POOL.filter(id => !FINALS.includes(id) && !plan.includes(id) && MAXN(id) >= n && !ROUND_OFF.includes(id) && !(n < 4 && catOf(id) === 'team'));
+  const cat = pool.filter(id => catOf(id) === want); if(cat.length) pool = cat;
+  const fresh = pool.filter(id => !PLAN_LAST.includes(id)); if(fresh.length) pool = fresh;
   if(!pool.length) pool = [1, 6, 9, 10, 11, 12, 21].filter(id => !plan.includes(id));
   round = plan[stage] = pool[Math.floor(Math.random()*pool.length)] || 1;
+  PLAN_CUR.push(round); try{ localStorage.setItem('feijao-last-plan', JSON.stringify(PLAN_CUR)); }catch(e){}
 }
 function setNPL(n){ NPL = n; try{ localStorage.setItem('feijao-npl', n); }catch(e){}
   document.querySelectorAll('#npl button').forEach(b => { const on = +b.dataset.n === n; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
@@ -3996,7 +4024,7 @@ const LOOKS = {
   manha:{top:0x58b8f5, hor:0xd8f4ff, sun:0xfffbe8, si:0.66, hs:0xf0fbff, hg:0x7fa0c0, hi:0.55, off:[-10, 22, 14], dir:[-0.35, 0.32, 0.88], wc:0xf2fbff},
   tarde:{top:0x4a8ee0, hor:0xffe2b8, sun:0xffdcaa, si:0.7, hs:0xfff2e2, hg:0x9a7a9a, hi:0.54, off:[20, 16, -12], dir:[0.6, 0.16, -0.78], wc:0xfff8f0},
   rosa:{top:0x7a6ae0, hor:0xffc4da, sun:0xffd0dc, si:0.64, hs:0xffeef6, hg:0x9a84cc, hi:0.58, off:[-18, 16, -12], dir:[-0.6, 0.14, -0.78], wc:0xfff4f8}};
-const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia'};
+const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde'};
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
@@ -4075,7 +4103,7 @@ function buildField(color, stripe){
   [[-9, -16], [9, 16], [-16, 9], [16, -9], [0, -19.5], [0, 19.5]].forEach(([x, z]) => box(x - 1.2, x + 1.2, 0, 1.6, z - 1.2, z + 1.2, 0xff4fa3));
   robot = null;
 }
-const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas'};
+const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas'};
 const RACE = r => r === 1 || r === 6 || r === 9 || r === 10 || r === 11 || r === 12 || r === 21;
 
 // Gangorras: corrida por gangorras que inclinam com o peso
@@ -4660,6 +4688,82 @@ function botMem(p, dt, inp){ if(!mf) return inp; let tx = p.mfW ? p.mfW[0] : p.p
   const dx = tx - p.pos.x, dz = tz - p.pos.z, d = Math.hypot(dx, dz); if(d > 0.25){ const s = mf.ph === 'pick' ? 1 : 0.45; inp.mx = dx/d*Math.min(1, d)*s; inp.mz = dz/d*Math.min(1, d)*s; }
   if(mf.ph === 'pick' && d > 2.5 && p.grounded && Math.random() < dt*0.6) inp.jump = true;
   if(mf.ph === 'drop' && Math.random() < dt*0.3*(p.skill || 0.8)){ const t = nearest(p, () => true); if(t && t.d < 1.3){ p.face = Math.atan2(t.q.pos.x - p.pos.x, t.q.pos.z - p.pos.z); inp.push = true; } }
+  return inp; }
+
+// ---------- Provas novas (parte 7) ----------
+// Chuva de Bombas (24): bombas caem do céu numa ilha redonda de pisos. Um anel vermelho mostra onde vão cair.
+// A explosão arremessa quem está perto e racha os pisos (3 bombas e o piso cai). Cada vez caem mais bombas, e depois de um tempo vêm os cocos gigantes.
+// Acaba quando sobra mais ou menos metade (ou aos 80 s).
+let cb = null;
+const CB_S = 2.8, CB_COL = [0xffb23f, 0xffd27a, 0xff6f91], CB_CRACK = [0xffb23f, 0xd98a2b, 0x9c5a2a];
+function buildBombs(n){ clearWorld(); const R = [10, 14, 19.5][SZ], N = Math.ceil(R/CB_S), tiles = [], map = {};
+  for(let i=-N;i<=N;i++) for(let j=-N;j<=N;j++){ const x = i*CB_S, z = j*CB_S; if(Math.hypot(x, z) > R) continue;
+    const b = box(x - 1.36, x + 1.36, -0.7, 0, z - 1.36, z + 1.36, CB_COL[(i + j + 99) % 3 === 0 ? 2 : (i + j) % 2 ? 1 : 0], {kind:'btile'});
+    const t = {b, x, z, i, j, hp:3, y:0, vy:0, fall:false, col:b.mesh.material.color.getHex()}; tiles.push(t); map[i + ',' + j] = t; }
+  // borda: boias listradas em volta da ilha (só enfeite) e postes com lâmpadas
+  const ringN = Math.round(R*2.2); for(let k=0;k<ringN;k++){ const a = k/ringN*Math.PI*2, r = R + 2.2, m = mesh(new THREE.TorusGeometry(0.55, 0.22, 8, 14), mat(k % 2 ? 0xffffff : 0xff3b4e), world); m.position.set(Math.sin(a)*r, -0.35, Math.cos(a)*r); m.rotation.x = Math.PI/2; m.castShadow = false; }
+  const lamps = []; for(let k=0;k<6;k++){ const a = k/6*Math.PI*2 + 0.3, r = R + 4, p = mesh(new THREE.CylinderGeometry(0.2, 0.28, 9, 8), mat(0x2b1846), world); p.position.set(Math.sin(a)*r, 2.5, Math.cos(a)*r);
+    const l = mesh(new THREE.SphereGeometry(0.55, 12, 8), glow(0xff5a3c, 0x551100), world); l.position.set(Math.sin(a)*r, 7.3, Math.cos(a)*r); lamps.push(l); }
+  cb = {R, N, tiles, map, bombs:[], flash:[], t:0, acc:0, start:n, keep:Math.max(1, Math.ceil(n*0.5)), lamps, area:Math.PI*R*R}; }
+const cbTile = (x, z) => { if(!cb) return null; const t = cb.map[Math.round(x/CB_S) + ',' + Math.round(z/CB_S)]; return t && !t.fall && Math.abs(x - t.x) < 1.4 && Math.abs(z - t.z) < 1.4 ? t : null; };
+const CB_GEO = {};
+function cbBomb(x, z, big){ if(!CB_GEO.b){ CB_GEO.b = new THREE.SphereGeometry(0.6, 16, 12); CB_GEO.f = new THREE.CylinderGeometry(0.07, 0.07, 0.45, 6); CB_GEO.s = new THREE.SphereGeometry(0.16, 8, 6); CB_GEO.r = new THREE.RingGeometry(0.86, 1, 36); CB_GEO.d = new THREE.CircleGeometry(1, 36); CB_GEO.st = new THREE.TorusGeometry(0.6, 0.06, 6, 20); }
+  const g = new THREE.Group(), sc = big ? 1.8 : 1, blast = big ? 4.6 : 3, crack = big ? 2.4 : 1.35;
+  // bomba de desenho (roxa escura com brilho) ou coco gigante (marrom com listras)
+  const body = mesh(CB_GEO.b, mat(big ? 0x7a4a26 : 0x2b1846), g);
+  if(big) [0, 1.05, 2.1].forEach(a => { const s = mesh(CB_GEO.st, mat(0x4a2a12), g); s.rotation.set(Math.PI/2, a, 0); s.castShadow = false; });
+  const hi = mesh(CB_GEO.s, new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.55}), g); hi.position.set(-0.24, 0.26, 0.3); hi.castShadow = false;
+  const fu = mesh(CB_GEO.f, mat(0xc9a36b), g); fu.position.y = 0.72; fu.rotation.z = 0.3;
+  const sp = mesh(CB_GEO.s, new THREE.MeshBasicMaterial({color:0xffd23f}), g); sp.position.set(0.1, 0.98, 0); sp.castShadow = false;
+  g.scale.setScalar(sc); world.add(g);
+  const ring = new THREE.Mesh(CB_GEO.r, new THREE.MeshBasicMaterial({color:0xff2a3c, transparent:true, opacity:0.9, depthWrite:false, side:THREE.DoubleSide})), disc = new THREE.Mesh(CB_GEO.d, new THREE.MeshBasicMaterial({color:0xff2a3c, transparent:true, opacity:0.18, depthWrite:false}));
+  [ring, disc].forEach(m => { m.rotation.x = -Math.PI/2; m.position.set(x, 0.04, z); m.scale.setScalar(blast); world.add(m); });
+  const T = big ? 2.3 : 1.7; g.position.set(x + rand(-3, 3), 26, z + rand(-3, 3));
+  cb.bombs.push({g, sp, ring, disc, x, z, x0:g.position.x, z0:g.position.z, t:0, T, big, blast, crack, spin:rand(-4, 4)}); }
+function cbBoom(b){ const {x, z, blast, crack, big} = b; world.remove(b.g); world.remove(b.ring); world.remove(b.disc);
+  puff(x, 0.4, z, big ? 26 : 16, 0xff8a00, big ? 0.3 : 0.2, big ? 8 : 6); puff(x, 0.4, z, big ? 18 : 10, 0xffd23f, 0.16, 5); puff(x, 0.3, z, 8, 0x6b5a52, 0.24, 3);
+  ringFx(x, 0, z, 0xffd23f, blast*1.2); ringFx(x, 0, z, 0xff5a3c, blast*0.8);
+  const f = new THREE.Mesh(CB_GEO.b, new THREE.MeshBasicMaterial({color:0xffc04a, transparent:true, opacity:0.85, depthWrite:false, blending:THREE.AdditiveBlending})); f.position.set(x, 0.3, z); world.add(f); cb.flash.push({m:f, t:0, s:blast*0.9});
+  sfxAt(new V3(x, 0, z), 'boom', big ? 60 : 40); if(humans().some(h => Math.hypot(h.pos.x - x, h.pos.z - z) < blast + 5)) shake = Math.max(shake, big ? 0.7 : 0.4);
+  for(const q of players){ if(!q.alive || q.dying > 0) continue; const dx = q.pos.x - x, dz = q.pos.z - z, d = Math.hypot(dx, dz); if(d > blast || q.pos.y > 4) continue;
+    const k = 1 - d/blast, a = d > 0.05 ? Math.atan2(dx, dz) : rand(0, 7); q.hitCD = 0; knock(q, Math.sin(a)*(9 + 9*k)*(big ? 1.25 : 1), 6 + 6*k, Math.cos(a)*(9 + 9*k)*(big ? 1.25 : 1), 0.35 + 0.3*k, 'bomba'); }
+  // racha os pisos perto (cor mais escura) e derruba os que já levaram 3
+  for(const t of cb.tiles){ if(t.fall || Math.hypot(t.x - x, t.z - z) > crack + 1.1) continue; t.hp -= big ? 2 : 1;
+    if(t.hp <= 0){ t.fall = true; t.vy = 2; t.b.active = false; puff(t.x, 0, t.z, 5, 0x9c5a2a, 0.22, 3); }
+    else t.b.mesh.material = mat(CB_CRACK[3 - t.hp]); } }
+function updateBombs(dt){ if(!cb) return;
+  for(const t of cb.tiles){ if(t.fall && t.y > -16){ t.vy -= 22*dt; t.y += t.vy*dt; t.b.mesh.position.y = -0.35 + t.y; t.b.mesh.rotation.x += dt*1.2; if(t.y <= -16) t.b.mesh.visible = false; }
+    else if(!t.fall && t.hp < 3 && Math.random() < dt*0.6*(3 - t.hp)) t.b.mesh.position.x = t.x + rand(-0.03, 0.03); }
+  cb.flash = cb.flash.filter(f => { f.t += dt; const k = f.t/0.35; f.m.scale.setScalar(0.4 + f.s*k); f.m.material.opacity = 0.85*(1 - k); if(k >= 1){ world.remove(f.m); return false; } return true; });
+  cb.lamps.forEach((l, i) => l.material.emissive.setHex((Math.floor(clock*6) + i) % 2 ? 0x551100 : 0xff3300));
+  cb.bombs = cb.bombs.filter(b => { b.t += dt; const k = Math.min(1, b.t/b.T); b.g.position.set(b.x0 + (b.x - b.x0)*k, 26*(1 - k*k) + 0.6*(b.big ? 1.8 : 1)*k, b.z0 + (b.z - b.z0)*k); b.g.rotation.x += b.spin*dt; b.g.rotation.z += b.spin*0.7*dt;
+    b.sp.visible = Math.floor(clock*20) % 2 === 0; const pul = 1 + Math.sin(b.t*(8 + 18*k))*0.05; b.ring.scale.setScalar(b.blast*pul); b.disc.material.opacity = 0.12 + 0.3*k; b.disc.scale.setScalar(b.blast*(0.25 + 0.75*k));
+    if(k >= 1){ cbBoom(b); return false; } return true; });
+  if(R1.phase !== 'play') return;
+  cb.t += dt; const alive = players.filter(p => p.alive);
+  // ritmo: começa calmo e acelera; ilha grande recebe mais bombas
+  const rate = cb.area/100*(cb.t < 3 ? 0.12 : 0.2 + cb.t*0.009); cb.acc += rate*dt;
+  while(cb.acc >= 1 && cb.bombs.length < 40){ cb.acc -= 1; let x, z; const live = cb.tiles.filter(t => !t.fall);
+    if(Math.random() < 0.3 && alive.length){ const p = alive[Math.floor(Math.random()*alive.length)]; x = p.pos.x + p.vel.x*0.6 + rand(-1.5, 1.5); z = p.pos.z + p.vel.z*0.6 + rand(-1.5, 1.5); }
+    else if(live.length){ const t = live[Math.floor(Math.random()*live.length)]; x = t.x + rand(-1.3, 1.3); z = t.z + rand(-1.3, 1.3); }
+    else { const a = rand(0, 7), r = Math.sqrt(Math.random())*cb.R; x = Math.sin(a)*r; z = Math.cos(a)*r; }
+    cbBomb(x, z, cb.t > 25 && Math.random() < 0.12 + cb.t*0.002); }
+  if(cb.acc > 1) cb.acc = 1;
+  if(alive.length <= cb.keep || cb.t >= 80){ cb.bombs.forEach(b => { world.remove(b.g); world.remove(b.ring); world.remove(b.disc); }); cb.bombs = []; endRound(); } }
+const cbInfo = () => !cb ? '' : `Vivos ${players.filter(p => p.alive).length} · passam ${cb.keep}` + (cb.t > 25 ? ' · cocos gigantes!' : '');
+// bots: fogem dos anéis vermelhos que vão explodir logo e andam por pisos inteiros, longe da borda; pulam buraco pequeno
+function botBomb(p, dt, inp){ if(!cb) return inp; let fx = 0, fz = 0, danger = 0;
+  for(const b of cb.bombs){ const dx = p.pos.x - b.x, dz = p.pos.z - b.z, d = Math.hypot(dx, dz), left = b.T - b.t; if(d > b.blast + 1 || left > 1.1 + (p.skill || 0.8)*0.5) continue;
+    const w = (b.blast + 1 - d)/(b.blast + 1)*(1.5 - left); fx += (d > 0.05 ? dx/d : rand(-1, 1))*w; fz += (d > 0.05 ? dz/d : rand(-1, 1))*w; danger += w; }
+  const cur = cbTile(p.pos.x, p.pos.z);
+  if(!p.cbT || Math.random() < dt*0.35 || !cbTile(p.cbT[0], p.cbT[1])){ const live = cb.tiles.filter(t => !t.fall && t.hp > 1 && Math.hypot(t.x - p.pos.x, t.z - p.pos.z) < 7 && Math.hypot(t.x, t.z) < cb.R - 2.6);
+    const t = live[Math.floor(Math.random()*live.length)] || cb.tiles.find(t => !t.fall); if(t) p.cbT = [t.x + rand(-0.6, 0.6), t.z + rand(-0.6, 0.6)]; }
+  let mx = 0, mz = 0; if(p.cbT){ const dx = p.cbT[0] - p.pos.x, dz = p.cbT[1] - p.pos.z, d = Math.hypot(dx, dz); if(d > 0.4){ mx = dx/d*Math.min(1, d)*0.7; mz = dz/d*Math.min(1, d)*0.7; } }
+  if(danger > 0.05){ const s = Math.min(1, danger*(0.5 + (p.skill || 0.8))), l = Math.hypot(fx, fz) || 1; mx = mx*(1 - s) + fx/l*s; mz = mz*(1 - s) + fz/l*s; }
+  // não anda pra buraco: olha 1,4 m na frente; se tiver piso logo depois, pula
+  const l = Math.hypot(mx, mz); if(l > 0.1){ const ax = p.pos.x + mx/l*1.4, az = p.pos.z + mz/l*1.4;
+    if(!cbTile(ax, az)){ if(cbTile(p.pos.x + mx/l*3.2, p.pos.z + mz/l*3.2) && p.grounded && cur) inp.jump = true; else { mx = -mx*0.5; mz = -mz*0.5; p.cbT = null; } } }
+  inp.mx = mx; inp.mz = mz; if(danger > 0.6 && p.grounded && Math.random() < dt*2) inp.dive = true;
   return inp; }
 
 // Guerra de Tomate: battle royale. Cada tomate tira vida, a zona fecha e quem zerar a vida sai
@@ -7192,7 +7296,7 @@ function updateShoot(dt){
     if(gone){ puff(s.pos.x, Math.max(0.1, s.pos.y), s.pos.z, 6, 0xff3b4e, 0.1, 2.4); if(!(s.w && s.w.splash)) sfxAt(s.pos, 'splat', 26); world.remove(s.m); shots.splice(i, 1); }
   }
   // barrinhas de vida em cima dos feijões
-  hpBars.forEach((h, i) => { const p = players[i]; if(!h || !p) return; h.g.visible = p.alive && p.dying <= 0 && p.glide !== 'plane' && R1.phase !== 'podium' && (!BIG || p.m.far === false || (p.isBot && humans().some(q => mates(p, q)))); if(!h.g.visible) return;
+  hpBars.forEach((h, i) => { const p = players[i]; if(!h || !p) return; h.g.visible = p.alive && p.dying <= 0 && p.glide !== 'plane' && R1.phase !== 'podium' && !(p.i === 0 && fpOn(p)) && (!BIG || p.m.far === false || (p.isBot && humans().some(q => mates(p, q)))); if(!h.g.visible) return;
     h.g.position.set(p.pos.x, p.pos.y + 2.35, p.pos.z); h.g.quaternion.copy(camera.quaternion); const k = (p.hp ?? 100)/100; h.fg.scale.x = Math.max(0.001, k); h.fg.position.x = -(1 - k)*0.52; h.fg.material.color.setHex(k > 0.5 ? 0x38d16a : k > 0.25 ? 0xffd23f : 0xff3b4e); });
   for(let i=hearts.length - 1;i>=0;i--){ const h = hearts[i]; h.m.rotation.y += dt*2.5; h.m.position.y = 0.8 + Math.sin(clock*3 + i)*0.12;
     const p = players.find(q => q.alive && q.dying <= 0 && (q.hp ?? 100) < 100 && Math.hypot(q.pos.x - h.pos.x, q.pos.z - h.pos.z) < 1.1 && q.pos.y < 1.5);
@@ -8259,7 +8363,7 @@ let earn = null;
 const newEarn = () => ({coins:0, xp:0, done:false, res:null});
 function reward(c, x){ if(!earn || earn.done) return; earn.coins += Math.round(c*[0.7, 1, 1.4][DIFF]); earn.xp += x; }
 function rec(k, t){ const old = SAVE.st[k]; if(!old || t < old){ SAVE.st[k] = Math.round(t*10)/10; if(old) say(`<b>Novo recorde!</b> ${t.toFixed(1)}s`, true); } }
-const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
+const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24];
 const ACH = [
   ['a1', 'Primeira coroa', 'Vença uma partida completa', () => st('crowns') >= 1, 50],
   ['a2', 'Tricampeão', 'Ganhe 3 coroas', () => st('crowns') >= 3, 150],
@@ -8620,6 +8724,7 @@ function botInput0(p, dt){
   if(round === 19) return botZones(p, dt, inp);
   if(round === 22) return botFut(p, dt, inp);
   if(round === 23) return botMem(p, dt, inp);
+  if(round === 24) return botBomb(p, dt, inp);
   if(round === 20) return botShoot(p, dt, inp);
   if(round === 8) return botFruit(p, dt, inp);
   if(round === 4 || round === 5) return botTag(p, dt, inp);
@@ -8802,16 +8907,16 @@ function startGame(){
   $('top').hidden = false;
   createPlayers(); elimOrder = []; earn = newEarn(); if(!BR_TEST){ bump('games'); if(BIG) bump('brGames'); } R1.ptsOver = false; $('ptsBoard').hidden = true;
   if(single){ plan = [single]; }
-  else if(PTS){ const fin = FINALS[Math.floor(Math.random()*FINALS.length)], pool = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 21, 23].filter(id => id !== fin && !ROUND_OFF.includes(id)).sort(() => Math.random() - 0.5); plan = pool.slice(0, 4).concat([fin]); players.forEach(p => { p.pts = 0; }); }
+  else if(PTS){ plan = newPlan(4); players.forEach(p => { p.pts = 0; }); }
   else if(BIG){ plan = [1, 13, 14, Math.random() < 0.6 ? 20 : 15]; }
-  else { const fin = FINALS[Math.floor(Math.random()*FINALS.length)], k = NPL > 40 ? 5 : NPL > 16 ? 4 : 3; plan = Array(k).fill(0).concat([fin]); }
+  else { plan = newPlan(NPL > 40 ? 5 : NPL > 16 ? 4 : 3); }
   stage = 0; pickRound(); startRound();
 }
 function startRound(){ futPick();
   if(PTS){ const back = players.filter(p => !p.alive).length; players.forEach(p => { p.alive = true; p.elT = 0; }); if(back && stage) say(`<b>${back}</b> feijões voltaram pra essa prova`, true); }
   const alive = players.filter(p => p.alive); SZ = szFor(alive.length); LX = [0]; LW = 14; RBIG = round === 1 && (BIG || SZ === 2); setTiles([[0, 0]]); TUPS = TAG_UPS; SPOTF = null; setNests(12.5);
   if([7, 17, 18, 19].includes(round) && alive.length < 4){ round = 2; plan[stage] = 2; }
-  ball = null; fut = null; mf = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
+  ball = null; fut = null; mf = null; cb = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
   alive.forEach(p => { p.item = false; p.passCD = 0; p.done = false; p.place = 0; p.vel.set(0,0,0); p.dive = 0; p.stun = 0; p.dying = 0; p.m.g.visible = true; p.m.g.scale.setScalar(1); p.redPos = null; });
   players.filter(p => !p.alive).forEach(p => p.m.g.visible = false);
   rev = null; players.forEach(p => { p.rev = false; p.revWait = 0; p.revUsed = false; p.card = false; p.cardUsed = false; p.stT = 0; }); R1.finished = 0; R1.t = 0; curLook = lookFor(round); setDark(false); mingle = null; tug = null; paint = null; zones = []; shots = []; hearts = []; hpBars = []; brZone = null; zoneP = null; plane = null; loot = []; drops = []; cars = []; players.forEach(p => p.car = null);
@@ -8841,6 +8946,10 @@ function startRound(){ futPick();
   } else if(round === 22){
     setupTeams(alive, 2); buildFut(alive.length); R1.timeLeft = fut.A.t; futSpawn(alive);
     banner('Futebol Arena', `${youTeamTxt()} Chute com F, mergulhe na bola pra bater forte e pule pra cabecear. A bola sobe nas paredes curvas! Pise nos círculos laranja pra correr mais. O time com menos gols sai!`, 3800);
+  } else if(round === 24){
+    buildBombs(alive.length); R1.timeLeft = 999;
+    const live = cb.tiles.slice().sort(() => Math.random() - 0.5); alive.forEach((p, k) => { const t = live[k % live.length]; p.pos.set(t.x + rand(-0.8, 0.8), 0, t.z + rand(-0.8, 0.8)); p.face = Math.atan2(-t.x, -t.z); p.cbT = null; });
+    banner('Chuva de Bombas', 'Fuja dos anéis vermelhos! A explosão arremessa e racha os pisos. Metade passa.', 3600);
   } else if(round === 23){
     buildMem(alive.length); R1.timeLeft = 999;
     alive.forEach((p, k) => { const t = mf.tiles[(k*7) % mf.tiles.length]; p.pos.set(t.x + rand(-0.7, 0.7), 0, t.z + rand(-0.7, 0.7)); p.face = Math.PI; p.mfW = null; p.mfT = null; });
@@ -8992,6 +9101,7 @@ function showResult(won){
     : round === 13 ? 'O vidro quebrou ou o tempo acabou na Ponte de Vidro. Dica: espere alguém testar a fileira da frente. Quando um vidro quebra, o outro é seguro.'
     : round === 14 ? 'Você ficou fora de uma sala com o número certo nas Salas. Dica: corra pra uma sala mais vazia assim que o número aparecer, e empurre quem sobrar (F).'
     : round === 15 ? 'O chão sumiu embaixo de você nos Blocos Caindo. Dica: não fique parado, fuja dos blocos piscando em vermelho e guarde um cantinho seguro.'
+    : round === 24 ? 'Uma bomba te jogou pra fora. Dica: fique longe da borda e dos pisos rachados, e corra assim que o anel vermelho aparecer.'
     : round === 23 ? 'Você caiu na Memória de Frutas. Dica: decore as frutas perto de você e corra assim que o telão mostrar qual é.'
     : round === 16 ? 'Te derrubaram no Apagão. Dica: fique longe da borda amarela e empurre (F) quem chegar perto. Os olhos brilham no escuro.'
     : round === 21 ? 'Não deu pra chegar no topo da Torre do Feijão a tempo. Dica: a escadaria é a mais segura, o parkour é o mais rápido se você acertar os pulos, e nas plataformas que andam espere ela chegar perto antes de pular.'
@@ -9061,7 +9171,7 @@ function say(html, force){
   setTimeout(() => { d.style.opacity = 0; setTimeout(() => d.remove(), 700); }, 3800);
 }
 const nm = p => p.isBot || twoP ? `<b>${p.name}</b>` : '<b>Você</b>';
-const HIT_TXT = {trator:'foi atropelado por um trator', bar:'levou uma barrada', hammer:'levou uma martelada', push:'foi empurrado', fruit:'levou uma frutada', door:'deu de cara numa porta de verdade', banana:'escorregou numa banana', tomate:'levou uma tomatada', onda:'foi arremessado pela onda', punch:'levou um soco da parede', ball:'foi atropelado por uma bola', bump:'quicou no pinball', saw:'foi pego por uma roda dentada', geyser:'voou num gêiser'};
+const HIT_TXT = {trator:'foi atropelado por um trator', bar:'levou uma barrada', hammer:'levou uma martelada', push:'foi empurrado', fruit:'levou uma frutada', door:'deu de cara numa porta de verdade', banana:'escorregou numa banana', tomate:'levou uma tomatada', bomba:'voou com uma bomba', onda:'foi arremessado pela onda', punch:'levou um soco da parede', ball:'foi atropelado por uma bola', bump:'quicou no pinball', saw:'foi pego por uma roda dentada', geyser:'voou num gêiser'};
 const confs = [];
 function confetti(){ const me = humans().find(h => h.alive) || you(); for(let i=0;i<140;i++){ const c = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.1), new THREE.MeshBasicMaterial({color:COLORS[i%COLORS.length], side:THREE.DoubleSide})); c.position.copy(me.pos).add(new V3(rand(-1,1), 2, rand(-1,1))); c.userData.v = new V3(rand(-6,6), rand(8,15), rand(-6,6)); c.userData.r = new V3(rand(-9,9), rand(-9,9), 0); scene.add(c); confs.push(c); } }
 
@@ -9199,7 +9309,7 @@ const SONGS = {
   menu:{bpm:96, bass:[131,0,0,0,110,0,0,0,87,0,0,0,98,0,0,0], lead:[659,0,784,0,659,0,523,0,587,0,523,0,494,0,392,0], wave:'triangle', kick:[0,10], snare:[], soft:true},
   battle:{bpm:124, bass:[110,0,110,131,0,110,0,98,87,0,87,104,0,87,98,0], lead:[440,0,523,587,0,523,440,0,349,0,440,523,0,659,587,0], wave:'sawtooth', kick:[0,3,8,10], snare:[4,12], minor:true},
 };
-const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper'};
+const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic'};
 let mStep = 0, mNext = 0, mTimer = null;
 const mKick = (w, d) => { tone(150, 0.16, 'sine', 0.5, 0.3, w, d); noise(0.02, 0.08, 3000, 0, 'highpass', 1, w, d); };
 const mSnare = (w, d) => { noise(0.14, 0.22, 1900, 1200, 'bandpass', 0.8, w, d); tone(190, 0.08, 'triangle', 0.12, 0.7, w, d); };
@@ -9345,6 +9455,7 @@ function updateHUD(){
   else if(round === 20){ $('hInfo').textContent = humans().filter(h => h.alive).map(h => `${twoP ? h.name + ' ' : ''}${h.glide === 'plane' ? '✈️ Espaço pula do avião' : h.glide === 'fall' || (!h.glide && !h.grounded && h.vel.y < -3 && h.pos.y - groundBelow(h) > 4.5) ? '🪂 Espaço abre o paraquedas' : h.glide ? '🪂 Guie com WASD' : '❤ ' + (h.hp ?? 100) + (h.sh > 0 ? ' 🛡 ' + Math.round(h.sh) : '') + (zoneP ? ' · 💥 ' + (h.kills || 0) : '')}`).concat(SQ() ? [`Time ${players.filter(q => q.isBot && humans().some(h => h.squad === q.squad)).map(q => q.alive ? '◆' + (q.hp ?? 100) : '✖').join(' ')}`, `Times ${squadsAlive()}`, `Vivos ${alive}`] : [`Vivos ${alive}`, `sobram ${R1.brKeep || 1}`]).join(' · '); }
   else if(round === 8 || round === 15 || round === 16){ $('hInfo').textContent = `Vivos ${alive}`; }
   else if(round === 23){ $('hInfo').textContent = mfInfo(); }
+  else if(round === 24){ $('hInfo').textContent = cbInfo(); }
   else if(round === 13){ $('hInfo').textContent = `Atravessaram ${players.filter(p => p.alive && p.done).length} · Vivos ${alive}`; }
   else if(round === 14 && mingle){ $('hInfo').textContent = mingle.state === 'run' ? `Grupos de ${mingle.n}! · Vivos ${alive}` : `Vivos ${alive} · Rodada ${Math.min(mingle.cycle + 1, mingle.cycles)} de ${mingle.cycles}`; }
   else if(round === 5){ $('hInfo').textContent = `Com rabo ${players.filter(p => p.alive && p.item).length}/${alive}` + (twoP ? humans().filter(h => h.alive).map(h => ` · ${h.name} ${h.item ? 'tem' : 'NÃO tem'}`).join('') : you().alive ? (you().item ? ' · você tem' : ' · você NÃO tem') : ''); }
@@ -9369,7 +9480,7 @@ function tick(dt){
   R1.t += dt;
   if(R1.phase === 'intro' && R1.t > 2.8){ R1.phase = 'count'; R1.t = 0; countN = 4; }
   if(R1.phase === 'count'){ const n = 3 - Math.floor(R1.t); if(n !== countN && n >= 1){ countN = n; banner(String(n), '', 800); sfx('beep'); } if(R1.t >= 3){ R1.phase = 'play'; R1.t = 0; banner('Vai!', '', 700); sfx('go'); if(round === 16){ setDark(true); banner('Apagão!', 'Empurre e não caia', 1200); } if(round === 2){ lightT = 0; light = 'green'; } } }
-  updateWorld(dt); updateObs(dt); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
+  updateWorld(dt); updateObs(dt); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
   if(R1.phase === 'play'){
     R1.timeLeft -= dt; if(round === 2) updateLight(dt);
     if(round === 4){
@@ -9407,7 +9518,7 @@ function tick(dt){
       if(p.grounded && p.ground && p.ground.kind !== 'mover' && p.ground.kind !== 'lift'){ if(LX.length > 1) p.lx = laneAt(p.pos.x); for(const [th, rz, rx, ry] of course.cps){ if(p.pos.z > th){ if(rz > p.cp.z){ p.cp.set(0, ry || 0, rz); p.cpX = rx; } break; } } }
       if(p.pos.y < -5){ if(!p.isBot || Math.random() < (players.length > 16 ? 0.05 : 0.3)) say(`${nm(p)} caiu na água!`, !p.isBot); DBG.falls[Math.round(p.pos.z/4)*4] = (DBG.falls[Math.round(p.pos.z/4)*4]||0) + 1; { const g = round === 6 ? solidAt(p.lx || 0, p.cp.z + 0.6, 0, 2) : null; p.pos.set((g && g.kind === 'seesaw' ? g.cx : RBIG ? RTX[raceTrack(p)] : (p.lx || 0)) + rand(-p.cpX, p.cpX), p.cp.y + 0.5, p.cp.z + rand(-0.5, 0.5)); } p.vel.set(0, 0, 0); p.stun = 0; p.dive = 0; if(p.isBot && Math.random() < 0.4) p.route = null; if(!p.isBot){ sfx('dive'); bump('falls'); } }
       if(!p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) { finishPlayer(p); if(R1.finished >= R1.quota) endRound(); }
-    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23].includes(round)){
+    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24].includes(round)){
       if(p.pos.y < -4){ p.alive = false; p.elT = R1.t; elimOrder.push(p); say(`${nm(p)} caiu e está fora!`, true); p.m.g.visible = false; sfxNear(p, 'zap', 40);
         if(!p.isBot){ bump('falls'); banner(tag(p) + 'Caiu!', `${twoP ? p.name : 'Você'} foi parar na água`, 2000); sfx('lose'); if(!anyHumanAlive()) setTimeout(() => showResult(false), 2200); } }
       if(round === 13 && p.alive && !p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) finishPlayer(p);
@@ -9526,8 +9637,8 @@ function vmStep(c, me, dt){ const sK = c.scK || 0, it = me.inv && me.inv[me.sel]
   const rb = VM.bl ? VM.rel : 0, rn = VM.rel - rb; // Blender: a arma desce um tico e deita de lado (gira em volta dela mesma) pra mostrar o pente
   g.position.set(0.22*(1 - e) + Math.sin(VM.bob)*0.008*b - rb*0.02, -0.3*(1 - e) - Math.abs(Math.cos(VM.bob))*0.01*b - rn*0.07 + rb*0, 0.06*(1 - e) + VM.kick*0.045 - rb*0.2);
   g.rotation.set(VM.kick*0.07 - rn*0.3 - 0.18*(1 - e)*e, 0.12*(1 - e), -0.22*(1 - e) + rn*0.35);
-  VM.fp = fp; if(fp){ const h = 1 - e; g.position.x += FP_VM[0]*h; g.position.y += FP_VM[1]*h; g.position.z += FP_VM[2]*h; }
-  VM.run = (VM.run || 0) + ((fp && me.sprinting && !me.ads && !(me.relT > 0) ? 1 : 0) - (VM.run || 0))*Math.min(1, dt*9); if(VM.run > 0.01){ const r = AE(VM.run); g.position.x += 0.02*r; g.position.y -= 0.03*r; g.rotation.x += 0.08*r; g.rotation.y += 0.3*r; g.rotation.z -= 0.15*r; }
+  VM.fp = fp; if(fp){ const h = 1 - e; g.position.x += FP_VM[0]*h; g.position.y += FP_VM[1]*h; g.position.z += FP_VM[2]*h; g.rotation.y -= 0.1*h; g.rotation.z += 0.2*h; }
+  VM.run = (VM.run || 0) + ((fp && me.sprinting && !me.ads && !(me.relT > 0) ? 1 : 0) - (VM.run || 0))*Math.min(1, dt*9); if(VM.run > 0.01){ const r = AE(VM.run); g.position.x += 0.02*r; g.position.y -= 0.03*r; g.rotation.x += 0.08*r; g.rotation.y += 0.22*r; g.rotation.z -= 0.06*r; }
   if(g.children[0]){ const q = AE(rb); g.children[0].rotation.order = 'YZX'; g.children[0].rotation.set(0.1*q, Math.PI + 0.55*q, 1.1*q); }
   const gi = g.children[0]; if(gi && gi.userData.bl){ const w = WI(it), t = me.relT > 0 ? 1 - me.relT/w.rel : -1, o = armaAnim(gi, it.k, t, Math.min(w.mag - it.mag, it.ammo)), hL = gi.userData.handL;
     if(o && o.hand && hL){ hL.position.lerp(o.hand.add(new V3(0.01, -0.02, 0)), o.w); hL.rotation.x += 0.8*o.w; } } }
@@ -9560,7 +9671,7 @@ function aim(c, me, dt){
       if(c.adsC){ c.yE = c.yaw + c.adsC[0]*sK; c.pe += c.adsC[1]*sK; } else c.yE = c.yaw;
       const hide = sK > 0.6 && me.alive; if(hide !== !!c.hid){ c.hid = hide; if(me.alive || me.dying > 0) me.m.g.visible = !hide; } }
     else if(c === cam1){ AIMY1 = AIM_Y; scopeOn = false; c.adsK = c.scK = 0; c.hid = false; }
-    const dist = br ? camDist + (3.3 - camDist)*c.adsK + (0.22 - 3.3)*c.scK : camDist;
+    const fpq = br && fpOn(me), aE = fpq ? Math.max(c.adsK, c.scK) : c.adsK, dist = br ? camDist + (3.3 - camDist)*aE + ((fpq ? 0.02 : 0.22) - 3.3)*c.scK : camDist;
     const pe = br ? c.pe : c.pitch, yE = br ? c.yE : c.yaw, tgt = new V3(lk.x + Math.sin(yE)*Math.cos(pe)*dist, lk.y + Math.sin(pe)*dist, lk.z + Math.cos(yE)*Math.cos(pe)*dist);
     if(tgt.y < (TWR() ? -6 : -3)) tgt.y = TWR() ? -6 : -3;
     if(round === 4 || round === 5 || round === 20){ // arena com andares: aproxima a câmera se tiver plataforma no caminho
@@ -9634,13 +9745,14 @@ const MAPS = [
   [18, 'Em times: pinte mais chão com a cor do seu time', '#3ee0b0'],
   [19, 'Em times: segure as zonas, a do alto vale o dobro', '#7fd3ff'],
   [23, 'Decore as frutas dos pisos e corra pra fruta que o telão mostrar. Os outros pisos caem', '#ff4f6a'],
+  [24, 'Bombas caem do céu: fuja dos anéis vermelhos. A explosão arremessa e racha os pisos', '#ff6f3c'],
   [22, 'Em times: futebol numa arena fechada com paredes curvas e bola gigante. O time com menos gols sai', '#ff9f1c'],
   [20, 'Battle royale: jogue tomates, a zona fecha e quem zerar a vida sai', '#ff3b4e'],
   [3, 'A final: seja o último em cima da arena', '#ffd23f'],
 ];
-const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
+const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
 const CAT_NAME = {race:'Corrida', surv:'Sobrevivência', team:'Equipe', crab:'Crab Game', final:'Final'};
-const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓'};
+const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨'};
 function renderMaps(cat='all'){
   $('maps').innerHTML = '';
   MAPS.filter(([id]) => !ROUND_OFF.includes(id)).filter(([id]) => cat === 'all' || (cat === 'final' ? FINALS.includes(id) : MAP_CAT[id] === cat)).forEach(([id, desc, col]) => { const b = document.createElement('button'); b.className = 'map' + (cat === 'final' || id === 3 ? ' final' : ''); b.id = 'map-' + id;
