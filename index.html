@@ -3231,7 +3231,11 @@ function fjLootFx(){ if(FJB.w !== world){ FJB.w = world; FJB.list = []; FJB.body
 
 function stripes(x0, x1, z, color, y=0){ const s = mesh(new THREE.BoxGeometry(x1-x0, 0.02, 0.22), mat(color), world); s.position.set((x0+x1)/2, y + 0.01, z); s.castShadow = false; }
 
-function clearWorld(){ if(LANE_KEEP) return; DROP_IM = []; DROP_P = []; TER = null; FJ_LIFE = []; scene.fog.near = 60; scene.fog.far = 160; if(camera.far !== 400){ camera.far = 400; camera.updateProjectionMatrix(); } if(typeof splats !== "undefined"){ splats.length = 0; dmgs.forEach(d => d.el.remove()); dmgs.length = 0; } GRID = null; scene.remove(world); world = new THREE.Group(); scene.add(world); solids = []; bars = []; hammers = []; robot = null; doors = []; itemBoxes = []; hazards = []; OBS = []; }
+// devolve geometrias e texturas de um pedaço da cena (dispose é seguro mesmo se a peça voltar a ser usada: o three envia de novo)
+function fjFree(o){ const G = new Set(), T = new Set(); o.traverse(x => { if(x.geometry) G.add(x.geometry); const ms = Array.isArray(x.material) ? x.material : x.material ? [x.material] : [];
+  ms.forEach(m => { for(const k of ['map', 'aoMap', 'alphaMap', 'emissiveMap', 'normalMap', 'bumpMap', 'lightMap', 'gradientMap']) if(m[k] && m[k].isTexture) T.add(m[k]); }); });
+  G.forEach(g => g.dispose()); T.forEach(t => t.dispose()); }
+function clearWorld(){ if(LANE_KEEP) return; DROP_IM = []; DROP_P = []; TER = null; FJ_LIFE = []; scene.fog.near = 60; scene.fog.far = 160; if(camera.far !== 400){ camera.far = 400; camera.updateProjectionMatrix(); } if(typeof splats !== "undefined"){ splats.length = 0; dmgs.forEach(d => d.el.remove()); dmgs.length = 0; } GRID = null; fjFree(world); scene.remove(world); world = new THREE.Group(); scene.add(world); solids = []; bars = []; hammers = []; robot = null; doors = []; itemBoxes = []; hazards = []; OBS = []; }
 
 // ---------- Tamanho das provas (parte 1): pequena, média e grande conforme os feijões vivos ----------
 // NPL = feijões na partida (menu). Cada prova escolhe o tamanho pelo número de vivos: até 18 pequena, até 45 média, mais que isso grande.
@@ -9099,7 +9103,7 @@ function makeBean(color, isYou, parent){
   return Object.assign(m, {line, bomb, spark, tail});
 }
 function createPlayers(){
-  players.forEach(p => scene.remove(p.m.g)); players.length = 0;
+  players.forEach(p => { scene.remove(p.m.g); fjFree(p.m.g); }); players.length = 0;
   for(let i=0;i<(BIG ? (BR_TEST ? (twoP ? 2 : 1) : BR_SQ === 3 ? 99 : 100) : nPlayers());i++){
     const isBot = i > (twoP ? 1 : 0);
     players.push({
@@ -9971,7 +9975,7 @@ function ranking(){
 }
 function showPodium(){
   const top = ranking().slice(0, 3);
-  clearWorld(); fruits = []; ball = null; setDark(false); mingle = null;
+  clearWorld(); loot = []; drops = []; fruits = []; ball = null; setDark(false); mingle = null;
   box(-8, 8, -1, 0, -8, 8, 0xb38cff);
   [[0, 3, 0xffd23f], [-2.7, 2, 0xd9dde8], [2.7, 1.3, 0xe0a060]].forEach(([x, h, c], k) => {
     box(x - 1.25, x + 1.25, 0, h, -1.25, 1.25, c);
@@ -10014,7 +10018,7 @@ function showResult(won){
     : round === 12 ? 'Não deu pra passar dos Três Caminhos a tempo. Dica: no último trecho a viga fininha é o caminho mais rápido, mas o martelo derruba. Se estiver lotado, troque de caminho.'
     : round === 11 ? 'O gelo te levou. Dica: no gelo você demora pra frear. Solte a tecla antes da curva e vire cedo.'
     : round === 6 ? 'Não deu pra ficar entre os primeiros nas Gangorras. Dica: fique do lado que está subindo pra equilibrar, ou troque de rota: as pedrinhas não balançam e a viga com martelo é o atalho.'
-    : round === 20 ? 'Acabaram seus tomates de vida na Guerra de Tomate. Dica: não fique parado, ande de lado enquanto joga, se esconda atrás dos caixotes e pegue os kits de cura (+40 de vida).'
+    : round === 20 && BIG ? (WAR ? 'Sua tropa perdeu a Guerra. Dica: ande junto do time, segure a zona de controle e gaste os grãos na loja da base (B) antes de voltar pra luta.' : 'Você caiu no Battle Royale. Dica: pouse longe da rota do avião, pegue colete e capacete cedo, ande perto das paredes e nunca fique fora da zona.') : round === 20 ? 'Acabaram seus tomates de vida na Guerra de Tomate. Dica: não fique parado, ande de lado enquanto joga, se esconda atrás dos caixotes e pegue os kits de cura (+40 de vida).'
     : round === 17 ? 'Seu time foi arrastado no Cabo de Guerra. Dica: aperte F o mais rápido que conseguir, sem parar, do começo ao fim.'
     : round === 18 ? 'Seu time pintou menos chão. Dica: corra onde ainda está branco ou pintado pelos outros, e empurre (F) quem estiver pintando perto de você.'
     : round === 22 ? 'Seu time fez menos gols no Futebol Arena. Dica: chegue por trás da bola antes de chutar (F), mergulhe nela pra bater forte e use as paredes curvas pra tabelar.'
@@ -10757,7 +10761,7 @@ $('pSettings').onclick = () => { $('pause').hidden = true; openSettings('pause')
 $('pKeys').onclick = () => { $('pause').hidden = true; returnTo = 'pause'; $('ctrls').hidden = false; setTimeout(() => $('ctrls').querySelector('.back').focus(), 30); };
 $('pQuit').onclick = () => ask('Voltar ao menu?', 'Você sai da partida e perde o progresso dela.', 'Sair da partida', toMenu);
 function toMenu(){ PAUSED = false; BIG = false; ['pause', 'result'].forEach(x => $(x).hidden = true); if(document.pointerLockElement) document.exitPointerLock(); openScreen('menu'); $('top').hidden = true; menuScene(); playMusic(true); try{ brHUD(); }catch(e){} clearTimeout(banner.t); $('bText').classList.remove('show'); }
-function menuScene(){ confs.forEach(c => scene.remove(c)); confs.length = 0; buildRace(); createPlayers(); players.forEach((p, k) => p.pos.set(-4.5 + (k%4)*3, 0, -3 + Math.floor(k/4)*1.8)); R1.phase = 'menu'; yaw = Math.PI*0.8; }
+function menuScene(){ confs.forEach(c => scene.remove(c)); confs.length = 0; loot = []; drops = []; buildRace(); createPlayers(); players.forEach((p, k) => p.pos.set(-4.5 + (k%4)*3, 0, -3 + Math.floor(k/4)*1.8)); R1.phase = 'menu'; yaw = Math.PI*0.8; }
 $('btnMenu').onclick = toMenu;
 function setDiff(d){ DIFF = d; try{ localStorage.setItem('feijao-diff', d); }catch(e){} document.querySelectorAll('#diff button').forEach(b => { const on = +b.dataset.d === d; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); }
 document.querySelectorAll('#diff button').forEach(b => b.onclick = () => setDiff(+b.dataset.d)); setDiff(DIFF);
