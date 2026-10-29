@@ -998,7 +998,7 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
 <div class="screen" id="settings" hidden>
   <div class="card wide panel">
     <div class="phead"><h2>Configurações</h2><button class="back" id="setBack">← Voltar <kbd>Esc</kbd></button></div>
-    <div class="seg tabs" id="setTabs"><button data-t="video" class="on">Vídeo</button><button data-t="audio">Som</button><button data-t="ctrl">Controles</button><button data-t="game">Jogo</button></div>
+    <div class="seg tabs" id="setTabs"><button data-t="video" class="on">Vídeo</button><button data-t="audio">Som</button><button data-t="ctrl">Controles</button><button data-t="hud">HUD</button><button data-t="game">Jogo</button></div>
     <div class="setbody" id="setBody"></div>
     <div class="setfoot"><button class="go alt" id="setReset">Restaurar padrão</button><span class="small">Tudo é salvo na hora, neste PC.</span></div>
   </div>
@@ -1054,29 +1054,50 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
   <div class="card panel cfbox"><h2 id="cfT"></h2><p id="cfM"></p><div class="row2"><button class="go" id="cfYes">Sim</button><button class="go alt" id="cfNo">Cancelar</button></div></div>
 </div>
 <div id="fps" hidden></div><div id="brHud" hidden><div id="brComp"><div class="cw"><div class="cs"></div></div><em>0°</em></div><div id="brTop"></div><div id="brZoneBox"></div><div id="brOut" hidden></div><div id="brMe"></div><div id="brTip" hidden></div><div id="brAct" hidden><span></span><div><i></i></div></div><div id="brKeys"><div><kbd>Clique</kbd> atirar · <kbd>Botão direito</kbd> mirar · <kbd>R</kbd> recarregar</div><div><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> arma · <kbd>E</kbd> pegar · <kbd>5</kbd> cura · <kbd>V</kbd> turbo</div><div><kbd>Shift</kbd> corre (mirando de sniper: segura o ar) · <kbd>C</kbd> agacha (correndo: slide) · <kbd>X</kbd> deita · <kbd>Z</kbd> esquiva · <kbd>G</kbd> arremessar</div><div><kbd>T</kbd> granada · <kbd>4</kbd> troca a granada · <kbd>E</kbd> trator</div><div>Pule na parede e segure <kbd>Espaço</kbd> pra escalar · <kbd>Espaço</kbd> na janela pula ela · <kbd>Esc</kbd> pausa</div></div></div><div id="dirLayer"></div><div id="dmgLayer"></div><div id="speedFx"></div><div id="hurtFx"></div><div id="killFx"></div>
+<style id="cfgCss">
+/* etapa 3: controles em grupos, Passe como tela própria */
+.ctrl .ctg{grid-column:1/-1;margin:10px 0 0;font-family:var(--display);font-weight:400;font-size:17px;letter-spacing:.04em;text-transform:uppercase;color:var(--orange);border-bottom:1px solid var(--line);padding-bottom:4px}
+.ctrl .ctg:first-child{margin-top:0}
+#ctrls .ctrl{max-height:62vh;overflow:auto}
+#shop:not(.passOnly) #tabs .tpass{display:none}
+#shop.passOnly #tabs{display:none}
+</style>
 <div class="screen" id="ctrls" hidden>
   <div class="card panel">
     <div class="phead"><h2>Controles</h2><button class="back" data-close>← Voltar <kbd>Esc</kbd></button></div>
     <div class="ctrl">
+      <h4 class="ctg">Geral</h4>
       <kbd>W A S D</kbd><span>andar</span>
       <kbd>Espaço</kbd><span>pular</span>
-      <kbd>Shift</kbd><span>mergulhar (passa por baixo das barras altas)</span>
-      <kbd>F / clique</kbd><span>empurrar (rouba rabo, derruba ovo, puxa a corda e joga tomate)</span>
-      <kbd>E</kbd><span>usar item (pegue nas caixas ?): banana, tomate, onda de choque ou gosma</span>
-      <kbd>G</kbd><span>agarrar quem está na sua frente (deixa a pessoa lenta)</span>
       <kbd>Mouse</kbd><span>girar a câmera e mirar (clique no jogo pra travar o mouse, Esc solta)</span>
       <kbd>Roda</kbd><span>aproximar ou afastar a câmera</span>
       <kbd>M</kbd><span>ligar e desligar a música</span>
       <kbd>Esc</kbd><span>pausar a partida</span>
-      <kbd>1 2 3</kbd><span>Modo 100: trocar de arma</span>
-      <kbd>E</kbd><span>Modo 100: pegar arma do chão ou entrar/sair do trator</span>
-      <kbd>Botão direito</kbd><span>Modo 100: mirar com a sniper</span>
-      <kbd>5</kbd><span>Modo 100: toque usa o consumível marcado · segure pra abrir a roda e escolher</span>
-      <kbd>Q / E</kbd><span>Modo 100: inclinar pra esquerda / direita (segure)</span>
-      <kbd>H</kbd><span>Modo 100: guardar ou sacar a arma</span>
-      <kbd>T</kbd><span>Modo 100: toque joga a granada ou o utilitário marcado · segure pra abrir a roda</span>
-      <kbd>4</kbd><span>Modo 100: passa pro próximo utilitário</span>
-      <kbd>Tab</kbd><span>Modo 100: inventário (arraste as armas pra trocar de lugar)</span>
+      <h4 class="ctg">Provas</h4>
+      <kbd>Shift</kbd><span>mergulhar (passa por baixo das barras altas)</span>
+      <kbd>F / clique</kbd><span>empurrar (rouba rabo, derruba ovo, puxa a corda e joga tomate)</span>
+      <kbd>E</kbd><span>usar item (pegue nas caixas ?): banana, tomate, onda de choque ou gosma</span>
+      <kbd>G</kbd><span>agarrar quem está na sua frente (deixa a pessoa lenta)</span>
+      <h4 class="ctg">Battle Royale e Guerra</h4>
+      <kbd>Clique</kbd><span>atirar</span>
+      <kbd>Botão direito</kbd><span>mirar em primeira pessoa (qualquer arma)</span>
+      <kbd>R</kbd><span>recarregar</span>
+      <kbd>1 2 3</kbd><span>trocar de arma</span>
+      <kbd>H</kbd><span>guardar ou sacar a arma</span>
+      <kbd>E</kbd><span>pegar do chão, abrir baú, entrar ou sair de veículo, levantar o colega caído</span>
+      <kbd>Shift</kbd><span>correr (mirando com a sniper: prender o ar)</span>
+      <kbd>C</kbd><span>agachar (correndo: deslizar)</span>
+      <kbd>X</kbd><span>deitar</span>
+      <kbd>Z</kbd><span>esquivar</span>
+      <kbd>Espaço</kbd><span>na parede alta: escalar</span>
+      <kbd>Q / E</kbd><span>inclinar pra esquerda / direita (segure)</span>
+      <kbd>5</kbd><span>toque usa o consumível marcado · segure pra abrir a roda</span>
+      <kbd>T</kbd><span>toque joga a granada ou o utilitário marcado · segure pra abrir a roda</span>
+      <kbd>4</kbd><span>passa pro próximo utilitário</span>
+      <kbd>V</kbd><span>tomar o suco turbo</span>
+      <kbd>Tab</kbd><span>inventário (arraste as armas pra trocar de lugar)</span>
+      <kbd>P</kbd><span>primeira ou terceira pessoa</span>
+      <kbd>B</kbd><span>Guerra: loja da base</span>
     </div>
     <p class="small">Controle de videogame: analógico anda, A pula, B mergulha, X empurra, Y usa item, LB agarra. Com 2 jogadores, o J2 usa as setas, Enter, Shift direito, Ctrl direito, End e Page Down.</p>
   </div>
@@ -11636,6 +11657,16 @@ addEventListener('keydown', e => { if($('menu').hidden || !$('confirm').hidden |
   if(e.code === 'Escape'){ $('btnQuit').click(); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 document.addEventListener('pointerdown', e => { const P = $('mPick'); if(!P.hidden && !e.target.closest('#mPick, #btnMode')) mmPick(false); });
 mmRender();
+
+// ---------- Etapa 3 dos menus: aba HUD nas Configurações e Passe fora da Loja ----------
+{ const take = (tab, k) => { const L = SET_UI[tab], i = L.findIndex(r => r[0] === k); return i < 0 ? null : L.splice(i, 1)[0]; };
+  const cross = take('game', 'cross'), theme = take('game', 'hudTheme'), tips = take('game', 'tips'), fps = take('video', 'showFps');
+  if(cross) cross[1] = 'Mira (Battle Royale, Guerra e Campo de Tiro)';
+  if(theme) theme[1] = 'Cor da HUD (Battle Royale, Guerra e Campo de Tiro)';
+  SET_UI.hud = [theme, cross, tips, fps].filter(Boolean);
+  const fp = SET_UI.ctrl.find(r => r[0] === 'fpp'); if(fp) fp[1] = 'Battle Royale e Guerra em primeira pessoa (tecla P troca na partida)'; }
+{ const _rs = renderShop; renderShop = function(){ const r = _rs.apply(this, arguments), S = $('shop'), on = shopTab === 'pass';
+    S.classList.toggle('passOnly', on); const h2 = S.querySelector('.phead h2'); if(h2) h2.textContent = on ? 'Passe da temporada' : 'Loja'; return r; }; }
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
