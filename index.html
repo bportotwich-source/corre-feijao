@@ -11040,6 +11040,19 @@ function wdGiveUp(p){ if(!p || !p.alive || !p.down) return; if(!p.isBot) banner(
 addEventListener('keydown', e => { if(!WAR || !BIG || round !== 20 || !inMatch() || e.code !== 'KeyR' || e.repeat || PAUSED) return; if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
   const me = you(); if(me.alive && me.down){ wdGiveUp(me); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 
+// ===================== GUERRA DE TIMES: CAIXAS SOMEM =====================
+// na Guerra todo mundo renasce, então as caixas dos eliminados somem sozinhas depois de 60 s (piscam nos últimos 10 s) pra não lotar o mapa
+// cada PC conta o próprio tempo (a caixa nasce na mesma hora em todos), sem mandar nada pela rede
+const WD_BOX_T = 60, WD_BOX_BLINK = 10;
+let wdBoxTk = 0;
+function wdBoxStep(dt){ if((wdBoxTk -= dt) > 0) return; wdBoxTk = 0.25; const now = R1.t, gone = new Map();
+  for(const L of loot){ const B = L.box; if(!B || B.chest || !B.g) continue; if(B.wdT == null) B.wdT = now;
+    const age = now - B.wdT; if(age >= WD_BOX_T){ if(!gone.has(B)) gone.set(B, []); gone.get(B).push(L); }
+    else if(age >= WD_BOX_T - WD_BOX_BLINK) B.g.visible = !B.g.visible; }
+  if(!gone.size) return; const net = typeof NET !== 'undefined' && NET.match; if(net) NET.quiet = true;
+  try{ gone.forEach((list, B) => { list.forEach(L => removeLoot(L)); world.remove(B.g); }); } finally { if(net) NET.quiet = false; } }
+{ const _us = updateShoot; updateShoot = function(dt){ _us(dt); if(WAR && BIG && round === 20 && R1.phase === 'play') wdBoxStep(dt); }; }
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
