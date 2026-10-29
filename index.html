@@ -10725,6 +10725,7 @@ const NET_MAPS = [['feijoada', 'Ilha Feijoada'], ['vale', 'Vale do Feijão'], ['
 const NET_POOL = [1, 3, 6, 9, 10, 11, 12, 13, 15, 21], NET_FINALS = [3, 15];   // provas que já funcionam online
 const netClient = () => NET.on && !NET.host;
 const netBR = () => !!NET.match && BIG && round === 20;
+const netCampo = () => typeof CAMPO !== 'undefined' && CAMPO && !!NET.match && !!NET.match.lobby;   // Campo de Tiro como lobby da sala de Battle Royale
 const netSq = id => /^br\d$/.test(id) ? +id[2] : 0;
 const netName = () => (CFG.name || '').trim().slice(0, 16) || 'Feijão';
 const netRnd = () => (Math.random()*4294967296) >>> 0;
@@ -10897,7 +10898,7 @@ function nameTag(text, col){ const c = document.createElement('canvas'), g = c.g
   const t = new THREE.CanvasTexture(c), s = new THREE.Sprite(new THREE.SpriteMaterial({map:t, depthTest:false, transparent:true})); s.scale.set(2.4, 0.6, 1); s.position.y = BIG ? 3.15 : 2.75; s.renderOrder = 999; return s; }
 function netTags(){ players.forEach(p => { const want = p.netH && NET.match; if(p.m.ntag && (!want || p.m.ntag.userData.n !== p.name)){ p.m.g.remove(p.m.ntag); p.m.ntag = null; }
   if(want && !p.m.ntag){ const m = NET.members[p.nid]; p.m.ntag = nameTag(p.name, m ? m.col : 0xffffff); p.m.ntag.userData.n = p.name; p.m.g.add(p.m.ntag); } }); }
-const own = p => NET.host ? !p.netH : p.i === 0;   // quem decide esse feijão é este PC?
+const own = p => p.dummy || (NET.host ? !p.netH : p.i === 0);   // quem decide esse feijão é este PC? (alvos do Campo de Tiro: cada PC tem os seus)
 const WK = Object.keys(WPN);
 // estado compacto: posição, velocidade, direção e flags. No Battle Royale vão junto vida, escudo, arma, pose e equipamento
 function netPack(p){ const f = (p.alive ? 1 : 0) | (p.grounded ? 2 : 0) | (p.dive > 0 ? 4 : 0) | (p.done ? 8 : 0) | (p.item ? 16 : 0) | (p.stun > 0 ? 32 : 0) | (p.dying > 0 ? 64 : 0) | (p.pushAnim > 0 ? 128 : 0);
@@ -10945,7 +10946,7 @@ function netZoneIn(a){ const z = zoneP; if(!z || !Array.isArray(a) || NET.host) 
 function netRound(seed){ const br = BIG && round === 20, bots = players.map(p => p.isBot);
   NET.inRound = true; NET.lootLive = false; NET.li = 0; NET.lc = 0; players.sort((a, b) => a.nid - b.nid);
   if(br) players.forEach(p => p.isBot = true);   // no Battle Royale todo mundo sorteia igual (o plano de pulo dos bots também)
-  netFutS = null; NET.rs = seed; try{ withSeed(seed, round === LB ? lbRound : _startRound); } finally { players.sort((a, b) => a.i - b.i); players.forEach((p, i) => p.isBot = bots[i]); NET.inRound = false; NET.lootLive = true; }
+  netFutS = null; NET.rs = seed; try{ withSeed(seed, round === LB ? lbRound : netCampo() ? lbCpRound : _startRound); } finally { players.sort((a, b) => a.i - b.i); players.forEach((p, i) => { if(i < bots.length) p.isBot = bots[i]; }); NET.inRound = false; NET.lootLive = true; }
   if(br){ players.forEach(p => { p.squad = Math.floor(p.nid/BR_SQ); p.revUsed = true; p._na = true; p._nd = false; p._nw = undefined; p._ng = undefined; if(!own(p)) p.jumpU = 2; }); markMates(); }
   netTags(); netSane(); }
 // envia o estado: o líder manda todo mundo (o que está longe de cada amigo vai menos vezes), o amigo só o próprio feijão
@@ -10953,7 +10954,7 @@ function netTick(dt){ if(!NET.match) return;
   NET.evT -= dt; if(NET.evT <= 0){ NET.evT = 1/NET_EVHZ; netFlush(); }
   NET.sendT -= dt; if(NET.sendT > 0) return; NET.sendT = 1/NET_HZ; netFlush();
   if(NET.host){ if(!NET.conns.size) return; const M = NET.members.length, br = netBR(), z = br ? netZonePack() : null; NET.sn++;
-    const all = players.filter(p => p.alive || p.dying > 0 || p.nid < M).map(p => [p, br && p.netH && NET.tg[p.nid] ? [p.nid, ...NET.tg[p.nid].s] : netPack(p)]);
+    const all = players.filter(p => !p.dummy && (p.alive || p.dying > 0 || p.nid < M)).map(p => [p, br && p.netH && NET.tg[p.nid] ? [p.nid, ...NET.tg[p.nid].s] : netPack(p)]);
     if(!br){ netSend({t:'s', tl:R1.timeLeft, p:all.map(x => x[1])}); return; }
     NET.members.forEach((m, k) => { if(!k || m.gone) return; const me = NET.byNid[k];
       const list = all.filter(([p]) => p.nid < M || !me || NET.sn % 4 === 0 || Math.abs(p.pos.x - me.pos.x) + Math.abs(p.pos.z - me.pos.z) < 150).map(x => x[1]);
@@ -10990,7 +10991,7 @@ function netEvIn(e, from){ const P = n => NET.byNid[n]; NET.stat.rx[e.t] = (NET.
     shots.push({pos, vel:new V3(+s[3], +s[4], +s[5]), m, owner:p, t:0, w:NW[e.kind], spin:true}); p.pushAnim = 0.3; p.face = Math.atan2(+s[3], +s[5]); sfxAt(p.pos, 'push', 30); return; }
   case 'bell': if(netLobby()) lbBellIn(e); return;
   case 'fg': if(!NET.host) netFutGoal(e); return;
-  case 'la': lootIn(e.l); return;
+  case 'la': if(!netCampo()) lootIn(e.l); return;
   case 'lr': { const L = loot.find(o => o.id === e.id); if(L){ NET.quiet = true; try{ removeLoot(L); } finally { NET.quiet = false; } } return; }
   case 'box': { const p = P(e.n); if(!Array.isArray(e.l)) return; const box = BRE.deathBox(e.c | 0); box.position.set(+e.x, +e.y, +e.z); box.rotation.y = +e.r || 0; world.add(box);
     const B = {g:box, label:'Caixa de ' + (p ? nm(p) : 'alguém')}; e.l.forEach(a => { const L = lootIn(a); if(!L) return; L.box = B; L.s.scale.setScalar(0.55); if(L.glow) L.glow.scale.setScalar(0.6); });
@@ -11022,7 +11023,7 @@ function netWatchMates(){ if(!netBR() || R1.phase !== 'play') return; const me =
 const _startGame = startGame, _startRound = startRound, _nextRound = nextRound, _endRound = endRound, _eliminate = eliminate, _finish = finishPlayer, _knock = knock, _botInput = botInput, _stepPlayer = stepPlayer, _showResult = showResult, _toMenu = toMenu, _pause = pause, _updateDrop = updateDrop, _usePower = usePower, _tick = tick, _createPlayers = createPlayers;
 const _hurt = hurt, _fireW = fireW, _throwNade = throwNade, _addLoot = addLoot, _removeLoot = removeLoot, _pickUp = pickUp, _dropAll = dropAll, _enterCar = enterCar, _leaveCar = leaveCar, _nextZone = nextZone, _supplyDrop = supplyDrop, _updateDrops = updateDrops, _updateShoot = updateShoot;
 startGame = function(){ if(!NET.match) return _startGame();
-  const d = NET.match; $('top').hidden = false; withSeed(d.seed, _createPlayers); netArrange(); elimOrder = []; earn = newEarn(); if(!d.lobby){ bump('games'); if(BIG) bump('brGames'); } R1.ptsOver = false; $('ptsBoard').hidden = true;
+  const d = NET.match; $('top').hidden = false; withSeed(d.seed, () => { const t = BR_TEST; if(netCampo()) BR_TEST = false; try{ _createPlayers(); } finally { BR_TEST = t; } }); netArrange(); elimOrder = []; earn = newEarn(); if(!d.lobby){ bump('games'); if(BIG) bump('brGames'); } R1.ptsOver = false; $('ptsBoard').hidden = true;
   plan = d.plan.slice(); if(PTS) players.forEach(p => { p.pts = 0; }); stage = 0; round = plan[0]; clock = d.clock; netRound(d.seed + 1); };
 nextRound = function(){ if(!NET.match) return _nextRound(); if(!NET.host || NET.over) return;
   const seed = netRnd(); stage++; round = plan[stage]; netCtl({t:'round', plan, stage, seed, clock}); netRound(seed); };
@@ -11033,7 +11034,7 @@ endRound = function(){ if(!NET.match) return _endRound(); if(!NET.host && !NET.f
   if(over) setTimeout(() => { netCtl({t:'over'}); netOver(); }, PTS ? 4000 : 2800);
   else if(!PTS && !humanSideAlive()) setTimeout(nextRound, 2600); };   // o líder caiu, mas os amigos seguem
 // eliminação: nas provas só o líder decide; no Battle Royale cada um decide a própria (e o líder, a dos bots)
-eliminate = function(p, why){ if(!NET.match) return _eliminate(p, why); if(!p.alive) return;
+eliminate = function(p, why){ if(!NET.match || p.dummy) return _eliminate(p, why); if(!p.alive) return; if(netCampo()) return own(p) ? _eliminate(p, why) : undefined;
   if(!NET.fromHost && !(NET.host || (netBR() && own(p)))) return;
   _eliminate(p, why); if(!own(p)){ p._na = false; p._bkS = false; } if(!NET.fromNet) netEv({t:'el', n:p.nid, why:String(why || '').replace(/<b>Você<\/b>/g, `<b>${netName()}</b>`).slice(0, 160)}); };
 finishPlayer = function(p){ if(!NET.match) return _finish(p); if(!NET.host && !NET.fromHost) return; _finish(p); if(NET.host && !NET.fromNet) netEv({t:'fin', n:p.nid}); };
@@ -11058,10 +11059,10 @@ throwNade = function(p, target, kind){ if(!netBR() || !own(p)) return _throwNade
   const s = shots[n0]; if(!s || (p.isBot && !netNear(p, 130))) return; const k = Object.keys(NW).find(x => NW[x] === s.w); if(!k) return;
   netEv({t:'nd', n:p.nid, kind:k, s:[r2(s.pos.x), r2(s.pos.y), r2(s.pos.z), r2(s.vel.x), r2(s.vel.y), r2(s.vel.z)]}); };
 // loot: cada item tem um número igual em todos os PCs; quem pega ou solta avisa os outros
-addLoot = function(k, x, y, z, ammo, rr, att){ if(!netBR() && !NET.inRound) return _addLoot(k, x, y, z, ammo, rr, att); if(NET.noLoot) return null;
+addLoot = function(k, x, y, z, ammo, rr, att){ if(netCampo() || (!netBR() && !NET.inRound)) return _addLoot(k, x, y, z, ammo, rr, att); if(NET.noLoot) return null;
   const L = _addLoot(k, x, y, z, ammo, rr, att); if(!NET.match) return L;
   if(!NET.lootLive){ L.id = 'i' + NET.li++; return L; } L.id = (players[0].nid | 0) + ':' + ++NET.lc; if(!NET.quiet) netEv({t:'la', l:lootPack(L)}); return L; };
-removeLoot = function(L){ _removeLoot(L); if(netBR() && NET.lootLive && !NET.quiet && L.id) netEv({t:'lr', id:L.id}); };
+removeLoot = function(L){ _removeLoot(L); if(netBR() && !netCampo() && NET.lootLive && !NET.quiet && L.id) netEv({t:'lr', id:L.id}); };
 pickUp = function(p, L){ if(netBR() && !own(p)) return false; return _pickUp(p, L); };
 dropAll = function(p){ if(!netBR()) return _dropAll(p); if(!own(p)){ p.inv = null; return; } if(!p.inv) return;
   const n0 = loot.length, nb = world.children.length; NET.quiet = true; try{ _dropAll(p); } finally { NET.quiet = false; }
@@ -11099,7 +11100,7 @@ updateFut = function(dt){ _updateFut(dt); if(!NET.match || !fut || round !== 22)
 function netFutIn(d){ if(!Array.isArray(d.b) || round !== 22) return; netFutS = {b:d.b.map(s => Array.isArray(s) ? s.map(Number) : null), at:performance.now()}; }
 function netFutGoal(e){ if(!fut || round !== 22) return; const b = fut.balls[e.k]; if(!b) return; b.pos.set(+e.x, +e.y, +e.z); b.last = NET.byNid[e.n] || null; netDo(() => _futGoal(b)); }
 // Battle Royale: quando nenhum amigo está mais vivo, o líder encerra pra todo mundo (os bots não precisam terminar)
-function netHostEnd(){ if(!NET.host || NET.over || !netBR() || R1.phase !== 'play') { NET.endT = 0; return; }
+function netHostEnd(){ if(!NET.host || NET.over || !netBR() || netCampo() || R1.phase !== 'play') { NET.endT = 0; return; }
   const hum = NET.members.some((m, k) => !m.gone && NET.byNid[k] && NET.byNid[k].alive);
   if(hum){ NET.endT = 0; return; } if(!NET.endT) NET.endT = clock + 3.5; else if(clock > NET.endT){ NET.endT = 0; netCtl({t:'over'}); netOver(); } }
 // câmera ou feijão com número inválido (NaN) travam o som e a câmera pra sempre: conserta na hora
@@ -11225,7 +11226,10 @@ const LB_F = {x:0, z:-13, hx:9, hz:6, mz:2};   // campo de futebol: centro, meia
 const LB_T = {x:-14, z:3};   // torre do sino
 const LB_R = 0.5;            // raio da bola
 const netLobby = () => !!(NET.match && NET.match.lobby);
-function lbMsg(){ return {t:'start', lobby:1, mode:NET.mode, pts:false, br:0, plan:[LB], seed:netRnd(), clock, diff:DIFF, members:NET.members.filter(m => !m.gone).map(m => ({id:m.id, name:m.name, look:m.look}))}; }
+// sala de Battle Royale ou Guerra: o lobby é o Campo de Tiro (alvos e mesas de itens); provas e Modo Pontos ficam na praça
+const lbCampo = () => typeof CAMPO !== 'undefined' && CAMPO;
+const lbCpOn = () => typeof cpEnter === 'function' && /^(br\d|war)$/.test(NET.mode);
+function lbMsg(){ const cp = lbCpOn(); return {t:'start', lobby:1, cp:cp ? 1 : 0, mode:NET.mode, pts:false, br:cp ? 1 : 0, plan:[cp ? 20 : LB], seed:netRnd(), clock, diff:DIFF, members:NET.members.filter(m => !m.gone).map(m => ({id:m.id, name:m.name, look:m.look}))}; }
 const lbCur = () => Object.assign({}, NET.match, {clock, members:NET.members.filter(m => !m.gone).map(m => ({id:m.id, name:m.name, look:m.look}))});
 // o líder abre (ou reabre) a praça pra todo mundo
 function lbStart(){ if(LB_OFF || !NET.host || !NET.on) return; const d = lbMsg(); netCtl(d); netBegin(d); }
@@ -11314,13 +11318,20 @@ function lbRound(){ const M = NET.members.length; players.forEach(p => { p.alive
   R1.timeLeft = 1e9; R1.quota = 99; R1.phase = 'play'; R1.t = 0; yaw = 0; pitch = 0.32; LBY.climb0 = null;
   if(TOON) applyToon();
   banner('Praça da sala', NET.host ? 'Seus amigos aparecem aqui quando entrarem. Esc abre a sala pra começar.' : 'Brinque aqui enquanto o líder escolhe o modo', 3200); }
+// o Campo de Tiro da sala: só quem está na sala (sem bots), cada PC com os seus alvos e as suas mesas
+function lbCpSpawn(p){ const S = cpSpawnAt(p.nid % 100); p.pos.set(S[0], 0.4, S[1]); p.vel.set(0, 0, 0); p.face = 0; p.grounded = false; p.glide = null; }
+function lbCpRound(){ const M = NET.members.length; players.forEach(p => { p.alive = p.nid < M; if(!p.alive) p.m.g.visible = false; });
+  _startRound(); R1.timeLeft = 1e9; R1.phase = 'play'; LBY.climb0 = null;
+  players.forEach(p => { if(p.dummy) return; if(p.nid >= M){ p.alive = false; p.m.g.visible = false; } });
+  banner('🎯 Campo de Tiro da sala', NET.host ? 'Seus amigos aparecem aqui quando entrarem. Esc abre a sala pra escolher o modo e começar.' : 'Treine nos alvos enquanto o líder começa a partida. Esc abre a sala.', 3600); }
 // alguém entrou com a praça aberta: aparece sem reiniciar
 function lbSync(){ if(!netLobby()) return; const M = NET.members.length; let add = false;
   for(let k = 0; k < M; k++){ const p = NET.byNid[k]; if(p && !p.alive) add = true; } if(!add) return;
   netArrange();
-  for(let k = 0; k < M; k++){ const p = NET.byNid[k]; if(!p || p.alive) continue; p.alive = true; p.dying = 0; p.done = false; p.m.g.visible = true; p.m.g.scale.setScalar(1); lbSpawn(p);
+  for(let k = 0; k < M; k++){ const p = NET.byNid[k]; if(!p || p.alive) continue; p.alive = true; p.dying = 0; p.done = false; p.m.g.visible = true; p.m.g.scale.setScalar(1);
+    if(lbCampo()){ lbCpSpawn(p); p.hp = 100; p.squad = p.nid; p._na = true; p._nd = false; p.revUsed = true; } else lbSpawn(p);
     if(NET.host && NET.members[k]) netTo(NET.members[k].id, lbCur()); }
-  netTags(); }
+  if(lbCampo()) markMates(); netTags(); }
 // ---- bola: o líder manda; cada PC simula igual e vai corrigindo pro que o líder diz ----
 function lbBall(dt){ const B = LBY.ball, F = LB_F; if(!B) return; const p = B.pos, v = B.vel, x0 = F.x - F.hx, x1 = F.x + F.hx, z0 = F.z - F.hz, z1 = F.z + F.hz;
   if(LBY.reset && clock > LBY.reset){ LBY.reset = 0; p.set(F.x, 2.5, F.z); v.set(0, 0, 0); }
@@ -11353,7 +11364,7 @@ function lbIn(d){ if(!Array.isArray(d.b) || d.b.length < 6) return; LBY.net = {b
 function lbBellIn(e){ const p = NET.byNid[e.n]; if(!p) return; const s = Math.max(0, +e.s || 0), b = LBY.best[e.n], rec = !b || s < b; if(rec) LBY.best[e.n] = s; LBY.ring = 1.2;
   const txt = `${s.toFixed(1)} s${rec && b ? ' · recorde!' : ''}`;
   if(p.i === 0){ banner('Dim-dom!', `Você tocou o sino em ${txt}`, 2200); sfx('win'); } else { say(`<b>${nm(p)}</b> tocou o sino em ${txt}`, true); sfx('ding'); } }
-function lbExtras(dt){ const me = players[0], B = LBY.bell; if(!me || !me.alive) return;
+function lbExtras(dt){ const me = players[0], B = LBY.bell; if(!me || !me.alive || lbCampo()) return;
   if(B){ LBY.ring = Math.max(0, LBY.ring - dt); B.g.rotation.z = Math.sin(clock*14)*0.35*LBY.ring;
     if(me.grounded && me.pos.y < 0.5 && Math.hypot(me.pos.x - B.x, me.pos.z - B.z) < 5.5) LBY.climb0 = clock;
     if(LBY.climb0 !== null && me.pos.y > B.y - 0.2 && Math.hypot(me.pos.x - B.x, me.pos.z - B.z) < 1.8){ const s = clock - LBY.climb0; LBY.climb0 = null; netEv({t:'bell', n:me.nid, s:Math.round(s*10)/10}); lbBellIn({n:me.nid, s}); } }
@@ -11369,12 +11380,16 @@ function lbPanel(on){ LBY.panel = !!on; document.body.classList.toggle('lb3d', L
 // ---- ganchos ----
 const _lbPause = pause; pause = function(on){ if(on && netLobby()){ if(!LBY.panel) lbPanel(true); return; } return _lbPause(on); };
 const _lbInput = playerInput; playerInput = function(p){ const r = _lbInput(p); if(LBY.panel && netLobby()){ r.mx = r.mz = 0; r.jump = r.dive = r.push = r.item = r.grab = false; } return r; };
-const _lbHUD = updateHUD; updateHUD = function(){ _lbHUD(); if(!netLobby()) return; const M = NET.members.length, lead = NET.members[0];
+const _lbHUD = updateHUD; updateHUD = function(){ _lbHUD(); if(!netLobby() || lbCampo()) return; const M = NET.members.length, lead = NET.members[0];
   $('hRound').textContent = 'Sala ' + NET.code; $('hInfo').textContent = `${M} na sala · ${NET.host ? 'Esc: escolher o modo e começar' : `esperando ${lead ? lead.name : 'o líder'} começar · Esc: sala`}`; $('hTime').textContent = `⚽ ${LBY.score[0]} x ${LBY.score[1]}`; };
 const _lbTick = tick; tick = function(dt){ _lbTick(dt); lbTick(dt); };
-const _lbBegin = netBegin; netBegin = function(d){ if(LBY.panel){ LBY.panel = false; document.body.classList.remove('lb3d'); } LBY.net = null; return _lbBegin(d); };
+// entrar no Campo de Tiro pela sala: o play() da partida vira o cpEnter() do campo; qualquer outra partida sai do campo antes (senão ele volta o mapa antigo)
+const _lbPlay = play; play = function(...a){ if(LBY.cpGo){ LBY.cpGo = false; return cpEnter(null); } return _lbPlay(...a); };
+const _lbBegin = netBegin; netBegin = function(d){ if(lbCampo()) cpLeave(); LBY.cpGo = !!(d && d.lobby && d.cp && typeof cpEnter === 'function'); if(LBY.panel){ LBY.panel = false; document.body.classList.remove('lb3d'); } LBY.net = null; return _lbBegin(d); };
 const _lbEnd = netEndMatch; netEndMatch = function(){ if(LBY.panel){ LBY.panel = false; document.body.classList.remove('lb3d'); } LBY.ball = null; LBY.bell = null; LBY.flag = null; return _lbEnd(); };
-const _lbRoomIn = netRoomIn; netRoomIn = function(d){ _lbRoomIn(d); lbSync(); };
+const _lbRoomIn = netRoomIn; netRoomIn = function(d){ _lbRoomIn(d); lbSync();
+  // o líder trocou entre provas e Battle Royale: reabre o lobby certo (praça ou Campo de Tiro) e volta pro painel
+  if(NET.host && netLobby() && !LB_OFF && !!NET.match.cp !== lbCpOn() && !LBY.swap){ LBY.swap = true; setTimeout(() => { LBY.swap = false; if(!netLobby() || !!NET.match.cp === lbCpOn()) return; lbStart(); lbPanel(true); }, 0); } };
 const _lbLeave = netLeave; netLeave = function(){ const lb = netLobby(); _lbLeave(); if(lb){ _toMenu(); openParty(); } };
 // alguém saiu com a praça aberta: o líder reabre a praça com a lista nova
 const _lbDrop = netDrop; netDrop = function(id){ if(!netLobby() || !NET.host) return _lbDrop(id);
