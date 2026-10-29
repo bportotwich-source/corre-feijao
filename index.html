@@ -930,6 +930,28 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
 @media (max-height:760px) and (min-width:761px){#menu .mtop .logo h1{font-size:36px}#menu .pcmain{top:calc(100px + env(safe-area-inset-top,0px))}#menu #btnPlay>b{font-size:38px}}
 @media (max-width:1100px) and (min-width:761px){#menu .mtab{font-size:16px;padding:8px 12px}#menu .mtop .ptop .xpwrap{display:none}}
 @media (max-width:760px){#menu .mtop{position:static;flex-wrap:wrap;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 0}#menu .mtabs{order:3;width:100%;margin:0;justify-content:space-between}#menu .mtab{font-size:14px;padding:8px 10px}#menu .pcmain{padding-top:14px}#menu .mpick{left:16px;width:calc(100% - 32px);top:150px}}
+
+/* etapa 2: Escolher modo em 3 colunas, por cima da área do menu (as abas continuam visíveis) */
+#menu .mpick{left:max(28px,env(safe-area-inset-left,0px));right:max(28px,env(safe-area-inset-right,0px));width:auto;top:calc(110px + env(safe-area-inset-top,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));max-height:none;display:flex;flex-direction:column;padding:18px 20px 16px}
+#menu .mph{padding:0 4px 12px;border-bottom:1px solid var(--line);margin-bottom:14px}#menu .mph b{font-size:32px}
+#menu .mpl{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+#menu .mpcol{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:var(--soft);padding:14px;display:flex;flex-direction:column;gap:8px;overflow:auto;min-height:0}
+#menu .mpcol h3{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:24px;letter-spacing:.02em;color:var(--ink);display:flex;align-items:center;gap:8px}
+#menu .mpcol .mpg{padding:6px 2px 0}
+#menu .mpo{background:var(--cream)}#menu .mpo.on{background:#fff8e8}
+#menu .mpo.sub{grid-template-columns:30px 1fr;padding:7px 11px;border-radius:12px}#menu .mpo.sub>i{width:30px;height:30px;font-size:17px;background:#fff}
+#menu .mpo.sub b{font-size:16px}
+#menu .mpms{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#menu .mpcs{display:flex;flex-wrap:wrap;gap:6px}
+#menu .mpc{font-family:var(--display);font-weight:400;font-size:16px;letter-spacing:.02em;color:var(--muted);background:var(--cream);border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+#menu .mpc:hover,#menu .mpc:focus-visible{color:var(--ink);border-color:var(--orange);outline:none}
+#menu .mpc.on{background:var(--ink);border-color:var(--ink);color:#fff}
+#menu .mpo:disabled,#menu .mpc:disabled{opacity:.45;cursor:default;transform:none}
+#menu .mpf{display:flex;align-items:center;gap:14px;padding-top:14px}
+#menu .mpf span{color:var(--muted);font-weight:800}#menu .mpf span b{color:var(--ink);font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.02em}
+#menu .mpf .go{margin-left:auto;min-width:200px;font-size:24px}
+@media (max-width:1100px){#menu .mpl{grid-template-columns:1fr 1fr}}
+@media (max-width:760px){#menu .mpick{left:16px;right:16px;top:150px;bottom:16px}#menu .mpl{grid-template-columns:1fr;overflow:auto}#menu .mpcol{overflow:visible}}
 </style>
 <div class="screen pc" id="menu" hidden>
   <header class="mtop">
@@ -946,7 +968,7 @@ body.brh #mini{font-size:var(--nhf);top:calc(4.4em + env(safe-area-inset-top,0px
       <button class="mbtn" id="btnCampoM"><b>Campo de Tiro</b><small>Treine com todos os itens antes de jogar</small></button>
     </nav>
   </div>
-  <div class="mpick" id="mPick" hidden role="dialog" aria-label="Trocar modo"><div class="mph"><b>Trocar modo</b><small><kbd>Esc</kbd> fecha</small></div><div class="mpl" id="mPickL"></div></div>
+  <div class="mpick" id="mPick" hidden role="dialog" aria-label="Escolher modo"><div class="mph"><b>Escolher modo</b><small><kbd>Esc</kbd> volta</small></div><div class="mpl" id="mPickL"></div></div>
   <section class="mset" aria-label="Configurações da partida">
       <div class="srow" data-mm="full pts map br big"><span>Jogadores</span><div class="seg" id="np"><button data-n="1">1</button><button data-n="2">2 no mesmo PC</button></div></div>
       <div class="srow" data-mm="full map"><span>Feijões</span><div class="seg" id="npl"><button data-n="16">16</button><button data-n="40">40</button><button data-n="100">100</button></div></div>
@@ -5334,7 +5356,7 @@ function botHunt(p, dt, inp){ if(!pq.open) return inp; const sk = p.skill || 0.8
 
 // Guerra de Tomate: battle royale. Cada tomate tira vida, a zona fecha e quem zerar a vida sai
 // mira do Modo 100: sem acessório dá um zoom leve no ombro; luneta e sniper viram lente em primeira pessoa
-let AIMY1 = 0.42, scopeOn = false; const FP_VM = [0.02, 0.18, -0.14, 62]; const fpOn = me => !!(CFG.fpp && BIG && round === 20 && !twoP && me && me.alive && !me.down && !me.glide && !me.car && R1.phase !== 'podium'); const adsScope = p => { const it = p.inv && p.inv[p.sel]; return !it ? null : it.k === 'sniper' ? 'sniper' : WI(it).scope ? 'luneta' : null; }, adsFov = p => { if(typeof ARMA !== 'undefined' && ARMA.lib){ const it = p.inv && p.inv[p.sel], z = VM_ZOOM[sightOf(it)] || 1.25; return CFG.fov/(z >= 2 ? 1.2 : z); } const s = adsScope(p); return s === 'sniper' ? 13 : s === 'luneta' ? 22 : CFG.fov/1.3; };
+let AIMY1 = 0.42, scopeOn = false; const FP_VM = [0.02, 0.18, -0.14, 62]; const fpOn = me => !!(CFG.fpp && BIG && round === 20 && !twoP && me && me.alive && !me.down && !me.glide && !me.car && R1.phase !== 'podium'); const adsScope = p => { const it = p.inv && p.inv[p.sel]; return !it ? null : it.k === 'sniper' ? (it.att && (it.att.mira8x || it.att.luneta) ? 'sniper' : null) : WI(it).scope ? 'luneta' : null; }, adsFov = p => { if(typeof ARMA !== 'undefined' && ARMA.lib){ const it = p.inv && p.inv[p.sel], z = VM_ZOOM[sightOf(it)] || 1.25; return CFG.fov/(z >= 2 ? 1.2 : z); } const s = adsScope(p); return s === 'sniper' ? 13 : s === 'luneta' ? 22 : CFG.fov/1.3; };
 const AIM_Y = 0.42, SHOT_V = 32, SHOT_G = -9, BR_W = 22, BR_DMG = 10;
 let shots = [], hearts = [], hpBars = [], brZone = null, bushes = [], FJ_MOITA = new Map();
 // parede da zona: listras diagonais que sobem devagar
@@ -10413,7 +10435,7 @@ function vmBuild0(p, it, key){ const k = it.k, att = it.att || {}, col = myLook(
 const ARMA = {lib:null}, VM_ZOOM = {ferro:1.25, reddot:1.35, holo:1.35, mira2x:2, mira4x:4, mira8x:8};
 // que mira a arma usa: a do acessório, a luneta 4x antiga, a 8x da sniper ou a alça de mira da própria arma
 const SIGHT_K = {reddot:'reddot', holo:'holo', mira2x:'mira2x', luneta:'mira4x', mira8x:'mira8x'}, ATT_BL = {silenc:['silenciador', 's_boca'], comp:['compensador', 's_boca'], empV:['emp_vertical', 's_baixo'], empA:['emp_angulada', 's_baixo']};
-const sightOf = it => { const a = (it && it.att) || {}, k = Object.keys(SIGHT_K).find(k => a[k]); return k ? SIGHT_K[k] : it && it.k === 'sniper' ? 'mira8x' : 'ferro'; };
+const sightOf = it => { const a = (it && it.att) || {}, k = Object.keys(SIGHT_K).find(k => a[k]); return k ? SIGHT_K[k] : 'ferro'; };
 function armaLoad(){ if(!THREE.GLTFLoader || typeof ARMA_GLB === 'undefined') return; const L = new THREE.GLTFLoader(), lib = {}, b64 = x => Uint8Array.from(atob(x), c => c.charCodeAt(0)).buffer, seen = new Set();
   const fix = o => o.traverse(m => { const M = m.material; if(!M || seen.has(M)) return; seen.add(M); M.color.convertLinearToSRGB(); if(M.emissive) M.emissive.convertLinearToSRGB(); // o jogo não converte a cor na saída
     if(M.name === 'glass' || M.name === 'lens'){ M.transparent = true; M.opacity = M.name === 'glass' ? 0.12 : 0.18; M.depthWrite = false; } });
@@ -10459,6 +10481,9 @@ function armaAnim(g, k, t, shells){ const U = g.userData; if(!U.rest) U.rest = g
     const tp = kid('tampa'); if(tp) tp.rotation.x -= 1.05*ASEG(t, 0.02, 0.1)*(1 - ASEG(t, 0.72, 0.8));
     if(fer) fer.position.z -= (k === 'pistol' ? 0.035*(1 - ASEG(t, 0.72, 0.77)) : 0.06*APULSE(t, 0.76, 0.9)); }
   return O; }
+function snIron(g, sm){ const dk = new THREE.MeshLambertMaterial({color:0x22202a}), red = new THREE.MeshBasicMaterial({color:0xff3b4e}), y = sm.position.y + 0.03, B = (w, h, d, x, yy, z, m) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m || dk); o.position.set(x, yy, z); g.add(o); return o; };
+  const zb = sm.position.z, mz = vmKid(g, 's_boca'), zf = mz ? mz.position.z - 0.03 : zb + 0.5; B(0.05, 0.012, 0.02, 0, y - 0.025, zb); [-1, 1].forEach(s => B(0.012, 0.03, 0.02, s*0.016, y - 0.006, zb)); // alça: entalhe em U
+  B(0.008, 0.04, 0.012, 0, y - 0.012, zf); B(0.01, 0.01, 0.014, 0, y + 0.006, zf, red); return new V3(0, y + 0.004, zb - 0.2); }
 function vmBuild(p, it){ const k = it.k, att = it.att || {}, sg = sightOf(it), look = myLook(), key = k + sg + attKey(att) + JSON.stringify(look) + !!ARMA.lib; if(VM.key === key) return VM.g; if(VM.g) vmScene.remove(VM.g); VM.key = key;
   const L = ARMA.lib; if(!L || !L[k]) return vmBuild0(p, it, key);
   const root = new THREE.Group(), g = armaBuild(k, att, sg), optic = g.userData.optic;
@@ -10476,7 +10501,7 @@ function vmBuild(p, it){ const k = it.k, att = it.att || {}, sg = sightOf(it), l
       if(!VM.rt) VM.rt = new THREE.WebGLRenderTarget(512, 512); const img = new THREE.Mesh(new THREE.CircleGeometry(R, 48), new THREE.MeshBasicMaterial({map:VM.rt.texture, depthWrite:false})); img.rotation.y = Math.PI; img.position.z = 0.0005; grp.add(img); }
     const ret = new THREE.Mesh(scope ? new THREE.CircleGeometry(R, 48) : new THREE.PlaneGeometry(R*2.1, R*2.1), new THREE.MeshBasicMaterial({map:VM_RET[sg] || (VM_RET[sg] = reticleTex(sg)), transparent:true, depthWrite:false}));
     ret.rotation.y = Math.PI; ret.position.z = scope ? -0.0005 : 0.001; ret.renderOrder = 2; grp.add(ret); if(scope) VM.lens = {grp, R, Z}; }
-  else { const f = vmKid(g, 's_ferro'), bb = new THREE.Box3().setFromObject(g); eye = f ? f.position.clone().add(new V3(0, 0, -0.34)) : new V3(0, bb.max.y + 0.03, bb.min.z - 0.25); }
+  else { const f = vmKid(g, 's_ferro'), sm = vmKid(g, 's_mira'), bb = new THREE.Box3().setFromObject(g); if(sm && k === 'sniper'){ eye = snIron(g, sm); } else eye = f ? f.position.clone().add(new V3(0, 0, -0.34)) : new V3(0, bb.max.y + 0.03, bb.min.z - 0.25); }
   g.rotation.y = Math.PI; g.position.set(eye.x, -eye.y, eye.z); root.add(g); root.userData.sn = false; VM.bl = true; VM.zm = Z; vmScene.add(root); return VM.g = root; }
 function vmStep(c, me, dt){ const sK = c.scK || 0, it = me.inv && me.inv[me.sel]; const fp = fpOn(me);
   if(fp && me.useT > 0 && USE_A[me.useK] && c === cam1 && BIG && round === 20 && !twoP){ VM.on = true; VM.fp = true; VM.e = 0; VM.lens = null; VM.up = 0; if(VM.g) VM.g.visible = false; VM.bob += dt*(6 + Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6)*5); vmUse(me, dt); return; } if(VM.ug) VM.ug.visible = false; VM.on = !!(it && sK > 0.02 && me.alive && BIG && round === 20 && c === cam1 && !twoP && !(fp && (me.holster || me.climb || me.mantle || me.vault))); if(!VM.on){ VM.up = 0; if(VM.g) VM.g.visible = false; if(VM.ug) VM.ug.visible = false; return; }
@@ -11550,11 +11575,38 @@ function mmSave(m){ MM = m; try{ localStorage.setItem('feijao-modo', JSON.string
 function mmRender(){ const [ic, nm, sub] = mmInfo(MM); $('mmIc').textContent = ic; $('mmName').textContent = nm; $('mmSub').textContent = sub;
   let any = false; document.querySelectorAll('#menu .mset [data-mm]').forEach(el => { const on = el.dataset.mm.split(' ').includes(MM.k); el.hidden = !on; if(on) any = true; });
   document.querySelector('#menu .mset').hidden = !any; }
-function mmPick(on){ const P = $('mPick'); P.hidden = !on; if(!on) return;
-  $('mPickL').innerHTML = MM_LIST.map(([g, L]) => `<div class="mpg">${g}</div>` + L.map(([k, ic, nm, d, more]) => `<button class="mpo${MM.k === k ? ' on' : ''}" data-k="${k}"><i>${ic}</i><span><b>${nm}</b><small>${d()}</small></span><em>${more ? 'escolher ›' : MM.k === k ? 'escolhido' : ''}</em></button>`).join('')).join('');
-  $('mPickL').querySelectorAll('.mpo').forEach(b => b.onclick = () => { sfx('beep'); const k = b.dataset.k;
-    if(k === 'map'){ mmPick(false); openScreen('mapsel'); } else if(k === 'br'){ mmPick(false); openScreen('bigsel'); } else { mmSave({k}); mmPick(false); $('btnPlay').focus(); } });
+function mmPick(on){ const P = $('mPick'); P.hidden = !on; if(!on) return; mmPickRender();
   setTimeout(() => { const f = $('mPickL').querySelector('.mpo.on') || $('mPickL').querySelector('.mpo'); if(f) f.focus(); }, 30); }
+// tela Escolher modo: clicar escolhe (fica marcado), Jogar começa. Mapa de prova abre a lista de provas (lá clicar já começa).
+function mmPickRender(){ const k = MM.k, ae = document.activeElement, fa = ae && ae.closest && ae.closest('#mPickL') ? Object.entries(ae.dataset)[0] : null;
+  const opt = (kk, ic, nm, sub, cls = '') => `<button class="mpo${cls}${k === kk ? ' on' : ''}" data-k="${kk}"><i>${ic}</i><span><b>${nm}</b><small>${sub}</small></span><em>${k === kk ? 'escolhido' : ''}</em></button>`;
+  const chip = (at, v, txt, on) => `<button class="mpc${on ? ' on' : ''}" data-${at}="${v}">${txt}</button>`;
+  const maps = [...document.querySelectorAll('#bigMap button')].map(b => [b.dataset.m, b.childNodes[0].textContent.trim()]);
+  const brMap = BIGMAP === 'front' ? 'feijoada' : BIGMAP, sq = MM.sq || mmSq(), warMap = BIGMAP === 'front' ? 'front' : 'feijoada';
+  $('mPickL').innerHTML =
+    `<section class="mpcol"><h3>🏁 Provas</h3>${opt('full', '🏁', 'Partida completa', `${NPL > 40 ? 5 : NPL > 16 ? 4 : 3} provas sorteadas e a final`)}${opt('pts', '🏆', 'Modo Pontos', 'Todo mundo joga as 5 provas. Ganha quem somar mais')}
+      ${opt('map', '🎲', 'Uma prova só', k === 'map' && ROUND_INFO[MM.r] ? `${ROUND_INFO[MM.r]} · clique pra trocar` : 'Escolha um dos mapas de prova')}
+      <div class="mpg">Feijões</div><div class="mpcs">${[16, 40, 100].map(n => chip('npl', n, n, NPL === n)).join('')}</div></section>` +
+    `<section class="mpcol"><h3>🎯 Battle Royale</h3>${opt('br', '🎯', 'Battle Royale', '100 feijões · zona fecha em 7 fases')}
+      <div class="mpg">Equipe</div><div class="mpcs">${[[1, 'Solo'], [2, 'Dupla'], [4, 'Squad']].map(([v, t]) => chip('sq', v, t, k === 'br' && sq === v)).join('')}</div>
+      <div class="mpg">Mapa</div><div class="mpms">${maps.filter(([m]) => m !== 'front').map(([m, nm]) => `<button class="mpo sub${k === 'br' && brMap === m ? ' on' : ''}" data-bm="${m}"><i>${nm.split(' ')[0]}</i><span><b>${nm.split(' ').slice(1).join(' ')}</b></span></button>`).join('')}</div>
+      <div class="mpg">Com provas antes</div>${opt('big', '👑', 'Partida completa com 100', 'Corrida gigante, provas e a final no BR')}</section>` +
+    `<section class="mpcol"><h3>⚔️ Mais modos</h3>${opt('war', '⚔️', 'Guerra de Times', '4 tropas de 25, zona de controle e loja da base')}
+      <div class="mpcs">${[['feijoada', 'Ilha Feijoada'], ['front', 'Front do Feijão']].map(([m, t]) => chip('wm', m, t, k === 'war' && warMap === m)).join('')}</div>
+      ${opt('campo', '🔫', 'Campo de Tiro', 'Mesas com todos os itens, alvos e parkour')}${opt('test', '🧪', 'Teste de gameplay', 'Só você no mapa, sem bots e sem zona')}</section>`;
+  let f = $('mPickF'); if(!f){ $('mPick').insertAdjacentHTML('beforeend', '<div class="mpf" id="mPickF"><span>Modo: <b id="mpSel"></b></span><button class="go" id="mpGo">Jogar</button></div>'); $('mpGo').onclick = () => { mmPick(false); mmGo(); }; }
+  const [, nm, sub] = mmInfo(MM); $('mpSel').textContent = nm + ' · ' + sub;
+  if(fa){ const L = $('mPickL').querySelector(`[data-${fa[0]}="${fa[1]}"]`); if(L) L.focus(); } }
+const mmSq = () => { try{ return +localStorage.getItem('feijao-sq') || 1; }catch(e){ return 1; } };
+$('mPickL').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; sfx('beep'); const d = b.dataset;
+  const setMap = m => { const x = document.querySelector(`#bigMap [data-m="${m}"]`); if(x) x.click(); };
+  if(d.k === 'map'){ mmPick(false); openScreen('mapsel'); return; }
+  if(d.k){ if(d.k === 'br' && BIGMAP === 'front') setMap('feijoada'); mmSave(d.k === 'br' ? {k:'br', sq:MM.sq || mmSq()} : {k:d.k}); }
+  else if(d.npl){ setNPL(+d.npl); if(!['full', 'map'].includes(MM.k)) mmSave({k:'full'}); else mmRender(); }
+  else if(d.sq){ if(BIGMAP === 'front') setMap('feijoada'); try{ localStorage.setItem('feijao-sq', d.sq); }catch(e){} mmSave({k:'br', sq:+d.sq}); }
+  else if(d.bm){ setMap(d.bm); mmSave({k:'br', sq:MM.k === 'br' && MM.sq || mmSq()}); }
+  else if(d.wm){ setMap(d.wm); mmSave({k:'war'}); }
+  mmPickRender(); });
 function mmGo(){ const k = MM.k, q = s => document.querySelector(s);
   if(k === 'pts') return play(0, false, true);
   if(k === 'map') return ROUND_INFO[MM.r] && !ROUND_OFF.includes(MM.r) ? play(MM.r) : openScreen('mapsel');
@@ -11579,7 +11631,7 @@ addEventListener('keydown', e => { if($('menu').hidden || !$('confirm').hidden |
   const P = $('mPick');
   if(!P.hidden){
     if(e.code === 'Escape'){ mmPick(false); $('btnMode').focus(); e.preventDefault(); e.stopImmediatePropagation(); return; }
-    if(e.code === 'ArrowUp' || e.code === 'ArrowDown'){ const L = [...P.querySelectorAll('.mpo')], i = L.indexOf(document.activeElement); L[clamp(i < 0 ? 0 : i + (e.code === 'ArrowDown' ? 1 : -1), 0, L.length - 1)].focus(); e.preventDefault(); e.stopImmediatePropagation(); }
+    if(e.code === 'ArrowUp' || e.code === 'ArrowDown'){ const L = [...P.querySelectorAll('button')], i = L.indexOf(document.activeElement); L[clamp(i < 0 ? 0 : i + (e.code === 'ArrowDown' ? 1 : -1), 0, L.length - 1)].focus(); e.preventDefault(); e.stopImmediatePropagation(); }
     return; }
   if(e.code === 'Escape'){ $('btnQuit').click(); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
 document.addEventListener('pointerdown', e => { const P = $('mPick'); if(!P.hidden && !e.target.closest('#mPick, #btnMode')) mmPick(false); });
