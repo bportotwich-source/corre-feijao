@@ -11787,6 +11787,13 @@ function fjZoneSlow(){ if(!BIG || WAR || BR_TEST) return; if(ZP === ZP_V) ZP = F
   if(U && U.front) U.front = U.front.map(o => { if(!o.parent || (o.parent.userData && o.parent.userData.fjPiv)) return o.parent || o; const p = new THREE.Group(); p.userData.fjPiv = true;
     p.position.copy(o.position); o.parent.add(p); p.add(o); o.position.set(0, 0, 0); return p; });
   return g; }; }
+// rotor do Blender gira em volta do cubo (a peça menor dentro dele), não do centro da caixa das pás
+function fjRotorHub(g, r){ if(!r || r.children.length < 2 || r.userData.fjHub) return; r.userData.fjHub = true; g.updateMatrixWorld(true);
+  let hub = null, hv = Infinity; const B = new THREE.Box3(), v = new THREE.Vector3();
+  r.children.forEach(c => { B.setFromObject(c); B.getSize(v); const k = v.x*v.y*v.z; if(k < hv){ hv = k; hub = c; } });
+  const H = new THREE.Box3().setFromObject(hub).getCenter(new THREE.Vector3()), hl = r.worldToLocal(H.clone()); if(hl.lengthSq() < 1e-6) return;
+  const hp = r.parent.worldToLocal(H.clone()); r.position.copy(hp); r.children.forEach(c => c.position.sub(hl)); }
+{ const _wm = wdvModel; wdvModel = function(...a){ const g = _wm(...a), U = g.userData; if(U && U.rot) U.rot.forEach(r => fjRotorHub(g, r)); return g; }; }
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
