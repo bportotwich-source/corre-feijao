@@ -503,6 +503,9 @@ body.lb3d #btnLbBack{display:inline-flex}
 body.lb3d #party.screen{background:rgba(22,10,44,.38);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
 body.lb3d #party .phead .back{display:none}
 .rhead .rbtns{display:flex;gap:10px;flex-wrap:wrap}
+
+/* polimento (Version 156): o aviso de baixo da tela Jogar com amigos ficava torto, fora dos cartões */
+#party #netStart > .note{max-width:none;text-align:center;margin:14px auto 0}
 /* controles */
 .card.panel .ctrl{background:#fff;border:1px solid var(--line);color:var(--ink)}.card.panel .ctrl kbd{background:var(--ink);color:#fff}
 /* passe */
@@ -8777,7 +8780,7 @@ function smokeBlocks(o, t){ for(const S of smokes){ if(S.a < 0.5) continue; cons
 function explode(s){ const w = s.w; puff(s.pos.x, Math.max(0.2, s.pos.y), s.pos.z, 22, 0x8a5a2b, 0.18, 6); puff(s.pos.x, Math.max(0.2, s.pos.y), s.pos.z, 14, 0xffd23f, 0.14, 5); sfxAt(s.pos, 'boom', 80); duckMusic();
   if(humans().some(h => h.pos.distanceTo(s.pos) < 14)) shake = Math.max(shake, 0.5);
   for(const q of players){ if(!q.alive || q.dying > 0 || mates(q, s.owner) && q !== s.owner) continue; const c = q.pos.clone().setY(q.pos.y + 0.8), d = c.distanceTo(s.pos); if(d > w.splash) continue;
-    const k = 1 - d/w.splash, dir = c.clone().sub(s.pos).setY(0).normalize(); q.hitCD = 0; const M = w.kbM || 1; knock(q, dir.x*12*k*M, (6 + 4*k)*(M > 1 ? 1.4 : 1), dir.z*12*k*M, M > 1 ? 1 : 0.5, 'tomate'); hurt(q, q === s.owner ? null : s.owner, Math.round(w.dmg*(q === s.owner ? 0.3 : 0.35 + 0.65*k)), `${nm(s.owner)} te explodiu com ${w.name}`); } }
+    const k = 1 - d/w.splash, dir = c.clone().sub(s.pos).setY(0).normalize(); q.hitCD = 0; const M = w.kbM || 1; knock(q, dir.x*12*k*M, (6 + 4*k)*(M > 1 ? 1.4 : 1), dir.z*12*k*M, M > 1 ? 1 : 0.5, 'tomate'); hurt(q, q === s.owner ? null : s.owner, Math.round(w.dmg*(q === s.owner ? 0.3 : 0.35 + 0.65*k)), q === s.owner ? `Você se explodiu com ${w.name}` : `${nm(s.owner)} te explodiu com ${w.name}`); } }
 function dropAll(p){ if(!p.inv) return; const y0 = Math.max(0, groundBelow(p)), y = Math.max(y0 - 0.45, Math.min(y0, ...[[0.5, 0.5], [-0.5, 0.5], [0.5, -0.5], [-0.5, -0.5]].map(([a, b]) => Math.max(0, groundAt(p.pos.x + a, p.pos.z + b, y0, 0.5))))), list = p.inv.filter(Boolean).map(x => [x.k, totalAmmo(normIt(x)), x.r ?? WPN[x.k].rar, x.att]);
   const ck = p.inv.find(x => x && CALS.includes(x.k)); if(ck) list.push(['ammo', 0, ck.k]); for(const k in KIT) for(let n=0;n<(p[KIT[k].f] || 0);n++) list.push([k]); if(!p.heals && !p.bands && Math.random() < 0.5) list.push(['band']); if(p.arm) for(const k in ARM) if(p.arm[k]) list.push([k, 0, p.arm[k]]);
   // tudo vai pra uma caixa com a tampa na cor de quem caiu; a caixa some quando esvazia
@@ -11767,6 +11770,14 @@ mmRender();
   document.addEventListener('click', e => { if(!e.isTrusted || ready() || !e.target.closest) return; const b = e.target.closest(FJ_GO); if(!b) return;
     e.preventDefault(); e.stopImmediatePropagation(); if(wait) return; toast('⏳ Carregando os mapas…'); const t0 = performance.now();
     wait = setInterval(() => { if(ready() || performance.now() - t0 > 20000){ clearInterval(wait); wait = null; $('toast').classList.remove('show'); b.click(); } }, 150); }, true); }
+// BR: bot contra bot tira menos vida, pra partida durar mais (no online, quem tem netH é gente de outro PC)
+const FJ_BVB = 0.5, FJ_BVB2 = 0.33; // Ilha Feijoada / mapas menores (mais gente por metro, brigam mais)
+{ const _h = hurt, isB = p => p && p.isBot && !p.netH; hurt = function(q, by, dmg, ...r){ if(BIG && round === 20 && !WAR && !CAMPO && !BR_TEST && by !== q && isB(by) && isB(q)) dmg *= FJBIG ? FJ_BVB : FJ_BVB2; return _h(q, by, dmg, ...r); }; }
+// zona mais lenta nos mapas menores: troca a tabela na 1ª fase da partida (as constantes originais ficam iguais)
+const FJ_ZK = (A, k) => A.map(r => [r[0]*k, r[1]*k, ...r.slice(2)]), FJ_ZPV = FJ_ZK(ZP_V, 1.35), FJ_ZPS = FJ_ZK(ZP_S, 1.7), FJ_ZPT = FJ_ZK(TW_ZP, 1.1);
+function fjZoneSlow(){ if(!BIG || WAR || BR_TEST) return; if(ZP === ZP_V) ZP = FJ_ZPV; else if(ZP === ZP_S) ZP = FJ_ZPS; else if(ZP === TW_ZP) ZP = FJ_ZPT; }
+{ const _nz = nextZone; nextZone = function(...a){ fjZoneSlow(); return _nz(...a); }; }
+{ const _tz = twNextZone; twNextZone = function(...a){ fjZoneSlow(); return _tz(...a); }; }
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
