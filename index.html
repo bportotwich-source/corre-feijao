@@ -5896,6 +5896,29 @@ function fjUsina(){ const g = fjR('Usina'), [, cx, cz, , Y] = g, used = []; let 
     FJ_BLD.push([xs - 0.2, xs + 6.6, tz - 0.7, tz + 2.3, 0x8a8f98]); [xs + 13, xs + 21].forEach(t => FJ_BLD.push([t - 3, t + 3, tz - 3, tz + 3, 0xdfe6ee])); bonusLoot.push(['rifle', xs + 17, Y + 6.4, tz]); }
   if(p = fjLot(g, cx - 14, cz + 12, 10, 8, used)){ const ty = fjBuilding(p[0] - 5, p[1] - 4, 10, 8, 2, {y:Y, c:0xe8e2d4, c2:0xcfc6b6, door:'z0', roof:'flat', tank:true}); bonusLoot.push(['smg', p[0], ty, p[1]]); } }
 
+// casa vermelha do Blender (Fazenda Jalo): visual = 1 malha/1 textura; colisão = caixas invisíveis do CV_COL
+const CV = {ok:false};
+function cvLoad(){ if(!THREE.GLTFLoader || typeof CV_GLB === 'undefined') return;
+  new THREE.GLTFLoader().parse(fjB64(CV_GLB).buffer, '', gl => { gl.scene.updateMatrixWorld(true); gl.scene.traverse(o => { if(o.isMesh && !CV.geo){ const t = o.material.map; t.encoding = THREE.LinearEncoding; t.anisotropy = 4;
+    CV.geo = o.geometry; CV.m = o.matrixWorld.clone(); CV.mat = new THREE.MeshLambertMaterial({map:t}); } }); CV.ok = !!CV.geo; }, e => { console.warn('casa vermelha', e); CV.fail = true; }); }
+addEventListener('load', () => setTimeout(cvLoad, 350));
+// x, z = centro do bloco da casa; rot = 0..3 (vezes 90 graus; 0 = porta pra +z). Ocupa x -6..8,8 e z -4,6..8,3 (com o quintal)
+function casaVermelha(x, z, y, rot){ const c = Math.cos(rot*Math.PI/2), sn = Math.sin(rot*Math.PI/2), P = (a, b) => [x + a*c + b*sn, z - a*sn + b*c];
+  const R = (a0, a1, b0, b1) => { const q = [P(a0, b0), P(a1, b1)]; return [Math.min(q[0][0], q[1][0]), Math.max(q[0][0], q[1][0]), Math.min(q[0][1], q[1][1]), Math.max(q[0][1], q[1][1])]; };
+  const [bx0, bx1, bz0, bz1] = R(-5.4, 5.4, -4, 4);
+  if(!CV.ok){ fjBuilding(bx0, bz0, bx1 - bx0, bz1 - bz0, 2, {y, c:0xa3301f, c2:0xf2e6c6, door:['z1', 'x1', 'z0', 'x0'][rot], roof:'pitch', rc:0x8a2c1f}); return y + 4.65; }
+  const n0 = solids.length;
+  CV_COL.forEach(([a0, a1, y0, y1, b0, b1, f]) => { const [u0, u1, w0, w1] = R(a0, a1, b0, b1); box(u0, u1, y + y0, y + y1, w0, w1, 0, f ? {invisible:true, noClimb:true} : {invisible:true}); });
+  const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot*Math.PI/2; world.add(g);
+  const m = new THREE.Mesh(CV.geo, CV.mat); m.matrixAutoUpdate = false; m.matrix.copy(CV.m); m.castShadow = m.receiveShadow = true; m.userData.keep = true; g.add(m);
+  for(let i = n0; i < solids.length; i++) solids[i].mesh = m;
+  FJ_BLD.push([bx0, bx1, bz0, bz1, 0xa3301f, 'z1', 2, y, 'pitch']); const [wx0, wx1, wz0, wz1] = R(-1.4, 2.8, 4, 5.8); FJ_BLD.push([wx0, wx1, wz0, wz1, 0xa3301f]);
+  return y + 4.65; }
+// lote 15 x 15 (casa + quintal) e porta virada pra (tx, tz)
+function cvAt(px, pz, tx, tz){ const a = Math.atan2(tx - px, tz - pz), rot = ((Math.round(a/(Math.PI/2)) % 4) + 4) % 4, c = Math.cos(rot*Math.PI/2), sn = Math.sin(rot*Math.PI/2);
+  // (px, pz) = centro do lote todo (casa + quintal): o centro do bloco fica 1,4 / 1,85 pra trás dele
+  return [px - (1.4*c + 1.85*sn), pz - (-1.4*sn + 1.85*c), rot]; }
+function cvLot(g, x, z, used, tx, tz){ const p = fjLot(g, x, z, 15, 15, used); return p ? cvAt(p[0], p[1], tx, tz) : null; }
 // Fazenda Jalo: casarão de 2 andares, celeiro vermelho com mezanino de feno, silo alto, casinha, curral e fardos
 function fjFazenda(){ const g = fjR('Fazenda'), [, cx, cz, R0, Y] = g, used = [], q = Math.min(1, R0/38); let s = 5151; const sr = () => (s = s*16807 % 2147483647)/2147483647; let p;
   if(p = fjLot(g, cx - 14*q, cz - 14*q, 13, 10, used)){ const ty = fjBuilding(p[0] - 6.5, p[1] - 5, 13, 10, 2, {y:Y, c:0xf4ead8, c2:0xd8cfc0, door:'z1', roof:'pitch', rc:0xb5532d, porch:true}); bonusLoot.push(['rifle', p[0] + 3, Y + 3.35, p[1]]); }
@@ -5904,7 +5927,7 @@ function fjFazenda(){ const g = fjR('Fazenda'), [, cx, cz, R0, Y] = g, used = []
   if(p = fjLot(g, barn ? barn[0] + 13 : cx, barn ? barn[1] : cz + 14*q, 7, 7, used)){ const [x, z] = p; blBlock('silo', [x, Y, z], {}, () => { disc(x, z, 3, Y, Y + 13, 0xd8dde6, 20); fjBand(x, z, 3.05, Y + 3, Y + 3.4, 0x9aa2ae); fjBand(x, z, 3.05, Y + 8, Y + 8.4, 0x9aa2ae);
     const dm = mesh(new THREE.SphereGeometry(3, 18, 8, 0, 6.283, 0, Math.PI/2), mat(0xb5532d), world); dm.position.set(x, Y + 13, z); dm.scale.y = 0.45;
     box(x - 0.4, x + 0.4, Y, Y + 12.7, z - 3.2, z - 3.0, 0x5a5f68); box(x - 1.1, x + 1.1, Y + 12.7, Y + 13, z - 3.7, z - 1.6, 0x6c7078); }); FJ_BLD.push([x - 3, x + 3, z - 3, z + 3, 0xd8dde6]); FJ_T.push({k:'silo', x, z, Y}); bonusLoot.push(['sniper', x, Y + 13.6, z]); }
-  if(p = fjLot(g, cx + 14*q, cz - 20*q, 9, 8, used)) fjBuilding(p[0] - 4.5, p[1] - 4, 9, 8, 1, {y:Y, c:0xf2d38a, c2:0xd8cfc0, door:'z1', roof:'pitch', rc:0x7a4a3a});
+  let ncv = 0; [[14, -20], [22, 4], [4, 26], [24, -6], [-2, -28], [26, 18]].forEach(([a, b]) => { if(ncv >= 3) return; const n = FJ_MISS.length, h = cvLot(g, cx + a*q, cz + b*q, used, cx, cz); FJ_MISS.length = n; if(h){ casaVermelha(h[0], h[1], Y, h[2]); ncv++; } });
   if(p = fjLot(g, cx - 18*q, cz, 12, 10, used)){ const [x, z] = p, R = (a, b, e, f) => box(a, b, Y, Y + 1.0, e, f, 0x8a5a2b);
     R(x - 6, x + 6, z - 5, z - 4.88); R(x - 6, x - 1, z + 4.88, z + 5); R(x + 1, x + 6, z + 4.88, z + 5); R(x - 6, x - 5.88, z - 4.88, z + 4.88); R(x + 5.88, x + 6, z - 4.88, z + 4.88);
     for(let i=0; i<5; i++) box(x - 4 + sr()*8 - 0.6, x - 4 + sr()*8 + 0.6, Y, Y + 0.9, z - 3 + i*1.5 - 0.45, z - 3 + i*1.5 + 0.45, 0xe8c860); }
@@ -6090,9 +6113,10 @@ function fjMorro(){ const g = fjR('Morro'); let px = g[1], pz = g[2], ph = -1; f
 // Floresta Vagem: clareira com cabanas, torre de guarda florestal e acampamento (a mata fica em volta)
 function fjFloresta(){ const g = fjR('Floresta'); let best = null; for(let k=0; k<80; k++){ const a = k*0.618*6.283, d = (k % 8)*4, x = g[1] + Math.cos(a)*d, z = g[2] + Math.sin(a)*d, [lo, hi] = fjVar(x, z, 18);
     if(roadD(x, z) < 16) continue; const v = hi - lo; if(!best || v < best[2]) best = [x, z, v]; } if(!best) return; const [x, z] = best; FJ_CLR.push([x, z, 22]); let s = 4141; const r = () => (s = s*16807 % 2147483647)/2147483647;
-  FJ_POIT.cabana(x - 9, z - 7, r); FJ_POIT.cabana(x + 8, z - 9, r); FJ_POIT.acamp(x + 2, z + 8, r);
+  if(CV.ok) [[-10, -9], [10, -10]].forEach(([a, b]) => { const [hx, hz, rot] = cvAt(x + a, z + b, x, z), c = Math.cos(rot*Math.PI/2), sn = Math.sin(rot*Math.PI/2), mx = hx + 0.7*c + 0.9*sn, mz = hz - 0.7*sn + 0.9*c, w = rot % 2 ? 11 : 12.5, d = rot % 2 ? 12.5 : 11; casaVermelha(hx, hz, fjPad(mx, mz, w, d, 0x8f8c86) - 0.1, rot); });
+  else { FJ_POIT.cabana(x - 9, z - 7, r); FJ_POIT.cabana(x + 8, z - 9, r); } FJ_POIT.acamp(x + 2, z + 8, r);
   const Y = fjPad(x - 8, z + 7, 5, 5, 0x8f8c86), t = fjTower(x - 8, z + 7, Y, 10, 2.2, 0x6b4426, {deck:0x8a5a2b, rail:0x6b4426, roof:0x4f6a3a}); bonusLoot.push(['sniper', x - 8, t, z + 7.6]);
-  FJ_BLD.push([x - 13, x - 5, z - 10, z - 4, 0x8a5a2b], [x + 4, x + 12, z - 12, z - 6, 0x8a5a2b]); }
+  if(!CV.ok) FJ_BLD.push([x - 13, x - 5, z - 10, z - 4, 0x8a5a2b], [x + 4, x + 12, z - 12, z - 6, 0x8a5a2b]); }
 
 // ---------- cenário vivo: vacas, galinhas, gaivotas e barquinhos ----------
 function fjCow(){ const g = new THREE.Group(), W = mat(0xf6f1e6), B = mat(0x2b2b2b), P = mat(0xf0a0a0), add = (m, w, h, d, x, y, z, p=g) => { const o = new THREE.Mesh(FJ_DG, m); o.scale.set(w, h, d); o.position.set(x, y, z); o.castShadow = true; p.add(o); return o; };
@@ -11769,7 +11793,7 @@ mmRender();
     return r; }; }
 // prédios e casas do Blender chegam em arquivos separados: o clique que começa partida espera eles ficarem prontos (no máximo 20 s)
 { const FJ_GO = '#btnPlay, #mpGo, #btnCampoM, #btnCampo, #btnWar, #btnBigParty, #btnBigTest, #bigsel [data-sq], #maps .map, #btnPts, #btnRoomStart';
-  const ready = () => document.readyState === 'complete' && (typeof BL_GLB === 'undefined' || BL.ok) && (typeof CASA_GLB === 'undefined' || CASA.ok);
+  const ready = () => document.readyState === 'complete' && (typeof BL_GLB === 'undefined' || BL.ok) && (typeof CASA_GLB === 'undefined' || CASA.ok) && (typeof CV_GLB === 'undefined' || CV.ok || CV.fail);
   let wait = null;
   document.addEventListener('click', e => { if(!e.isTrusted || ready() || !e.target.closest) return; const b = e.target.closest(FJ_GO); if(!b) return;
     e.preventDefault(); e.stopImmediatePropagation(); if(wait) return; toast('⏳ Carregando os mapas…'); const t0 = performance.now();
