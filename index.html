@@ -8986,7 +8986,7 @@ function updateShoot(dt){
     if(R1.phase !== 'play'){ p.vel.set(0, 0, 0); p.pos.y = p.skyY; continue; }
     if(!p.isBot && (p.glide === 'chute' || p.glide === 'fall') && !p.vault){ const V = airWin(p); if(V){ p.glide = false; p.landT = R1.t; if(p.m.chute) p.m.chute.visible = false; V.dur = 0.55; p.vault = V; p.sq = 0.4; sfx('jump'); continue; } }
     if(p.glide === 'fall'){ p.vel.y = Math.max(p.vel.y, -22);
-      if(p.pos.y - gY(p.pos.x, p.pos.z) < 14 || p.wantChute){ p.wantChute = false; p.chuteCD = 0.45; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
+      if((p.pos.y - gY(p.pos.x, p.pos.z) < 14 && p.vel.y < 0) || p.wantChute){ p.wantChute = false; p.chuteCD = 0.45; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
     else p.vel.y = Math.max(p.vel.y, -5); }
   if(!brZone) return;
   if(R1.phase === 'play'){
@@ -9491,7 +9491,7 @@ function useUtil(s){ const k = s.w.util, o = s.owner, y = Math.max(0, groundBelo
     const b = box(x - hx, x + hx, y, y + H, z - hz, z + hz, 0, {invisible:true, wallHP:200}); const g = BRE.breadWall(L, H, D); g.position.set(x, y, z); if(along === 'z') g.rotation.y = Math.PI/2; g.scale.y = 0.2; world.add(g); b.mesh = g; gridAdd(b);
     for(const q of players) if(q.alive && q.pos.x > b.min.x - 0.4 && q.pos.x < b.max.x + 0.4 && q.pos.z > b.min.z - 0.4 && q.pos.z < b.max.z + 0.4 && q.pos.y < y + H){ const dx = along === 'x' ? 0 : 1, dz = along === 'x' ? 1 : 0, sd = ((q.pos.x - x)*dx + (q.pos.z - z)*dz) >= 0 ? 1 : -1; q.pos.x += dx*sd*0.9; q.pos.z += dz*sd*0.9; }
     utils.push({k, b, t:0, life:UTIL.pao.t}); puff(x, y + 0.4, z, 10, 0xf3d9a4, 0.14, 3); sfxAt(s.pos, 'push', 40); }
-  else if(k === 'mola'){ const b = jumpPad(x, z, y, 21, 0x38d16a); gridAdd(b); const ring = world.children[world.children.length - 1]; utils.push({k, b, ring, t:0, life:UTIL.mola.t}); ringFx(x, y + 0.3, z, 0x38d16a, 3); sfxAt(s.pos, 'jump', 40); }
+  else if(k === 'mola'){ const b = jumpPad(x, z, y, 21, 0x38d16a); b.launch = true; gridAdd(b); const ring = world.children[world.children.length - 1]; utils.push({k, b, ring, t:0, life:UTIL.mola.t}); ringFx(x, y + 0.3, z, 0x38d16a, 3); sfxAt(s.pos, 'jump', 40); }
   else if(k === 'radar'){ pings.push({x, y, z, t:0, o}); ringFx(x, y + 0.3, z, 0xff3b4e, 6); sfxAt(s.pos, 'beep', 50); if(!o.isBot) banner(tag(o) + '🍈 Radar ligado', 'Inimigos a até 35 m aparecem marcados por 6 s', 1200);
     else { const f = nearest(o, q => q.alive && !mates(q, o) && Math.hypot(q.pos.x - x, q.pos.z - z) < UTIL.radar.R); if(f){ o.foe = f; o.reT = 6; } } } }
 const PING_M = new THREE.MeshBasicMaterial({color:0xff3b4e, depthTest:false, transparent:true}), PING_G = new THREE.OctahedronGeometry(0.28, 0); let pingMarks = [];
@@ -9699,7 +9699,7 @@ function brHUD(){
   // dica do momento: avião, queda, paraquedas ou assistindo alguém
   const fallHigh = !me.glide && !me.grounded && me.vel.y < -3 && me.pos.y - groundBelow(me) > 4.5;
   const follow = me.alive ? null : players.find(p => p.alive && mates(p, me)) || players.find(p => p.alive);
-  const tip = !me.alive ? (me.rev ? '🏁 <b>Revanche</b>: passe primeiro pelo portal amarelo e volte pra partida!' : me.revWait ? '🏁 A revanche já vai começar...' : follow ? `👀 Assistindo <b>${follow.name}</b>` + (sq && mates(follow, me) ? ' · seu time ainda está vivo' : '') : '') : me.glide === 'plane' ? '✈️ Aperte <kbd>Espaço</kbd> para pular do avião' : me.glide === 'fall' || fallHigh ? '🪂 <kbd>Espaço</kbd> abre o paraquedas · <kbd>Shift</kbd> mergulha' : me.glide ? '🪂 Guie com <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>' : me.car ? (me.car.heli ? '🚁 Pilotando · mouse vira · <kbd>Espaço</kbd> sobe · <kbd>Shift</kbd> desce · <kbd>E</kbd> salta de paraquedas' : me.car.jeep ? '🚙 Dirigindo o jipe · pare perto da sua tropa pra ela subir · <kbd>E</kbd> desce' : me.car.boat ? '🚤 Pilotando a lancha · <kbd>E</kbd> desce · na praia ela encalha' : '🚜 Dirigindo o trator · <kbd>E</kbd> desce · passe por cima dos outros pra atropelar') : '';
+  const tip = !me.alive ? (me.rev ? '🏁 <b>Revanche</b>: passe primeiro pelo portal amarelo e volte pra partida!' : me.revWait ? '🏁 A revanche já vai começar...' : follow ? `👀 Assistindo <b>${follow.name}</b>` + (sq && mates(follow, me) ? ' · seu time ainda está vivo' : '') : '') : me.glide === 'plane' ? '✈️ Aperte <kbd>Espaço</kbd> para pular do avião' : me.glide === 'fall' || fallHigh ? '🪂 <kbd>Espaço</kbd> abre o paraquedas · <kbd>Shift</kbd> mergulha' : me.glide ? '🪂 Guie com <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>' : me.car ? (me.car.heli ? '🚁 Pilotando · mouse vira · <kbd>Espaço</kbd> sobe · <kbd>Shift</kbd> desce · <kbd>E</kbd> salta de paraquedas' : me.car.jeep ? (me.car.kind === 'trator' ? '🚜 Dirigindo o trator' : '🚙 Dirigindo o jipe') + ' · pare perto da sua tropa pra ela subir · <kbd>E</kbd> desce' : me.car.boat ? '🚤 Pilotando a lancha · <kbd>E</kbd> desce · na praia ela encalha' : '🚜 Dirigindo o trator · <kbd>E</kbd> desce · passe por cima dos outros pra atropelar') : '';
   const tp = $('brTip'); if(tp.dataset.h !== tip){ tp.dataset.h = tip; tp.innerHTML = tip; } tp.hidden = !tip || !$('pick').hidden || !$('nhPick').hidden;
   $('brKeys').hidden = !me.alive || !!me.glide || !BIG;
   // barra de recarga / cura embaixo da mira
@@ -10414,7 +10414,7 @@ function stepPlayer(p, dt, inp){
     if(TER) terrStep(p, ox, oz);
   }
   if(p.car) carBumper(p);
-  if(p.grounded && p.ground && p.ground.bounce){ p.vel.y = p.ground.bounce; p.grounded = false; p.ground.mesh.scale.y = 0.4; sfxNear(p, 'jump'); if(near(p, 30)) ringFx(p.pos.x, p.pos.y, p.pos.z, 0xffd23f, 3); }
+  if(p.grounded && p.ground && p.ground.bounce){ if(p.ground.launch && BIG && round === 20 && !p.isBot && !p.car && !TWR()) molaLaunch(p); else p.vel.y = p.ground.bounce; p.grounded = false; p.ground.mesh.scale.y = 0.4; sfxNear(p, 'jump'); if(near(p, 30)) ringFx(p.pos.x, p.pos.y, p.pos.z, 0xffd23f, 3); }
   hitObstacles(p);
 }
 function doPush(p){
@@ -12444,6 +12444,15 @@ addEventListener('keydown', e => { if(!WAR || !BIG || round !== 20 || !inMatch()
 { const _us = updateShoot; updateShoot = function(dt){ _us(dt); if(!WD.po || !WAR) return; for(const P of WD.po){ const f = P.f && P.f.m; if(!f) continue; const a = f.geometry.attributes.position; for(let i=0;i<a.count;i++){ const u = a.getX(i) + 1; a.setZ(i, Math.sin(clock*4 + u*2 + P.x)*0.15*u/2); } a.needsUpdate = true; } }; }
 // Ilha Feijoada: zonas pela ilha toda (não só as justinhas do meio)
 
+// feijão-mola no Modo 100: sobe até a altura do avião (fora a Torre Feijão, que tem teto), pra atravessar o mapa em queda livre e de paraquedas
+function molaLaunch(p){ const top = FJBIG ? 118 : 92, H = Math.max(25, top - p.pos.y); p.vel.y = Math.sqrt(-2*GRAV*H); p.vel.x = Math.sin(p.face)*6; p.vel.z = Math.cos(p.face)*6;
+  p.glide = 'fall'; p.skyY = p.pos.y + H; p.wantChute = false; p.chuteCD = 0; p.land = null; p.climb = null; p.vault = null; p.stance = 0; p.ads = false; if(!p.m.chute) chute(p); p.m.chute.visible = false;
+  ringFx(p.pos.x, p.pos.y, p.pos.z, 0x38d16a, 5); sfx('whoosh'); banner(tag(p) + '🚀 Lá vai você!', 'Sobe até a altura do avião. Na descida, mire pra onde quer ir e aperte <kbd>Espaço</kbd> pra abrir o paraquedas', 1800); }
+// trator funciona igual ao jipe: anda 1,4x, leva 2 de carona no estribo de trás (a tropa sobe quando você para perto), tem 500 de vida
+WDV.info.trator = {nm:'Trator FEIJÃO', seats:3, hp:500, rad:1.4, box:[0.95, 2.3, 1.5], ic:'🚜', d:'3 lugares, forte no barro', seat:[[0, 0, -CAR_SEAT], [0.62, 0.42, -1.55], [-0.62, 0.42, -1.55]]};
+function trJeep(c){ if(c.kind || c.boat) return c; const I = WDV.info.trator; Object.assign(c, {kind:'trator', jeep:true, spdK:1.4, sx:0, sb:CAR_SEAT, team:c.team ?? -1, owner:null, hp:I.hp, hp0:I.hp, pass:new Array(I.seats).fill(null), rad:I.rad, vx:0, vy:0, vz:0, pitch:0, roll:0, rs:0, air:false}); return c; }
+{ const _sc = spawnCars; spawnCars = function(...a){ const r = _sc(...a); cars.forEach(trJeep); return r; }; }
+{ const _cv = cpVeh; cpVeh = function(P){ const r = _cv(P); if(P.c) trJeep(P.c); return r; }; }
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
