@@ -5702,7 +5702,7 @@ function arv2Load(n){ if(typeof ARV2_GLB === 'undefined' || !THREE.GLTFLoader){ 
     for(let i = 0; i < c.count; i++){ a[i*3] = Math.pow(c.getX(i)*k, 1/2.2); a[i*3 + 1] = Math.pow(c.getY(i)*k, 1/2.2); a[i*3 + 2] = Math.pow(c.getZ(i)*k, 1/2.2); }
     g.setAttribute('color', new THREE.Float32BufferAttribute(a, 3)); g.computeBoundingSphere(); ARV2[m.name.replace(/\.\d+$/, '')] = g; if(m.material.map) map = m.material.map; });
     map.encoding = THREE.LinearEncoding; map.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy()); map.needsUpdate = true;
-    ARV2.mat = new THREE.MeshLambertMaterial({map, vertexColors:true, alphaTest:0.5, side:THREE.DoubleSide});
+    ARV2.mat = new THREE.MeshLambertMaterial({map, vertexColors:true, alphaTest:0.5, side:THREE.DoubleSide}); ARV2.mat.color.setScalar(1.4);   // verde vivo como no print do Bruno (30/10 17:2x)
     ARV2.dep = new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking, map, alphaTest:0.5, side:THREE.DoubleSide});
     ARV2.ok = !!(ARV2.copa && ARV2.pinheiro && ARV2.moita); }, e => console.warn('árvores novas', e)); }
 addEventListener('load', () => setTimeout(arv2Load, 250));
