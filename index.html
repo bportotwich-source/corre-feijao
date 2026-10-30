@@ -8778,7 +8778,9 @@ function shootInput(p, inp){
   if(p.swim){ inp.push = inp.nade = inp.use = false; }
   if(p.stT > 0){ if(inp.push) p.stT = 0; else { inp.mx *= 0.15; inp.mz *= 0.15; inp.nade = inp.use = inp.turbo = false; } }
   if(p.rvT > 0){ if(inp.push){ p.rvT = 0; } else { inp.mx *= 0.15; inp.mz *= 0.15; inp.nade = inp.use = inp.turbo = false; } }
-  if(p.glide === 'fall' && inp.jump && R1.phase === 'play' && p.pos.y < p.skyY - 3) p.wantChute = true;
+  p.chuteCD = Math.max(0, (p.chuteCD || 0) - 1/60);
+  if(p.glide === 'fall' && inp.jump && R1.phase === 'play' && p.pos.y < p.skyY - 3 && p.chuteCD <= 0) p.wantChute = true;
+  if(BIG && !p.isBot && p.glide === 'chute' && inp.jumpP && R1.phase === 'play' && p.chuteCD <= 0 && p.pos.y - Math.max(gY(p.pos.x, p.pos.z), groundBelow(p)) > 12){ p.glide = 'fall'; p.wantChute = false; p.skyY = p.pos.y + 3; p.chuteCD = 0.45; if(p.m.chute) p.m.chute.visible = false; sfx('whoosh'); inp.jump = inp.jumpP = false; }
   // pulou de lugar alto (prédio, torre): dá pra abrir o paraquedas de novo
   if(BIG && !p.glide && p.alive && !p.grounded && p.vel.y < -3 && R1.phase === 'play' && (inp.jump || (p.isBot && p.vel.y < -8)) && p.pos.y - groundBelow(p) > 4.5){ chute(p); p.glide = 'chute'; p.skyY = p.pos.y; p.vel.y = Math.max(p.vel.y, -6); if(!p.isBot) sfx('chute'); }
   if(BIG && p.glide === 'plane' && inp.jump && plane && plane.t > 0.6) p.wantJump = true;
@@ -8919,8 +8921,9 @@ function updateShoot(dt){
       continue; }
     if(p.grounded || !p.alive){ p.glide = false; p.landT = R1.t; if(p.m.chute) p.m.chute.visible = false; continue; }
     if(R1.phase !== 'play'){ p.vel.set(0, 0, 0); p.pos.y = p.skyY; continue; }
+    if(!p.isBot && (p.glide === 'chute' || p.glide === 'fall') && !p.vault){ const V = airWin(p); if(V){ p.glide = false; p.landT = R1.t; if(p.m.chute) p.m.chute.visible = false; V.dur = 0.55; p.vault = V; p.sq = 0.4; sfx('jump'); continue; } }
     if(p.glide === 'fall'){ p.vel.y = Math.max(p.vel.y, -22);
-      if(p.pos.y - gY(p.pos.x, p.pos.z) < 14 || p.wantChute){ p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
+      if(p.pos.y - gY(p.pos.x, p.pos.z) < 14 || p.wantChute){ p.wantChute = false; p.chuteCD = 0.45; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
     else p.vel.y = Math.max(p.vel.y, -5); }
   if(!brZone) return;
   if(R1.phase === 'play'){
@@ -10262,13 +10265,21 @@ function stepClimb(p, dt, inp){ const C = p.climb, b = C.b, n = C.n, tx = -n[1],
   if(b.max.y - p.pos.y <= 1.7){ p.wallN = n; p.wallB = b; const L = ledgeAt(p); if(L){ p.climb = null; p.mantle = {t:0, dur:0.36, x0:p.pos.x, y0:p.pos.y, z0:p.pos.z, x1:L[0], y1:L[1], z1:L[2]}; p.sq = 0.4; sfxNear(p, 'jump'); return true; } const nb = wallUp(p, b, n); if(nb) C.b = nb; else p.pos.y = Math.min(p.pos.y, b.max.y - 1.0); }
   p.face = Math.atan2(-n[0], -n[1]); p.vel.set(0, 0, 0); p.grounded = false; p.slideT = 0; p.useT = 0; return true; }
 // pular janela (v74): parapeito ou mureta baixa e fina, com vão livre em cima, dá pra atravessar num salto
-function vaultAt(p){ const b = p.wallB, n = p.wallN; if(!b || !n || !canClimb(b)) return null; const top = b.max.y, dy = top - p.pos.y; if(dy < 0.3 || dy > 1.6) return null;
+// no ar (paraquedas/queda): peitoril de janela a até 0,9 m na frente, entre os pés-0,8 e o peito; indo na direção dele
+function airWin(p){ const sp = Math.hypot(p.vel.x, p.vel.z); if(sp < 1) return null; const ux = p.vel.x/sp, uz = p.vel.z/sp, wB = p.wallB, wN = p.wallN; let V = null;
+  for(const b of solidsAt(p.pos.x + ux*0.6, p.pos.z + uz*0.6)){ if(!b.active || b.kind === 'ramp' || !canClimb(b) || b.max.y - p.pos.y < -0.8 || b.max.y - p.pos.y > 1.6) continue;
+    const tx = b.max.x - b.min.x, tz = b.max.z - b.min.z; if(Math.min(tx, tz) > 1.0) continue; const ax = tx < tz, c = ax ? (b.min.x + b.max.x)/2 : (b.min.z + b.max.z)/2, d = (ax ? p.pos.x : p.pos.z) - c, n = ax ? [Math.sign(d), 0] : [0, Math.sign(d)];
+    if(Math.abs(d) > R + 0.9 + Math.min(tx, tz)/2 || (ax ? ux*n[0] : uz*n[1]) > -0.5) continue; const o = ax ? p.pos.z : p.pos.x; if(o < (ax ? b.min.z : b.min.x) - 0.1 || o > (ax ? b.max.z : b.max.x) + 0.1) continue;
+    p.wallB = b; p.wallN = n; V = vaultAt(p, true); if(V) break; }
+  if(!V){ p.wallB = wB; p.wallN = wN; } return V; }
+function vaultAt(p, air){ const b = p.wallB, n = p.wallN; if(!b || !n || !canClimb(b)) return null; const top = b.max.y, dy = top - p.pos.y; if(dy < (air ? -0.8 : 0.3) || dy > 1.6) return null;
   if((n[0] ? b.max.x - b.min.x : b.max.z - b.min.z) > 1.0) return null;
   const clear = (x, z, y0, y1) => !solidsAt(x, z).some(o => o.active && o !== b && x > o.min.x - 0.25 && x < o.max.x + 0.25 && z > o.min.z - 0.25 && z < o.max.z + 0.25 && o.min.y < y1 && o.max.y > y0);
   const mx = n[0] ? (b.min.x + b.max.x)/2 : p.pos.x, mz = n[0] ? p.pos.z : (b.min.z + b.max.z)/2; if(!clear(mx, mz, top + 0.05, top + 0.95)) return null;
   const far = n[0] ? (n[0] < 0 ? b.max.x + R + 0.2 : b.min.x - R - 0.2) : (n[1] < 0 ? b.max.z + R + 0.2 : b.min.z - R - 0.2), x1 = n[0] ? far : p.pos.x, z1 = n[0] ? p.pos.z : far;
-  const gy = Math.max(0, groundBelow({pos:new V3(x1, top + 0.05, z1)})); if(top - gy > 2.2 || !clear(x1, z1, gy + 0.05, gy + 1.4)) return null;
-  return {t:0, dur:0.42, x0:p.pos.x, y0:p.pos.y, z0:p.pos.z, x1, y1:gy, z1, top:top + 0.12, n}; }
+  const gy = Math.max(0, groundBelow({pos:new V3(x1, top + 0.05, z1)})), drop = top - gy > 2.2; // janela de andar alto: passa e cai do outro lado
+  if(drop ? air || !clear(x1, z1, top + 0.05, top + 1.3) : !clear(x1, z1, gy + 0.05, gy + 1.4)) return null;
+  return {t:0, dur:0.42, x0:p.pos.x, y0:p.pos.y, z0:p.pos.z, x1, y1:drop ? top + 0.05 : gy, z1, top:top + 0.12, n}; }
 function stepParkour(p, dt, inp){
   p.wallT = Math.max(0, (p.wallT || 0) - dt); if(p.grounded && !p.climb) p.stam = Math.min(100, (p.stam ?? 100) + dt*25);
   if(p.climb && !p.mantle) return stepClimb(p, dt, inp);
