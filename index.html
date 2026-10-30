@@ -6417,7 +6417,7 @@ function fjDoorsAdd(DL, x, z, y, rot, bm){ fjDoorWorld(); const c = Math.round(M
     const q = X ? [px, px + dr.d*w, pz - 0.06, pz + 0.06] : [px - 0.06, px + 0.06, pz, pz + dr.d*w], e = [P(q[0], q[2]), P(q[1], q[3])];
     const b = box(Math.min(e[0][0], e[1][0]), Math.max(e[0][0], e[1][0]), y + py, y + py + h, Math.min(e[0][1], e[1][1]), Math.max(e[0][1], e[1][1]), 0, {invisible:true, noClimb:true, door:true});
     b.mesh = bm;
-    const ext = dr.m === 'madeira2', hs = Math.abs(Math.sin(H[0]*12.9898 + H[1]*78.233)*43758.5453) % 1;
+    const ext = dr.m !== 'madeira', hs = Math.abs(Math.sin(H[0]*12.9898 + H[1]*78.233)*43758.5453) % 1;
     const d = {i:FJD.L.length, hx:H[0], hy:y + py, hz:H[1], a0, da, w, h, b, o:0, tgt:0, k:ext ? 1 : 0, slot:-1, ks:-1,
       cx:(e[0][0] + e[1][0])/2, cz:(e[0][1] + e[1][1])/2, ox:H[0] + V(...O)[0]*w/2, oz:H[1] + V(...O)[1]*w/2};
     if(!ext && hs < 0.45){ d.o = d.tgt = 1; b.active = false; }        // por dentro, quase metade começa aberta
