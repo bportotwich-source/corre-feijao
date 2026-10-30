@@ -6369,7 +6369,7 @@ function pnLoad(){ const D = window.PN_D; if(!D || !THREE.GLTFLoader || typeof M
   const keys = Object.keys(D); PNV.n = keys.length; PNV.vmat = new THREE.MeshLambertMaterial({color:0xcfe6f2, transparent:true, opacity:0.22, depthWrite:false}); PNV.vfar = new THREE.MeshLambertMaterial({color:0x7d97a8});
   const fin = () => { if(++PNV.done === PNV.n) PNV.ok = true; };
   MeshoptDecoder.ready.then(() => { const L = new THREE.GLTFLoader(); L.setMeshoptDecoder(MeshoptDecoder);
-    keys.forEach(k => L.parse(fjB64(D[k].glb).buffer, '', gl => { gl.scene.updateMatrixWorld(true); const M = {col:D[k].col, lot:D[k].lot, bb:D[k].bb, c:D[k].c};
+    keys.forEach(k => L.parse(fjB64(D[k].glb).buffer, '', gl => { gl.scene.updateMatrixWorld(true); const M = {col:D[k].col, lot:D[k].lot, bb:D[k].bb, c:D[k].c, doors:D[k].doors};
       gl.scene.traverse(o => { if(!o.isMesh) return; if(o.name === 'cd_far'){ M.fgeo = o.geometry; M.fm = o.matrixWorld.clone(); return; } if(!o.material.map){ M.vgeo = o.geometry; M.vm = o.matrixWorld.clone(); }
         else if(!M.geo){ const t = o.material.map; t.encoding = THREE.LinearEncoding; t.anisotropy = 4; M.geo = o.geometry; M.m = o.matrixWorld.clone(); M.mat = new THREE.MeshLambertMaterial({map:t}); } });
       if(M.geo) PNV.M[k] = M; D[k].glb = null; fin(); }, e => { console.warn('prédio novo', k, e); fin(); })); }).catch(() => { PNV.fail = true; }); }
@@ -6386,9 +6386,71 @@ function pnPlace(k, x, z, y, rot){ const M = PNV.M[k]; if(!M) return null; const
     let vf = null; if(M.vgeo){ vf = new THREE.Mesh(M.vgeo, PNV.vfar); vf.matrixAutoUpdate = false; vf.matrix.copy(M.vm); vf.userData.keep = true; vf.visible = false; g.add(vf); }
     (PNV.lod || (PNV.lod = [])).push({m, f, v:g.children[1] && g.children[1].material === PNV.vmat ? g.children[1] : null, vf, x:(l0 + l1)/2, z:(l2 + l3)/2, w:world, s:0, g, k}); }
   for(let i = n0; i < solids.length; i++) solids[i].mesh = m;
+  if(M.doors && M.doors.length) fjDoorsAdd(M.doors, x, z, y, rot, m);
   const [bx0, bx1, bz0, bz1] = R(...M.bb); FJ_BLD.push([bx0, bx1, bz0, bz1, M.c]);
   // árvores, moitas e pedras (fjNature) evitam o terreno todo do prédio (quintal, garagem, estacionamento): círculos ao longo do lado comprido
   { const [l0, l1, l2, l3] = R(...M.lot), w = l1 - l0, d = l3 - l2, r = Math.min(w, d)/2 + 2.5, L = Math.max(w, d), n = Math.max(1, Math.ceil(L/r)); for(let i = 0; i < n; i++){ const t = n > 1 ? i/(n - 1) : 0.5, cx = w >= d ? l0 + r - 2.5 + (w - 2*(r - 2.5))*t : (l0 + l1)/2, cz = w >= d ? (l2 + l3)/2 : l2 + r - 2.5 + (d - 2*(r - 2.5))*t; FJ_CLR.push([cx, cz, r]); } } PNV.placed = (PNV.placed || []).concat([k]); PNV.at = (PNV.at || []).concat([[k, x, z, y, rot]]); return m; }
+// ---------- portas de verdade (Version 172): folha na dobradiça, E abre/fecha, bots abrem, fechada segura feijão, tiro e visão
+var FJ_DOOR_NET = null, FJ_DOOR_BOTS = () => true;          // online.js troca: manda 'dr' e só o líder abre porta pros bots
+const FJD = {L:[], w:null, G:new Map(), im:null, kn:null, cap:320, t:0, near:[]};
+const FJD_COL = [0xb07a4c, 0x7a4c2c];      // porta de dentro (madeira clara) e de fora (escura)
+function fjDoorGeo(){ if(FJD.geo) return FJD.geo;
+  const bx = (L, x0, x1, y0, y1, z0, z1) => { const g = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0).toNonIndexed(); g.translate((x0 + x1)/2, (y0 + y1)/2, (z0 + z1)/2); L.push(g); };
+  const join = L => { const P = [], N = []; L.forEach(g => { P.push(...g.attributes.position.array); N.push(...g.attributes.normal.array); g.dispose(); });
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.computeBoundingSphere(); return g; };
+  // folha de 1,1 x 2,45 ao longo de +x a partir da dobradiça (o jogo estica pra largura de cada porta), 4 almofadas em relevo de cada lado
+  const L = [], W = 1.05, H = 2.45, t = 0.025; bx(L, 0.02, 0.02 + W, 0.01, H - 0.02, -t, t);
+  for(const sd of [-1, 1]){ const n0 = sd > 0 ? t : -t - 0.014, n1 = sd > 0 ? t + 0.014 : -t;
+    for(const [a0, a1] of [[0.12, W/2 - 0.05], [W/2 + 0.05, W - 0.12]]){ bx(L, 0.02 + a0, 0.02 + a1, 0.18, 1.0, n0, n1); bx(L, 0.02 + a0, 0.02 + a1, 1.2, H - 0.2, n0, n1); } }
+  const K = []; for(const sd of [-1, 1]){ bx(K, W - 0.115, W - 0.045, 1.0, 1.07, sd*(t + 0.02) - 0.035, sd*(t + 0.02) + 0.035); bx(K, W - 0.095, W - 0.065, 1.02, 1.05, Math.min(sd*t, sd*(t + 0.03)), Math.max(sd*t, sd*(t + 0.03))); }
+  return FJD.geo = {leaf:join(L), knob:join(K)}; }
+// prepara a lista do mapa atual (portas novas a cada mapa)
+function fjDoorWorld(){ if(FJD.w === world) return; FJD.w = world; FJD.L = []; FJD.G = new Map(); FJD.near = [];
+  const G = fjDoorGeo(), mk = (geo, m) => { const im = new THREE.InstancedMesh(geo, m, FJD.cap); im.count = 0; im.frustumCulled = false; im.castShadow = im.receiveShadow = true; im.userData.keep = true; im.userData.noBatch = true; world.add(im); return im; };
+  FJD.im = FJD_COL.map(c => mk(G.leaf, new THREE.MeshLambertMaterial({color:c}))); FJD.kn = mk(G.knob, new THREE.MeshLambertMaterial({color:0xe2b443})); }
+// portas de um prédio (coordenadas do modelo, porta do prédio pra +z), girado rot*90° em volta de (x, z)
+function fjDoorsAdd(DL, x, z, y, rot, bm){ fjDoorWorld(); const c = Math.round(Math.cos(rot*Math.PI/2)), sn = Math.round(Math.sin(rot*Math.PI/2));
+  const P = (a, b) => [x + a*c + b*sn, z - a*sn + b*c], V = (a, b) => [a*c + b*sn, -a*sn + b*c], yaw = v => Math.atan2(-v[1], v[0]);
+  DL.forEach(dr => { const [px, py, pz] = dr.p, w = dr.w, h = dr.h, X = dr.ax === 'x';
+    const A = X ? [dr.d, 0] : [0, dr.d], O = X ? [0, dr.s] : [dr.s, 0], H = P(px, pz), a0 = yaw(V(...A)), a1 = yaw(V(...O));
+    let da = a1 - a0; while(da > Math.PI) da -= 2*Math.PI; while(da < -Math.PI) da += 2*Math.PI;
+    const q = X ? [px, px + dr.d*w, pz - 0.06, pz + 0.06] : [px - 0.06, px + 0.06, pz, pz + dr.d*w], e = [P(q[0], q[2]), P(q[1], q[3])];
+    const b = box(Math.min(e[0][0], e[1][0]), Math.max(e[0][0], e[1][0]), y + py, y + py + h, Math.min(e[0][1], e[1][1]), Math.max(e[0][1], e[1][1]), 0, {invisible:true, noClimb:true, door:true});
+    b.mesh = bm;
+    const ext = dr.m === 'madeira2', hs = Math.abs(Math.sin(H[0]*12.9898 + H[1]*78.233)*43758.5453) % 1;
+    const d = {i:FJD.L.length, hx:H[0], hy:y + py, hz:H[1], a0, da, w, h, b, o:0, tgt:0, k:ext ? 1 : 0, slot:-1, ks:-1,
+      cx:(e[0][0] + e[1][0])/2, cz:(e[0][1] + e[1][1])/2, ox:H[0] + V(...O)[0]*w/2, oz:H[1] + V(...O)[1]*w/2};
+    if(!ext && hs < 0.45){ d.o = d.tgt = 1; b.active = false; }        // por dentro, quase metade começa aberta
+    FJD.L.push(d); const k = gk(d.cx, d.cz); let L = FJD.G.get(k); if(!L) FJD.G.set(k, L = []); L.push(d); }); }
+// portas perto de (x, z) (célula e vizinhas da grade de 4 m)
+function fjDoorsAt(x, z){ const out = [], i = Math.floor(x/GC), j = Math.floor(z/GC); for(let a = -1; a <= 1; a++) for(let b = -1; b <= 1; b++){ const L = FJD.G.get((i + a + 500)*1000 + j + b + 500); if(L) out.push(...L); } return out; }
+// alguém parado no vão (aí a porta não fecha em cima dele)
+function fjDoorBlocked(d){ const b = d.b; for(const p of players){ if(!p.alive) continue; const x = p.pos.x, z = p.pos.z;
+    if(x > b.min.x - 0.42 && x < b.max.x + 0.42 && z > b.min.z - 0.42 && z < b.max.z + 0.42 && p.pos.y < b.max.y && p.pos.y + 1.6 > b.min.y) return true; } return false; }
+function fjDoorSet(d, open, quiet, force){ open = open ? 1 : 0; if(!d || d.tgt === open) return true;
+  if(!open && !force && fjDoorBlocked(d)) return false;
+  d.tgt = open; d.b.active = !open; sfxAt(new V3(d.cx, d.hy + 1.2, d.cz), open ? 'porta' : 'portaF', 22);
+  if(!quiet && FJ_DOOR_NET) FJ_DOOR_NET(d.i, open); return true; }
+// porta que o feijão alcança (meio da folha a até 1,5 m, na altura dele)
+function fjDoorNear(p){ if(FJD.w !== world || !FJD.L.length) return null; let best = null, bd = 1.5;
+  for(const d of fjDoorsAt(p.pos.x, p.pos.z)){ if(p.pos.y < d.hy - 0.6 || p.pos.y > d.hy + 1.4) continue; const mx = d.o > 0.5 ? d.ox : d.cx, mz = d.o > 0.5 ? d.oz : d.cz, q = Math.hypot(p.pos.x - mx, p.pos.z - mz); if(q < bd){ bd = q; best = d; } }
+  return best; }
+const FJD_M = new THREE.Matrix4(), FJD_Q = new THREE.Quaternion(), FJD_S = new V3(), FJD_P = new V3(), FJD_Y = new V3(0, 1, 0);
+function fjDoorTick(dt){ if(FJD.w !== world || !FJD.L.length || !FJD.im) return;
+  // bots abrem a porta quando chegam perto (online: só o líder decide e manda pros outros)
+  FJD.t++; if(FJ_DOOR_BOTS() && FJD.t % 6 === 0) for(const p of players){ if(!p.isBot || p.netH || !p.alive || p.car || p.ride || p.glide) continue;
+    for(const d of fjDoorsAt(p.pos.x, p.pos.z)) if(!d.tgt && Math.hypot(p.pos.x - d.cx, p.pos.z - d.cz) < 1.25 && p.pos.y > d.hy - 0.6 && p.pos.y < d.hy + 1.4) fjDoorSet(d, 1); }
+  // quais portas desenhar: até 40 m da câmera (refeito a cada 10 quadros)
+  let rebuild = FJD.t % 10 === 0 || FJD.near.length === 0;
+  if(rebuild){ const hs = [camera.position]; if(twoP && typeof cam2 !== 'undefined' && cam2.pos) hs.push(cam2.pos); const nr = [];
+    for(const d of FJD.L){ let q = 1e9; for(const h of hs){ const v = (d.cx - h.x)**2 + (d.cz - h.z)**2; if(v < q) q = v; } if(q < 1600){ nr.push(d); if(nr.length >= FJD.cap) break; } }
+    const n = [0, 0]; FJD.L.forEach(d => d.slot = -1); nr.forEach((d, i) => { d.slot = i; d.ks = n[d.k]++; d.dirty = true; }); FJD.near = nr; FJD.kn.count = nr.length; FJD.im.forEach((m, k) => m.count = n[k]); }
+  let up = false;
+  for(const d of FJD.near){ if(d.o !== d.tgt){ d.o = d.tgt ? Math.min(1, d.o + dt/0.3) : Math.max(0, d.o - dt/0.3); d.dirty = true; } if(!d.dirty) continue; d.dirty = false; up = true;
+    const e = d.o*d.o*(3 - 2*d.o); FJD_Q.setFromAxisAngle(FJD_Y, d.a0 + d.da*e); FJD_P.set(d.hx, d.hy, d.hz); FJD_S.set(d.w/1.1, d.h/2.45, 1); FJD_M.compose(FJD_P, FJD_Q, FJD_S);
+    FJD.im[d.k].setMatrixAt(d.ks, FJD_M); FJD.kn.setMatrixAt(d.slot, FJD_M); }
+  for(const d of FJD.L) if(d.slot < 0 && d.o !== d.tgt) d.o = d.tgt;               // longe: muda na hora
+  if(up){ FJD.im.forEach(m => m.instanceMatrix.needsUpdate = true); FJD.kn.instanceMatrix.needsUpdate = true; } }
 // procura em espiral um terreno (w x d) sem estrada, sem prédio e com pouca subida; devolve [x, z]
 function pnSpot(x, z, w, d, used, maxR, slope, minH, rmin){ const ST = TM.st || [];
   const ok = (x, z) => { const x0 = x - w/2 - 1, x1 = x + w/2 + 1, z0 = z - d/2 - 1, z1 = z + d/2 + 1;
@@ -12521,6 +12583,19 @@ function fjProvaGrid(){ if(BIG || !world) return;
   for(const b of solids){ const q = b._pb; if(!q) continue; if(Math.abs(b.min.x - q[0]) > 0.8 || Math.abs(b.min.z - q[1]) > 0.8 || Math.abs(b.max.x - q[2]) > 0.8 || Math.abs(b.max.z - q[3]) > 0.8){
     b._pg.forEach(L => { const k = L.indexOf(b); if(k >= 0) L.splice(k, 1); }); fjPgCells(b); } } }
 { const _t = tick; tick = function(dt){ fjProvaGrid(); return _t(dt); }; }
+
+// portas de verdade (Version 172): ganchos que precisam de SND/tick/shootInput/nhInv já declarados
+{ const _t = tick; tick = function(dt){ const r = _t(dt); fjDoorTick(dt); return r; }; }
+SND.porta = d => { noise(0.22, 0.06, 500, 1300, 'bandpass', 4, 0, d, 0.03); tone(rr(170, 200), 0.18, 'triangle', 0.05, 1.4, 0.02, d); };
+SND.portaF = d => { noise(0.12, 0.25, 900, 140, 'lowpass', 1, 0, d); tone(rr(95, 110), 0.16, 'sine', 0.3, 0.5, 0, d); tone(1100, 0.03, 'square', 0.03, 0.6, 0.01, d); };
+// E: depois de levantar colega / estação / sair do veículo / pegar do chão, abre ou fecha a porta (antes de abrir baú e entrar em veículo)
+{ const _si = shootInput; shootInput = function(p, inp){
+  if(BIG && inp.item && !p.isBot && p.alive && !p.down && !p.car && !p.ride && !p.glide && !p.climb && !downMate(p) && !(nearSt(p) && cardsOf(p).length) && !nearLoot(p, 1.8, L => !!WPN[L.k] && !boxLock(L, p))){
+    const d = fjDoorNear(p); if(d){ inp.item = false; if(!fjDoorSet(d, !d.tgt) && !p.isBot) say('Tem alguém na porta', true); } }
+  return _si(p, inp); }; }
+// cartão de baixo: "Porta · E abrir/fechar" quando não tem item, baú nem veículo
+{ const _nh = nhInv; nhInv = function(me){ _nh(me); const P = $('nhPick'); if(!P.hidden || me.car || me.ride) return; const d = fjDoorNear(me); if(!d) return;
+  P.hidden = false; P.classList.add('nt'); nhSet(P, `<div><b>Porta</b><div class="k"><kbd>E</kbd> ${d.tgt ? 'fechar' : 'abrir'}</div></div>`); }; }
 // transparência: o corte termina antes do próprio feijão (caixa real do modelo, não o ponto atrasado da câmera)
 const fjOccMe = {s:new THREE.Sphere(), v:new V3()};
 { const _o = window.fjOccSet; window.fjOccSet = function(c, cam, on){ _o(c, cam, on); const O = window.FJ_OCC, R = O.R; if(!(R.x > 0)) return;
