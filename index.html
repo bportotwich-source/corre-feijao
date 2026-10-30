@@ -8511,7 +8511,7 @@ function driveCar(p, dt, mx, mz, ml, inp){ const c = p.car, fx = Math.sin(p.face
   const fjJeepDrive = c.jeep && !p.isBot && inp && inp.iz !== undefined;
   if(fjJeepDrive){ // jipe: W/S frente e ré do próprio jipe, A/D viram (na ré o volante inverte, como carro de verdade)
     const sp1 = p.vel.x*fx + p.vel.z*fz; want = inp.iz > 0.1 ? inp.iz : inp.iz < -0.1 ? 0.55*inp.iz : 0;
-    turn = clamp(inp.ix, -1, 1)*2.2*(sp1 < -0.5 || (want < 0 && sp1 < 0.5) ? -1 : 1); }
+    turn = -clamp(inp.ix, -1, 1)*2.2*(sp1 < -0.5 || (want < 0 && sp1 < 0.5) ? -1 : 1); }
   else if(ml > 0.1){ const dot = (mx*fx + mz*fz)/ml, cr = (mz*fx - mx*fz)/ml;
     if(dot > -0.55){ want = ml; const tf = Math.atan2(mx, mz); let d = tf - p.face; d = Math.atan2(Math.sin(d), Math.cos(d)); turn = clamp(d*3, -2.4, 2.4); }
     else { want = -0.45*ml; turn = clamp(-cr*2, -1.6, 1.6); } }
