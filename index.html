@@ -2751,6 +2751,383 @@ def('galaxia', 'Galáxia', 'lend', 0, 'corpo de céu estrelado com nebulosa que 
     fx.stars.children.forEach(s => { const k = s.userData.k; s.scale.setScalar(Math.max(0, Math.sin(t*2.2 + k*1.9))*1.2); s.rotation.z = t*0.8 + k; }); },
 }, AN));
 
+// ---------- SKINS FOFAS (lote da loja pensado pro público feminino) ----------
+const FM = {shop:true, fem:true};
+function heartS(s){ const h = new T.Shape(); h.moveTo(0, -s*0.9); h.bezierCurveTo(s*1.2, -s*0.1, s*0.75, s*0.95, 0, s*0.38); h.bezierCurveTo(-s*0.75, s*0.95, -s*1.2, -s*0.1, 0, -s*0.9); return h; }
+// laço: dois lóbulos e o nó
+function bow(parent, col, p, s, r){ const b = new T.Group(); b.position.set(...p); b.scale.setScalar(s || 1); if(r) b.rotation.set(...r); parent.add(b);
+  [-1, 1].forEach(k => P(b, sph(0.07, 12, 9), col, [k*0.075, 0, 0], [1.1, 0.75, 0.45], [0, 0, k*0.35])); P(b, sph(0.035, 10, 8), col, [0, 0, 0.01]); return b; }
+// asa achatada com textura própria: shape em [0,1]x[0,1] (UV = coordenada), escalada depois
+function wingTex(key, fn){ const k = 'w' + key; if(mats[k]) return mats[k]; const c = document.createElement('canvas'); c.width = c.height = 256; fn(c.getContext('2d'), 256);
+  const t = new T.CanvasTexture(c); return mats[k] = rimify(new T.MeshLambertMaterial({map:t, transparent:true, side:T.DoubleSide, depthWrite:false}), 'skinmap'); }
+const wingG = (k, pts) => G('wg' + k, () => { const s = new T.Shape(); s.moveTo(...pts[0]); for(let i=1;i<pts.length;i+=2) s.quadraticCurveTo(...pts[i], ...pts[i + 1]); return new T.ShapeGeometry(s, 14); });
+// asas presas nas costas: some com mochila, vai pra trás com colete
+const backWing = (z0) => (q, c) => { c.position.z = q && q.vest ? z0 - 0.13 : z0; return !(q && q.pack); };
+
+// 1. BAILARINA — collant rosa, tutu de tule em camadas que balança, coque com laço
+def('bailarina', 'Bailarina', 'comum', 0, 'collant rosinha com brilho, tutu de tule em camadas que balança quando anda e coque com laço de cetim', Object.assign({
+  covers:['hat', 'outfit'], price:300,
+  body:() => bodyMat('bailarina', g => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ffc6dc'); gr.addColorStop(0.6, '#ff9cc4'); gr.addColorStop(1, '#ffb8d4'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(255,255,255,.75)'; for(let k=0;k<70;k++){ g.beginPath(); g.arc((k*67) % W, rowOf(0.95) + (k*29) % 70, 1.6, 0, 7); g.fill(); }
+    g.fillStyle = '#ffe1ec'; g.fillRect(0, rowOf(0.4), W, H); }),
+  limb:0xff9cc4, legCol:0xffc6dc,
+  parts:(g, m) => {
+    const tutu = new T.Group(); tutu.position.y = 0.46; g.add(tutu); m.skinFx.tutu = tutu;
+    [[0.82, 0xffe3ee, 0.05], [0.74, 0xffc2da, 0.0], [0.66, 0xffa8cb, -0.04]].forEach(([R, c, y], i) => {
+      const L = P(tutu, latheG('tutu' + i, [[0.43, 0.05], [R*0.75, 0.02], [R, -0.03], [R*0.99, -0.06], [R*0.72, -0.04], [0.43, -0.03]], 30), matC(c, {side:T.DoubleSide}), [0, y, 0]);
+      for(let k=0;k<16;k++){ const a = (k + i*0.5)/16*Math.PI*2; P(L, sph(0.05, 8, 6), c, [Math.sin(a)*R*0.98, -0.045, Math.cos(a)*R*0.98], [1, 0.55, 1]); } });
+    P(g, sph(0.14, 14, 10), 0x5a3426, [0, 1.42, -0.26], [1, 0.9, 0.9]);
+    bow(g, 0xff6fa8, [0, 1.53, -0.2], 1.0, [-0.3, 0, 0]);
+    m.legs.forEach(l => [0.06, 0.13].forEach(y => P(l, tor(0.13, 0.012, 16), 0xff6fa8, [0, y, 0], [1, 1, 1.2], [Math.PI/2 + 0.25, 0, 0])));
+  },
+  tick:(m, t) => { const u = m.skinFx.tutu; if(!u) return; u.rotation.y = Math.sin(t*1.3)*0.25; u.children.forEach((L, i) => { L.rotation.x = Math.sin(t*3 + i)*0.05; L.rotation.z = Math.cos(t*2.6 + i*1.7)*0.05; L.position.y = [0.05, 0, -0.04][i] + Math.sin(t*5 + i)*0.006; }); },
+}, FM));
+
+// 2. GATINHA — pelinho cinza com listras, orelhas que mexem, bigodes, coleira com sininho e rabo que balança
+def('gatinha', 'Gatinha', 'raro', 0, 'pelinho cinza listrado com barriga branca, orelhinhas que mexem, bigodes, coleira com sininho, patinhas rosa e rabo que balança', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:() => bodyMat('gatinha', g => { g.fillStyle = '#b8b2c8'; g.fillRect(0, 0, W, H);
+    g.strokeStyle = '#8e86a3'; g.lineWidth = 9; g.lineCap = 'round'; for(let k=0;k<9;k++){ const x = BX - 120 + k*30; wrapX(xx => { g.beginPath(); g.moveTo(xx, 8); g.quadraticCurveTo(xx + 10, 40, xx - 4, 70 + (k % 2)*16); g.stroke(); }, x); }
+    g.fillStyle = '#fbf7ff'; g.beginPath(); g.ellipse(FX, rowOf(0.48), 74, 92, 0, 0, 7); g.fill(); }),
+  limb:0xb8b2c8, legCol:0xfbf7ff,
+  parts:(g, m) => {
+    m.skinFx.ears = [-1, 1].map(s => { const e = new T.Group(); e.position.set(s*0.24, 1.33, 0.02); e.rotation.set(0, 0, -s*0.38); g.add(e);
+      P(e, latheG('cear', [[0.13, 0], [0.11, 0.07], [0.06, 0.16], [0.001, 0.22]], 14), 0xb8b2c8, [0, 0, 0], [1, 1, 0.5]);
+      P(e, latheG('cear2', [[0.08, 0], [0.06, 0.07], [0.001, 0.15]], 12), 0xffaecb, [0, 0.01, 0.035], [1, 1, 0.3]); e.userData.s = s; return e; });
+    [-1, 1].forEach(s => [-0.04, 0.02].forEach((y, k) => P(g, caps(0.006, 0.2), 0xffffff, [s*0.38, 0.93 + y, 0.4 - k*0.02], 1, [0, -s*0.4, Math.PI/2 + s*(y*3)])));
+    P(g, sph(0.035, 10, 8), 0xff8cb4, [0, 0.95, 0.515], [1.3, 0.8, 0.7]);
+    P(g, tor(0.49, 0.035, 32), 0xff6fa8, [0, 0.6, 0], [1, 1, 0.97], [Math.PI/2, 0, 0]);
+    const bell = P(g, sph(0.05, 12, 9), phong(0xffd23f, {shininess:100}), [0, 0.54, 0.49]); m.skinFx.bell = bell;
+    m.arms.forEach(a => { P(a, sph(0.045, 10, 8), 0xffaecb, [0, -0.03, 0.115], [1, 0.8, 0.5]); [-0.05, 0, 0.05].forEach(x => P(a, sph(0.022, 8, 6), 0xffaecb, [x, 0.035, 0.11], [1, 1, 0.5])); });
+    const tr = new T.Group(); tr.position.set(0, 0.33, -0.42); tr.rotation.x = 2.2; g.add(tr);
+    m.skinFx.tail = chain(tr, 6, 0.09, 0.06, 0.045, matC(0xb8b2c8), matC(0xfbf7ff));
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(!fx.tail) return;
+    fx.tail.forEach((s, i) => { s.rotation.z = Math.sin(t*2.4 - i*0.6)*0.32; s.rotation.x = -0.12 - Math.sin(t*1.7 - i*0.4)*0.06; });
+    const tw = Math.max(0, Math.sin(t*1.1)*8 - 7); fx.ears.forEach(e => e.rotation.z = -e.userData.s*(0.38 + tw*0.35*(e.userData.s > 0 ? 1 : 0.4)));
+    fx.bell.position.x = Math.sin(t*6)*0.012; },
+}, FM));
+
+// 3. SEREIA — escamas furta-cor, cabelo comprido ondulando, barbatana que abana, coroa de estrela-do-mar e bolhas
+def('sereia', 'Sereia', 'epico', 0, 'escamas furta-cor do turquesa ao roxo, cabelo comprido que ondula, barbatana que abana, coroa de estrela-do-mar, colar de pérolas e bolhinhas subindo', Object.assign({
+  covers:['hat', 'outfit'], price:550,
+  body:() => { const k = 'bsereia'; return mats[k] || (mats[k] = rimify(new T.MeshPhongMaterial({shininess:70, specular:0x88ffff, map:paint('sereia', g => {
+    const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#8ff0e0'); gr.addColorStop(0.5, '#4fc1e8'); gr.addColorStop(1, '#8a5cff'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    for(let y=0, r=0;y<H+14;y+=12, r++) for(let x=(r % 2)*8;x<W+16;x+=16){ g.strokeStyle = r % 3 ? 'rgba(255,255,255,.35)' : 'rgba(80,40,160,.3)'; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 8, 0.1*Math.PI, 0.9*Math.PI); g.stroke(); }
+    g.fillStyle = 'rgba(255,255,255,.4)'; for(let k=0;k<40;k++){ g.beginPath(); g.arc((k*83) % W, (k*37) % H, 1.8, 0, 7); g.fill(); } })}), 'skinph')); },
+  limb:0x6fd8e8, legCol:0x8a5cff,
+  parts:(g, m) => {
+    const sm = matC(0xff8a7a); P(g, ext('star5', starS(0.12, 0.05, 5), 0.04, 0.02), sm, [0.12, 1.43, 0.06], 1, [-0.5, 0.2, 0.3]);
+    P(g, ext('star5', starS(0.12, 0.05, 5), 0.04, 0.02), matC(0xffb36a), [-0.14, 1.42, 0.02], 0.7, [-0.5, -0.3, -0.4]);
+    for(let k=0;k<11;k++){ const a = (k - 5)/5*1.05, p = onBody(a, 0.66, 0.04); P(g, sph(0.032, 10, 8), phong(0xfff8f0, {shininess:120}), [p[0], p[1] - Math.cos(a*1.5)*0.03, p[2]]); }
+    const hm = matC(0xd45cf0); m.skinFx.hair = [];
+    [-0.2, 0, 0.2].forEach((x, i) => { const r = new T.Group(); r.position.set(x, 1.3, -0.36 + Math.abs(x)*0.25); r.rotation.set(0.35, 0, x*0.6); g.add(r);
+      AR(r, q => !(q && q.pack)); const hs = chain(r, 7, 0.09, 0.06, 0.035, hm); hs.forEach(sg => sg.children[0].scale.set(1.7, 1.15, 0.7)); m.skinFx.hair.push(hs); });
+    const fin = new T.Group(); fin.position.set(0, 0.22, -0.38); g.add(fin); m.skinFx.fin = fin;
+    const fs = new T.Shape(); fs.moveTo(0, 0); fs.quadraticCurveTo(0.12, -0.1, 0.34, -0.32); fs.quadraticCurveTo(0.18, -0.24, 0, -0.18); fs.quadraticCurveTo(-0.18, -0.24, -0.34, -0.32); fs.quadraticCurveTo(-0.12, -0.1, 0, 0);
+    P(fin, ext('mfin', fs, 0.03, 0.02), matC(0x9a6cff, {transparent:true, opacity:0.85}), [0, 0, 0], 1.25, [-0.9, 0, 0]);
+    const bub = new T.Group(); g.add(bub); m.skinFx.bub = bub; const bm = matC(0xdff8ff, {transparent:true, opacity:0.45, depthWrite:false});
+    for(let k=0;k<7;k++){ const b = new T.Mesh(sph(0.035, 10, 8), bm); b.userData.k = k; bub.add(b); }
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(!fx.fin) return;
+    fx.fin.rotation.x = Math.sin(t*3)*0.25; fx.fin.rotation.z = Math.sin(t*2.1)*0.12;
+    fx.hair.forEach((segs, j) => segs.forEach((s, i) => { s.rotation.x = 0.05 + Math.sin(t*2.2 - i*0.7 + j)*0.12; s.rotation.z = Math.sin(t*1.7 - i*0.5 + j*1.3)*0.09; }));
+    fx.bub.children.forEach(b => { const k = b.userData.k, f = (t*0.3 + k/7) % 1, a = k*2.3; b.position.set(Math.sin(a)*0.6 + Math.sin(t*2 + k)*0.04, 0.2 + f*1.7, Math.cos(a)*0.55); b.scale.setScalar(0.5 + f*0.9); }); },
+}, FM));
+
+// 4. UNICÓRNIO — branquinho, chifre dourado em espiral, crina e rabo arco-íris que balançam
+def('unicornio', 'Unicórnio', 'epico', 0, 'branquinho com brilhos, chifre dourado em espiral, orelhinhas, crina e rabo de arco-íris que balançam e estrelinhas em volta', Object.assign({
+  covers:['hat', 'outfit'], price:550,
+  body:() => bodyMat('unicornio', g => { g.fillStyle = '#fffaff'; g.fillRect(0, 0, W, H);
+    const cs = ['#ffb3d9', '#b3d9ff', '#d9b3ff', '#fff0a8']; for(let k=0;k<44;k++){ g.fillStyle = cs[k % 4]; const x = (k*71) % W, y = (k*47) % H; g.beginPath(); for(let i=0;i<8;i++){ const a = i/8*Math.PI*2, r = i % 2 ? 2 : 6; g.lineTo(x + Math.cos(a)*r, y + Math.sin(a)*r); } g.fill(); }
+    g.fillStyle = 'rgba(255,214,240,.7)'; g.beginPath(); g.ellipse(FX, rowOf(0.45), 70, 80, 0, 0, 7); g.fill(); }),
+  limb:0xfffaff, legCol:0xd9c2ff,
+  parts:(g, m) => {
+    const horn = new T.Group(); horn.position.set(0, 1.4, 0.16); horn.rotation.x = 0.4; g.add(horn); const gold = phong(0xffd36a, {shininess:110});
+    P(horn, latheG('horn2', [[0.075, 0], [0.06, 0.1], [0.04, 0.2], [0.02, 0.29], [0.001, 0.33]], 14), gold, [0, 0, 0]);
+    for(let k=0;k<4;k++) P(horn, tor(0.065 - k*0.013, 0.012, 14), gold, [0, 0.04 + k*0.07, 0], 1, [Math.PI/2 + 0.3, 0, k*0.8]);
+    [-1, 1].forEach(s => { const e = new T.Group(); e.position.set(s*0.22, 1.33, -0.02); e.rotation.z = -s*0.35; g.add(e);
+      P(e, latheG('uear', [[0.08, 0], [0.065, 0.06], [0.03, 0.13], [0.001, 0.17]], 12), 0xfffaff, [0, 0, 0], [1, 1, 0.55]); P(e, latheG('uear2', [[0.045, 0], [0.03, 0.06], [0.001, 0.11]], 10), 0xffb3d9, [0, 0.01, 0.02], [1, 1, 0.3]); });
+    const rb = [0xff6b8a, 0xffa25a, 0xffe066, 0x7ee08a, 0x6ac8ff, 0xb38cff]; m.skinFx.mane = [];
+    for(let k=0;k<9;k++){ const y = 1.44 - k*0.065, a = Math.PI - 0.05, p = onBody(a, Math.min(1.44, y), 0.05), c = rb[k % 6]; const pf = P(g, sph(0.12 - k*0.005, 12, 9), c, [0, y + (k ? 0 : 0.02), k ? p[2] - 0.02 : -0.08], [0.55, 1.25, 1.25]); pf.userData.y0 = pf.position.y; m.skinFx.mane.push(pf); }
+    const tr = new T.Group(); tr.position.set(0, 0.36, -0.42); tr.rotation.x = 2.0; g.add(tr);
+    const tseg = chain(tr, 6, 0.07, 0.08, 0.06, matC(rb[0])); tseg.forEach((s, i) => { s.children[0].material = matC(rb[i % 6]); s.children[0].scale.set(1.3, 1.2, 0.8); }); m.skinFx.tail = tseg;
+    const st = new T.Group(); g.add(st); m.skinFx.stars = st;
+    for(let k=0;k<6;k++){ const s = new T.Mesh(ext('ustar', starS(0.05, 0.02, 4), 0.004, 0.002), new T.MeshBasicMaterial({color:[0xffd6f0, 0xd6ecff, 0xfff3b0][k % 3]})); s.userData.k = k; st.add(s); }
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(!fx.mane) return;
+    fx.mane.forEach((p, i) => { p.position.y = p.userData.y0 + Math.sin(t*3 - i*0.7)*0.015; p.position.x = Math.sin(t*2.2 - i*0.5)*0.02; });
+    fx.tail.forEach((s, i) => { s.rotation.z = Math.sin(t*2.6 - i*0.6)*0.3; s.rotation.x = -0.1 + Math.sin(t*1.9 - i*0.5)*0.08; });
+    fx.stars.children.forEach(s => { const k = s.userData.k, f = (t*0.45 + k/6) % 1, a = k*2.1 + t*0.6; s.position.set(Math.sin(a)*0.7, 0.4 + f*1.2, Math.cos(a)*0.66); s.rotation.set(0, a, t*2); s.scale.setScalar(Math.sin(f*Math.PI)*1.3); }); },
+}, FM));
+
+// 5. BORBOLETA — vestidinho em degradê, asas estampadas grandes que batem devagar e antenas de coração
+def('borboleta', 'Borboleta', 'epico', 0, 'vestidinho lilás com florzinhas, asas grandes estampadas que batem devagar e antenas com pontinha de coração', Object.assign({
+  covers:['hat', 'outfit'], price:550,
+  body:() => bodyMat('borboleta', g => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ffe0f2'); gr.addColorStop(0.55, '#d9b8ff'); gr.addColorStop(1, '#9f7cff'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    for(let k=0;k<26;k++){ const x = (k*89) % W, y = rowOf(0.65) + (k*31) % 110; wrapX(xx => { g.fillStyle = '#fff'; for(let i=0;i<5;i++){ const a = i/5*Math.PI*2; g.beginPath(); g.arc(xx + Math.cos(a)*5, y + Math.sin(a)*5, 4, 0, 7); g.fill(); } g.fillStyle = '#ffd23f'; g.beginPath(); g.arc(xx, y, 3, 0, 7); g.fill(); }, x); } }),
+  limb:0xe8ccff, legCol:0x9f7cff,
+  parts:(g, m) => {
+    m.skinFx.ant = [-1, 1].map(s => { const a = new T.Group(); a.position.set(s*0.1, 1.42, 0.08); g.add(a);
+      P(a, caps(0.013, 0.3), 0x3a2a55, [s*0.06, 0.13, 0], 1, [0, 0, -s*0.45]); P(a, ext('hrt', heartS(0.05), 0.02, 0.012), 0xff6fa8, [s*0.13, 0.28, 0]); return a; });
+    const up = wingTex('bup', (c, n) => { const gr = c.createRadialGradient(0, n, 10, 0, n, n*1.3); gr.addColorStop(0, '#ffd23f'); gr.addColorStop(0.45, '#ff8a3d'); gr.addColorStop(0.75, '#ff4fa3'); gr.addColorStop(1, '#3a1f5a'); c.fillStyle = gr; c.fillRect(0, 0, n, n);
+      c.fillStyle = '#fff'; [[0.78, 0.2], [0.88, 0.32], [0.66, 0.12], [0.9, 0.48]].forEach(([x, y]) => { c.beginPath(); c.arc(x*n, y*n, 9, 0, 7); c.fill(); }); c.strokeStyle = 'rgba(40,20,60,.55)'; c.lineWidth = 3; for(let k=0;k<5;k++){ c.beginPath(); c.moveTo(0, n); c.lineTo(n*(0.3 + k*0.17), n*(0.05 + k*0.05)); c.stroke(); } });
+    const lo = wingTex('blo', (c, n) => { const gr = c.createRadialGradient(0, 0, 10, 0, 0, n*1.2); gr.addColorStop(0, '#7fd8ff'); gr.addColorStop(0.55, '#b38cff'); gr.addColorStop(1, '#3a1f5a'); c.fillStyle = gr; c.fillRect(0, 0, n, n); c.fillStyle = '#fff'; [[0.6, 0.75], [0.75, 0.6]].forEach(([x, y]) => { c.beginPath(); c.arc(x*n, n - y*n, 8, 0, 7); c.fill(); }); });
+    const upG = wingG('bu', [[0, 0], [0.2, 0.9], [0.75, 1.0], [1.05, 0.95], [0.9, 0.5], [0.6, 0.05], [0, 0]]), loG = wingG('bl', [[0, 0], [0.5, -0.05], [0.8, -0.5], [0.75, -0.95], [0.3, -0.8], [0.05, -0.35], [0, 0]]);
+    m.skinFx.wings = [-1, 1].map(s => { const w = new T.Group(); w.position.set(s*0.07, 0.95, -0.45); g.add(w); AR(w, backWing(-0.45));
+      const u = new T.Mesh(upG, up), l = new T.Mesh(loG, lo); [u, l].forEach(x => { x.scale.set(s*0.62, 0.62, 1); x.castShadow = false; w.add(x); }); l.position.y = -0.02; w.userData.s = s; return w; });
+  },
+  tick:(m, t) => { const fx = m.skinFx; (fx.wings || []).forEach(w => w.rotation.y = w.userData.s*(0.35 + Math.sin(t*3.2)*0.45));
+    (fx.ant || []).forEach((a, k) => a.rotation.z = Math.sin(t*3 + k)*0.15); },
+}, FM));
+
+// 6. MORANGUINHO — vestido de morango com sementinhas, folhas de chapéu, laço e coraçõezinhos subindo
+def('moranguinho', 'Moranguinho', 'comum', 0, 'vestido de morango com sementinhas e golinha de renda, chapéu de folhas, laço de bolinhas e coraçõezinhos subindo', Object.assign({
+  covers:['hat', 'outfit'], price:300,
+  body:() => bodyMat('moranguinho', g => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#ff6b81'); gr.addColorStop(1, '#e8344f'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#ffe9a8'; for(let r=0;r<12;r++) for(let k=0;k<20;k++){ const x = k*26 + (r % 2)*13, y = 28 + r*19; g.beginPath(); g.ellipse(x, y, 2.6, 4.2, 0, 0, 7); g.fill(); }
+    g.fillStyle = '#fff'; for(let x=0;x<W;x+=14){ g.beginPath(); g.arc(x, rowOf(1.18), 8, 0, Math.PI); g.fill(); } g.fillRect(0, rowOf(1.18) - 4, W, 5); }),
+  limb:0xff6b81, legCol:0xfff2f5,
+  parts:(g, m) => {
+    for(let k=0;k<7;k++){ const a = k/7*Math.PI*2; P(g, ext('sl', leafShape(0.11, 0.3), 0.03, 0.015), 0x4fbf5a, [Math.sin(a)*0.1, 1.42, Math.cos(a)*0.1], 1, [Math.PI/2 - 0.45, a, 0]).rotation.order = 'YXZ'; }
+    P(g, caps(0.025, 0.16), 0x3e9e48, [0, 1.52, 0], 1, [0.2, 0, 0.1]);
+    const b = bow(g, 0xffffff, [0.3, 1.33, 0.12], 1.1, [0, 0.5, -0.4]); b.children.forEach(c => c.material = texM('dots', 32, 32, (c2, w, h) => { c2.fillStyle = '#ff6fa8'; c2.fillRect(0, 0, w, h); c2.fillStyle = '#fff'; [[8, 8], [24, 24], [24, 8], [8, 24]].forEach(([x, y]) => { c2.beginPath(); c2.arc(x, y, 4, 0, 7); c2.fill(); }); }));
+    const hs = new T.Group(); g.add(hs); m.skinFx.hearts = hs;
+    for(let k=0;k<4;k++){ const h = new T.Mesh(ext('hrt2', heartS(0.06), 0.025, 0.012), new T.MeshBasicMaterial({color:k % 2 ? 0xff6fa8 : 0xff3b5c, transparent:true})); h.userData.k = k; hs.add(h); }
+  },
+  tick:(m, t) => { const hs = m.skinFx.hearts; if(!hs) return; hs.children.forEach(h => { const k = h.userData.k, f = (t*0.32 + k/4) % 1, a = k*1.9 + 0.6; h.position.set(Math.sin(a)*0.55 + Math.sin(t*3 + k)*0.05, 0.9 + f*1.0, Math.cos(a)*0.45); h.rotation.y = a; h.material.opacity = Math.sin(f*Math.PI); h.scale.setScalar(0.6 + f*0.6); }); },
+}, FM));
+
+// 7. POP STAR — jaqueta holográfica, rabo de cavalo que balança no ritmo, microfone de fone e confete caindo
+def('popstar', 'Pop Star', 'raro', 0, 'jaqueta holográfica com estrela, saia de brilho, microfone de cantora, rabo de cavalo rosa que balança no ritmo e confete caindo', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:() => { const k = 'bpopstar'; return mats[k] || (mats[k] = rimify(new T.MeshPhongMaterial({shininess:90, specular:0xffffff, map:paint('popstar', g => {
+    const gr = g.createLinearGradient(0, 0, W, H); ['#ff9ad5', '#c08cff', '#8fd8ff', '#ff9ad5', '#c08cff'].forEach((c, i) => gr.addColorStop(i/4, c)); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(255,255,255,.35)'; for(let k=0;k<6;k++){ g.beginPath(); g.moveTo(k*90, 0); g.lineTo(k*90 + 30, 0); g.lineTo(k*90 - 60, H); g.lineTo(k*90 - 90, H); g.fill(); }
+    const sy = rowOf(0.42); g.fillStyle = '#2b1846'; g.fillRect(0, sy, W, H - sy); g.fillStyle = '#ffd23f'; for(let k=0;k<90;k++){ g.beginPath(); g.arc((k*37) % W, sy + 6 + (k*13) % (H - sy - 8), 1.8, 0, 7); g.fill(); }
+    g.fillStyle = '#ffd23f'; g.save(); g.translate(FX + 70, rowOf(0.78)); g.beginPath(); for(let i=0;i<10;i++){ const a = i/10*Math.PI*2 - Math.PI/2, r = i % 2 ? 8 : 18; g.lineTo(Math.cos(a)*r, Math.sin(a)*r); } g.fill(); g.restore(); })}), 'skinph')); },
+  limb:0xc08cff, legCol:0xffffff,
+  parts:(g, m) => {
+    const hm = matC(0xff6fb5); const pr = new T.Group(); pr.position.set(0, 1.42, -0.2); pr.rotation.x = 1.3; g.add(pr); m.skinFx.pony = chain(pr, 7, 0.075, 0.085, 0.045, hm, hm); m.skinFx.pony.forEach(sg => sg.children[0].scale.set(1.3, 1.2, 0.9));
+    AR(pr, q => !(q && q.helm)); P(g, sph(0.13, 12, 9), hm, [0, 1.4, -0.1], [1.1, 0.7, 1.1]); P(g, tor(0.08, 0.03, 16), 0xffd23f, [0, 1.45, -0.22], 1, [1.3, 0, 0]);
+    P(g, caps(0.012, 0.36), 0x2b2233, [0.36, 0.93, 0.36], 1, [0, 0, Math.PI/2 - 0.2]).rotation.set(0, -0.7, Math.PI/2 + 0.25);
+    P(g, sph(0.035, 10, 8), 0x2b2233, [0.2, 0.88, 0.47]); P(g, sph(0.06, 12, 9), 0x2b2233, [0.47, 1.02, 0.08], [0.5, 1, 1]);
+    const cf = new T.Group(); g.add(cf); m.skinFx.conf = cf; const cs = [0xff4fa3, 0xffd23f, 0x38e0ff, 0x7ee08a, 0xb38cff];
+    for(let k=0;k<12;k++){ const c = new T.Mesh(G('conf', () => new T.PlaneGeometry(0.05, 0.03)), new T.MeshBasicMaterial({color:cs[k % 5], side:T.DoubleSide})); c.userData.k = k; cf.add(c); }
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(!fx.pony) return; const beat = Math.sin(t*Math.PI*2.1);
+    fx.pony.forEach((s, i) => { s.rotation.z = beat*0.22*(i ? 0.6 : 1); s.rotation.x = Math.sin(t*4.2 - i*0.7)*0.08; });
+    fx.conf.children.forEach(c => { const k = c.userData.k, f = (t*0.4 + k/12) % 1, a = k*2.4; c.position.set(Math.sin(a)*(0.5 + (k % 3)*0.12) + Math.sin(t*3 + k)*0.05, 2.0 - f*2.0, Math.cos(a)*(0.45 + (k % 3)*0.12)); c.rotation.set(t*5 + k, t*3 + k*2, t*4); }); },
+}, FM));
+
+// 8. FADA DAS FLORES (lendária) — vestido de pétalas que brilha, tiara de flores, asas que cintilam, varinha mágica e pétalas caindo
+def('fada', 'Fada das Flores', 'lend', 0, 'vestido de pétalas lilás que brilha, tiara de florzinhas, asas transparentes que cintilam, varinha com estrela e pétalas caindo em volta', Object.assign({
+  covers:['hat', 'outfit'], price:800,
+  body:() => bodyMat('fada', g => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#f6eaff'); gr.addColorStop(0.5, '#dcc4ff'); gr.addColorStop(1, '#b48cff'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    for(let r=0;r<2;r++) for(let k=0;k<16;k++){ const x = k*32 + r*16, y = rowOf(0.42) + r*26; wrapX(xx => { g.fillStyle = r ? '#ffb3e0' : '#c9a6ff'; g.beginPath(); g.moveTo(xx - 15, y); g.quadraticCurveTo(xx, y + 60, xx + 15, y); g.quadraticCurveTo(xx, y - 10, xx - 15, y); g.fill(); }, x); }
+    g.fillStyle = 'rgba(255,255,255,.85)'; for(let k=0;k<60;k++){ g.beginPath(); g.arc((k*53) % W, (k*29) % rowOf(0.5), 1.5, 0, 7); g.fill(); } }, {emissive:0x1a0c2a}),
+  limb:0xe6d4ff, legCol:0xb48cff,
+  parts:(g, m) => {
+    const fc = [0xff8cc8, 0xfff3a0, 0xa8e4ff, 0xffb3e0, 0xc9a6ff, 0xffffff];
+    for(let k=0;k<7;k++){ const a = (k - 3)/3*1.3, x = Math.sin(a)*0.33, z = Math.cos(a)*0.22, f = new T.Group(); f.position.set(x, 1.41 - Math.abs(a)*0.05, z); f.rotation.set(-0.5, a, 0); g.add(f);
+      for(let i=0;i<5;i++){ const b = i/5*Math.PI*2; P(f, sph(0.028, 8, 6), fc[k % 6], [Math.cos(b)*0.03, Math.sin(b)*0.03, 0], [1, 1, 0.5]); } P(f, sph(0.018, 8, 6), 0xffd23f, [0, 0, 0.01]); }
+    const wm = matC(0xe8f4ff, {transparent:true, opacity:0.45, side:T.DoubleSide, depthWrite:false, emissive:0x302848}); m.skinFx.wm = wm;
+    m.skinFx.wings = [-1, 1].map(s => { const w = new T.Group(); w.position.set(s*0.07, 1.0, -0.44); g.add(w); AR(w, backWing(-0.44));
+      P(w, ext('fwing', leafShape(0.22, 0.62), 0.006, 0.004), wm, [0, 0, 0], 1, [0, 0, -s*0.85]).castShadow = false;
+      P(w, ext('fwing2', leafShape(0.16, 0.42), 0.006, 0.004), wm, [0, -0.04, 0], 1, [0, 0, -s*2.2]).castShadow = false;
+      P(w, tor(0.12, 0.006, 14), matC(0xffffff, {emissive:0x806090}), [s*0.26, 0.18, 0.004], [1, 2.2, 1], [0, 0, -s*0.85]).castShadow = false; w.userData.s = s; return w; });
+    const wand = new T.Group(); wand.position.set(0.02, 0.0, 0.1); wand.rotation.set(0.5, 0, -0.3); m.arms[1].add(wand);
+    P(wand, caps(0.012, 0.36), 0xfff3d0, [0, 0.16, 0]); m.skinFx.star = P(wand, ext('wstar', starS(0.07, 0.03, 5), 0.02, 0.01), matC(0xffe066, {emissive:0x806000}), [0, 0.36, 0]);
+    const pe = new T.Group(); g.add(pe); m.skinFx.pet = pe;
+    for(let k=0;k<8;k++){ const p = new T.Mesh(sph(0.03, 8, 6), matC(fc[k % 5])); p.scale.set(1, 0.3, 1.6); p.userData.k = k; pe.add(p); }
+    const sp = new T.Group(); g.add(sp); m.skinFx.sp = sp; for(let k=0;k<6;k++){ const s = new T.Mesh(sph(0.018, 6, 4), new T.MeshBasicMaterial({color:0xfff3a0})); s.userData.k = k; sp.add(s); }
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(!fx.wings) return;
+    fx.wings.forEach(w => w.rotation.y = w.userData.s*(0.3 + Math.sin(t*9)*0.3)); fx.wm.emissive.setHSL((t*0.15) % 1, 0.6, 0.18);
+    fx.star.rotation.y = t*2; fx.star.scale.setScalar(1 + Math.max(0, Math.sin(t*4))*0.25);
+    fx.pet.children.forEach(p => { const k = p.userData.k, f = (t*0.18 + k/8) % 1, a = k*0.8 + t*0.4; p.position.set(Math.sin(a)*(0.6 + f*0.15), 1.9 - f*1.9, Math.cos(a)*(0.55 + f*0.15)); p.rotation.set(t*2 + k, t + k, Math.sin(t*3 + k)); });
+    fx.sp.children.forEach(s => { const k = s.userData.k, f = (t*0.8 + k/6) % 1; s.position.set(0.56 + Math.sin(k*2.1)*0.08*f, 0.85 - f*0.5, 0.35 + Math.cos(k*1.7)*0.08*f); s.scale.setScalar(Math.sin(f*Math.PI)*1.4); }); },
+}, FM));
+
+// ---------- SKINS DO MODO GUERRA (lote da loja: a parte colorida pega a cor da sua tropa na Guerra) ----------
+const WR = {shop:true, war:true};
+// camuflagem: manchas arredondadas, sempre iguais (semente fixa)
+function camo(g, cols, n, seed){ g.fillStyle = cols[0]; g.fillRect(0, 0, W, H); let r = seed || 7; const rnd = () => (r = (r*16807) % 2147483647)/2147483647;
+  for(let i=1;i<cols.length;i++){ g.fillStyle = cols[i]; for(let k=0;k<n;k++){ const x = rnd()*W, y = rnd()*H, w = 12 + rnd()*26, h = 7 + rnd()*15, a = rnd()*3; wrapX(xx => { g.beginPath(); g.ellipse(xx, y, w, h, a, 0, 7); g.fill(); }, x); } } }
+const tc = m => m.skinCol === undefined ? 0x3fae4a : m.skinCol;   // cor da tropa (fora da Guerra: a cor do jogador)
+const tcs = c => hex(c === undefined ? 0x3fae4a : c);
+// braçadeira da tropa no braço esquerdo
+const armband = (m) => P(m.arms[0], tor(0.13, 0.03, 18), tc(m), [0, 0.02, 0], [1, 1, 1], [Math.PI/2, 0, 0]);
+// capacete de combate com cobertura camuflada, jugular nos lados e faixa da tropa (cols = cores da camuflagem)
+function combatHelmet(g, m, key, cols, o){ o = o || {}; const h = new T.Group(); h.position.set(0, 1.23, -0.01); g.add(h); AR(h, q => !(q && q.helm));   // com o capacete do BR, o dele some
+  const cm = texM('hc' + key, 128, 64, (c, w, hh) => { c.fillStyle = cols[0]; c.fillRect(0, 0, w, hh); let r = 13; const rnd = () => (r = (r*16807) % 2147483647)/2147483647;
+    for(let i=1;i<cols.length;i++){ c.fillStyle = cols[i]; for(let k=0;k<14;k++){ c.beginPath(); c.ellipse(rnd()*w, rnd()*hh, 5 + rnd()*9, 3 + rnd()*5, rnd()*3, 0, 7); c.fill(); } } });
+  P(h, latheG('chelm', [[0.001, 0.31], [0.2, 0.3], [0.33, 0.22], [0.41, 0.08], [0.44, -0.04], [0.48, -0.1], [0.48, -0.125], [0.43, -0.11]], 26), cm, [0, 0, 0], [1, 1, 0.97]);
+  P(h, G('hband', () => new T.CylinderGeometry(0.432, 0.445, 0.07, 30, 1, true)), matC(o.band !== undefined ? o.band : tc(m), {side:T.DoubleSide}), [0, -0.005, 0], [1, 1, 0.97]);
+  [-1, 1].forEach(s => P(h, caps(0.012, 0.26), 0x2b2b26, [s*0.43, -0.2, 0.02], 1, [0, 0, s*0.1]));
+  if(o.net){ for(let k=0;k<5;k++) P(h, tor(0.4 - k*0.05, 0.006, 26), 0x3a3a26, [0, 0.06 + k*0.05, 0], [1, 1, 0.97], [Math.PI/2, 0, 0]); for(let k=0;k<8;k++) P(h, tor(0.38, 0.006, 20, Math.PI*0.5), 0x3a3a26, [0, 0.0, 0], 1, [0, k/8*Math.PI*2, Math.PI/2]); }
+  return h; }
+// colete tático pintado no corpo: placa da frente e de trás, alças e porta-carregadores
+function plateCarrier(g, col, dark){ [FX, BX].forEach((x, i) => wrapX(xx => { g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(xx - 66, rowOf(0.98), 132, rowOf(0.4) - rowOf(0.98), 12) : g.rect(xx - 66, rowOf(0.98), 132, rowOf(0.4) - rowOf(0.98)); g.fill();
+    g.fillStyle = dark; for(let k=0;k<4;k++) g.fillRect(xx - 60, rowOf(0.9) + k*13, 120, 3); if(!i) for(let k=0;k<3;k++){ g.fillRect(xx - 52 + k*36, rowOf(0.6), 30, 36); } }, x));
+  g.fillStyle = col; g.fillRect(0, rowOf(1.0), W, 10); g.fillRect(0, rowOf(0.42), W, 12); }
+// porta-carregadores e rádio em 3D na frente do colete
+function vestGear(g, col){ [-0.3, -0.1, 0.1, 0.3].forEach(a => { const p = onBody(a, 0.56, 0.04); P(g, rbox(0.1, 0.13, 0.06, 0.02), col, [p[0], p[1], p[2]], 1, [0, a, 0]); });
+  const p = onBody(-0.95, 0.8, 0.03); P(g, rbox(0.08, 0.16, 0.07, 0.02), col, [p[0], p[1], p[2]], 1, [0, -0.95, 0]); P(g, caps(0.008, 0.18), 0x1a1b1e, [p[0] - 0.02, p[1] + 0.15, p[2] - 0.02]); }
+const knee = (m, col) => m.legs.forEach(l => P(l, rbox(0.14, 0.09, 0.05, 0.02), col, [0, 0.16, 0.13], 1, [-0.2, 0, 0]));
+
+// 1. SOLDADO DE SELVA — camuflagem de mato, capacete com rede e folhas, colete tático e braçadeira da tropa
+def('selva', 'Soldado de Selva', 'comum', 0, 'farda camuflada de mato, capacete com rede e raminhos de folha que balançam, colete tático com carregadores, rádio e braçadeira na cor da tropa', Object.assign({
+  covers:['hat', 'outfit'], price:300,
+  body:() => bodyMat('selva', g => { camo(g, ['#5f6e3a', '#3e4a24', '#7a6a42', '#2a301c'], 26, 11); plateCarrier(g, '#4e5a32', '#3a4426'); }),
+  limb:0x5f6e3a, legCol:0x2a2620,
+  parts:(g, m) => { const h = combatHelmet(g, m, 'selva', ['#5f6e3a', '#3e4a24', '#7a6a42', '#2a301c'], {net:true}); armband(m); vestGear(g, 0x4e5a32);
+    m.skinFx.leaves = [[-0.25, 0.2, 0.25], [0.3, 0.15, -0.1], [-0.05, 0.28, -0.3], [0.15, 0.25, 0.25]].map(([x, y, z], i) => { const l = new T.Group(); l.position.set(x, y, z); l.rotation.set(-z*1.5, 0, -x*2); h.add(l);
+      [0, 1, 2].forEach(j => P(l, ext('sl2', leafShape(0.04, 0.17), 0.01, 0.006), [0x4f7a2e, 0x6a8f3a, 0x3e5f22][j], [0, 0, 0], 1, [0, j*1.1, (j - 1)*0.4])); l.userData.k = i; return l; }); },
+  tick:(m, t) => { (m.skinFx.leaves || []).forEach(l => { const k = l.userData.k; l.rotation.y = Math.sin(t*2 + k)*0.25; }); },
+}, WR));
+
+// 2. SOLDADO DO DESERTO — camuflagem de areia, lenço xadrez no pescoço que tremula, óculos de proteção no capacete
+def('deserto', 'Soldado do Deserto', 'comum', 0, 'farda camuflada cor de areia, capacete com óculos de proteção, lenço xadrez no pescoço com a ponta tremulando no vento, colete coiote e braçadeira da tropa', Object.assign({
+  covers:['hat', 'outfit'], price:300,
+  body:() => bodyMat('deserto', g => { camo(g, ['#cdb88e', '#b39a6c', '#e0d0a8', '#8f7a54'], 24, 5); plateCarrier(g, '#a88a5c', '#8a7048'); }),
+  limb:0xcdb88e, legCol:0x6a5236,
+  parts:(g, m) => { const h = combatHelmet(g, m, 'deserto', ['#c8b48a', '#a8946a', '#d8c8a0']); armband(m); vestGear(g, 0xa88a5c);
+    [-1, 1].forEach(s => { P(h, latheG('gog3', [[0.001, 0.03], [0.075, 0.03], [0.085, -0.03], [0.001, -0.03]], 14), 0x2b2b30, [s*0.1, 0.1, 0.38], 1, [Math.PI/2 - 0.75, 0, 0]); P(h, sph(0.066, 10, 8), phong(0xff8a2a, {shininess:120, transparent:true, opacity:0.85}), [s*0.1, 0.11, 0.4], [1, 1, 0.35], [-0.75, 0, 0]); });
+    const sm = texM('shemagh', 64, 64, (c, w, hh) => { c.fillStyle = '#e8dcc0'; c.fillRect(0, 0, w, hh); c.fillStyle = '#5a4630'; for(let x=0;x<w;x+=8) for(let y=0;y<hh;y+=8) if((x + y) % 16 === 0) c.fillRect(x, y, 4, 4); c.fillRect(0, 28, w, 3); });
+    P(g, tor(0.46, 0.075, 30, Math.PI*2), sm, [0, 0.72, -0.01], [1, 1, 0.97], [Math.PI/2, 0, 0]);
+    const tail = new T.Group(); tail.position.set(0.12, 0.72, -0.44); tail.rotation.x = 0.4; g.add(tail); AR(tail, q => !(q && q.pack));
+    m.skinFx.tail = chain(tail, 4, 0.08, 0.06, 0.03, sm); m.skinFx.tail.forEach(s => s.children[0].scale.set(1.4, 1, 0.4)); },
+  tick:(m, t) => { (m.skinFx.tail || []).forEach((s, i) => { s.rotation.x = 0.3 + Math.sin(t*6 - i)*0.25; s.rotation.z = Math.sin(t*4.3 - i*0.8)*0.2; }); },
+}, WR));
+
+// 3. MÉDICO DE COMBATE — capacete com a cruz da tropa, braçadeira branca e bolsa de primeiros socorros
+def('medico', 'Médico de Combate', 'comum', 0, 'farda camuflada, capacete com a cruz na cor da tropa na frente e atrás, braçadeira branca, colete com bolsa de primeiros socorros e a cruz nas costas', Object.assign({
+  covers:['hat', 'outfit'], price:300,
+  body:c => bodyMat('medico' + c, g => { camo(g, ['#6b7448', '#4f5a34', '#857e58', '#3a4026'], 24, 19); plateCarrier(g, '#57603a', '#444c2c');
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(BX, rowOf(0.72), 30, 0, 7); g.fill(); g.fillStyle = tcs(c); g.fillRect(BX - 8, rowOf(0.72) - 22, 16, 44); g.fillRect(BX - 22, rowOf(0.72) - 8, 44, 16); }),
+  limb:0x6b7448, legCol:0x2a2620,
+  parts:(g, m) => { const h = combatHelmet(g, m, 'medico', ['#6b7448', '#4f5a34', '#857e58'], {band:0xffffff}); vestGear(g, 0x57603a);
+    [0.47, -0.47].forEach(z => { const d = new T.Group(); d.position.set(0, 0.1, z*0.98); d.rotation.set(z > 0 ? -0.55 : 0.55, z > 0 ? 0 : Math.PI, 0); h.add(d);
+      P(d, latheG('mdisc', [[0.001, 0.008], [0.08, 0.008], [0.08, -0.008], [0.001, -0.008]], 18), 0xffffff, [0, 0, 0], 1, [Math.PI/2, 0, 0]); P(d, rbox(0.11, 0.035, 0.02, 0.006), tc(m), [0, 0, 0.012]); P(d, rbox(0.035, 0.11, 0.02, 0.006), tc(m), [0, 0, 0.013]); });
+    P(m.arms[0], tor(0.13, 0.035, 18), 0xffffff, [0, 0.02, 0], 1, [Math.PI/2, 0, 0]); P(m.arms[0], rbox(0.05, 0.05, 0.02, 0.005), tc(m), [-0.13, 0.02, 0], 1, [0, Math.PI/2, 0]);
+    const bag = new T.Group(); bag.position.set(-0.43, 0.4, 0.14); bag.rotation.y = -1.0; g.add(bag); m.skinFx.bag = bag;
+    P(bag, rbox(0.22, 0.17, 0.1, 0.04), 0xf2efe6, [0, 0, 0]); P(bag, rbox(0.07, 0.022, 0.012, 0.005), tc(m), [0, 0, 0.055]); P(bag, rbox(0.022, 0.07, 0.012, 0.005), tc(m), [0, 0, 0.056]); },
+  tick:(m, t) => { const b = m.skinFx.bag; if(b) b.rotation.z = Math.sin(t*3.5)*0.06; },
+}, WR));
+
+// 4. SOLDADO DA NEVE — camuflagem branca, capacete com capa branca, cachecol e o bafo de frio saindo
+def('neve', 'Soldado da Neve', 'raro', 0, 'farda camuflada de neve branca e cinza, capacete com capa branca, cachecol de lã, luvas grossas, colete claro e o bafinho de frio saindo de vez em quando', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:() => bodyMat('neve', g => { camo(g, ['#eef2f6', '#c9d1da', '#a9b4c0', '#ffffff'], 26, 31); plateCarrier(g, '#d0d6de', '#aab3bf'); }),
+  limb:0xe6ebf0, legCol:0x8a929c,
+  parts:(g, m) => { combatHelmet(g, m, 'neve', ['#f2f5f8', '#d0d7df', '#b6c0cb']); armband(m); vestGear(g, 0xc4cbd4);
+    P(g, tor(0.46, 0.07, 30), 0x8a9aae, [0, 0.72, -0.01], [1, 1, 0.97], [Math.PI/2, 0, 0]);
+    m.arms.forEach(a => P(a, sph(0.15, 12, 9), 0x5a6270, [0, -0.02, 0.02], [1, 0.9, 1]));
+    const br = new T.Group(); br.position.set(0, 0.9, 0.5); g.add(br); m.skinFx.breath = br;
+    for(let k=0;k<4;k++){ const s = new T.Mesh(sph(0.05, 10, 8), new T.MeshLambertMaterial({color:0xffffff, transparent:true, depthWrite:false})); s.userData.k = k; br.add(s); } },
+  tick:(m, t) => { const br = m.skinFx.breath; if(!br) return; const c = t % 2.6;
+    br.children.forEach(s => { const k = s.userData.k, f = Math.min(1, Math.max(0, (c - k*0.08)/1.1)); s.visible = f > 0 && f < 1; s.position.set(Math.sin(k*2.1)*0.03, f*0.14, 0.05 + f*0.3); s.scale.setScalar(0.5 + f*1.5); s.material.opacity = 0.6*(1 - f); }); },
+}, WR));
+
+// 5. SOLDADO URBANO — camuflagem digital cinza, colete preto, joelheiras e lanterna no capacete
+def('urbano', 'Soldado Urbano', 'raro', 0, 'camuflagem digital cinza de cidade, colete preto com carregadores, capacete com lanterna que pisca e faixa da tropa, joelheiras e luvas táticas', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:() => bodyMat('urbano', g => { g.fillStyle = '#7a7f87'; g.fillRect(0, 0, W, H); const cs = ['#5a5f66', '#9aa0a8', '#3e4248']; let r = 3; const rnd = () => (r = (r*16807) % 2147483647)/2147483647;
+    for(let k=0;k<520;k++){ g.fillStyle = cs[k % 3]; const s = 6 + Math.floor(rnd()*2)*6; g.fillRect(Math.floor(rnd()*W/6)*6, Math.floor(rnd()*H/6)*6, s, s); } plateCarrier(g, '#2e3136', '#1e2024'); }),
+  limb:0x6a6f77, legCol:0x26282c,
+  parts:(g, m) => { const h = combatHelmet(g, m, 'urbano', ['#5a5f66', '#4a4e54', '#6a6f77']); armband(m); vestGear(g, 0x2e3136); knee(m, 0x26282c);
+    m.arms.forEach(a => P(a, sph(0.135, 12, 9), 0x26282c, [0, -0.02, 0.02], [1, 0.85, 1]));
+    P(h, rbox(0.07, 0.07, 0.14, 0.02), 0x1e2024, [0.44, 0.02, 0.06], 1, [0, 0, -0.15]); m.skinFx.lamp = P(h, sph(0.03, 10, 8), new T.MeshBasicMaterial({color:0xfff6c8}), [0.44, 0.02, 0.14], [1, 1, 0.5]); },
+  tick:(m, t) => { const l = m.skinFx.lamp; if(l) l.visible = (t % 2) < 1.4 || Math.sin(t*40) > 0; },
+}, WR));
+
+// 6. ATIRADOR CAMUFLADO — roupa de folhas (ghillie) com tufos que balançam no vento e fita da tropa
+def('ghillie', 'Atirador Camuflado', 'raro', 0, 'roupa de folhas e fios (ghillie) coberta de tufos que balançam com o vento, e uma fita na cor da tropa amarrada no braço', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:() => bodyMat('ghillie', g => { camo(g, ['#4d5a2c', '#3a4520', '#6c7a3a', '#7a6a3a', '#2c341a'], 40, 23);
+    g.strokeStyle = 'rgba(40,50,20,.6)'; g.lineWidth = 2; for(let k=0;k<160;k++){ const x = (k*67) % W, y = (k*31) % H; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 3, y + 10); g.stroke(); } }),
+  limb:0x4d5a2c, legCol:0x3a4520,
+  parts:(g, m) => { const cs = [0x5d6e30, 0x4a5826, 0x76803e, 0x8a7a42, 0x3e4a22]; m.skinFx.tufts = [];
+    for(let k=0;k<26;k++){ const a = (k*2.399) % (Math.PI*2), front = Math.cos(a) > 0.55, y = 0.35 + ((k*0.618) % 1)*1.1; if(front && y > 0.75 && y < 1.25) continue;
+      const p = onBody(a, y, 0.01), tf = new T.Group(); tf.position.set(p[0], p[1], p[2]); tf.rotation.y = a; g.add(tf);
+      for(let j=0;j<3;j++) P(tf, ext('gl' + (j % 2), leafShape(0.05 + (j % 2)*0.02, 0.22 + (k % 3)*0.05), 0.01, 0.006), cs[(k + j) % 5], [0, 0, 0.01], 1, [0.5 + j*0.15, (j - 1)*0.5, (j - 1)*0.4]);
+      tf.userData.k = k; m.skinFx.tufts.push(tf); }
+    for(let k=0;k<7;k++){ const a = k/7*Math.PI*2 + 0.4; if(Math.cos(a) > 0.5) continue; const tf = new T.Group(); tf.position.set(Math.sin(a)*0.22, 1.38, Math.cos(a)*0.18); tf.rotation.y = a; g.add(tf);
+      for(let j=0;j<3;j++) P(tf, ext('gl1', leafShape(0.07, 0.27), 0.01, 0.006), cs[(k + j) % 5], [0, 0, 0], 1, [0.3 + j*0.2, (j - 1)*0.6, 0]); tf.userData.k = k + 30; m.skinFx.tufts.push(tf); }
+    const rib = new T.Group(); m.arms[0].add(rib); P(rib, tor(0.13, 0.025, 18), tc(m), [0, 0.03, 0], 1, [Math.PI/2, 0, 0]);
+    m.skinFx.rib = [-1, 1].map(s => P(rib, caps(0.02, 0.16), tc(m), [-0.12, -0.04, s*0.03], [1, 1, 0.5], [s*0.3, 0, -0.3]));
+  },
+  tick:(m, t) => { const fx = m.skinFx; (fx.tufts || []).forEach(tf => { const k = tf.userData.k; tf.rotation.x = Math.sin(t*2.3 + k*0.7)*0.18; tf.rotation.z = Math.sin(t*1.9 + k)*0.12; });
+    (fx.rib || []).forEach((r, i) => r.rotation.x = (i ? 0.3 : -0.3) + Math.sin(t*5 + i)*0.25); },
+}, WR));
+
+// 7. PARAQUEDISTA — macacão camuflado cinza, arnês com fivelas da tropa, óculos de salto e mochila de paraquedas com fitas tremulando
+def('paraquedista', 'Paraquedista', 'epico', 0, 'macacão camuflado cinza-azulado, arnês com fivelas na cor da tropa, capacete de salto com óculos e mochila de paraquedas com fitas tremulando no vento', Object.assign({
+  covers:['hat', 'outfit'], price:550,
+  body:() => bodyMat('paraquedista', g => { camo(g, ['#7d8794', '#5f6a78', '#a2abb6', '#4a5260'], 26, 17); }),
+  limb:0x6c7684, legCol:0x2c2a30,
+  parts:(g, m) => {
+    const h = combatHelmet(g, m, 'para', ['#6a7380', '#4f5866', '#8a939e']);
+    [-1, 1].forEach(s => { P(h, latheG('gog3', [[0.001, 0.03], [0.075, 0.03], [0.085, -0.03], [0.001, -0.03]], 14), 0x2b2b30, [s*0.1, 0.1, 0.38], 1, [Math.PI/2 - 0.75, 0, 0]); P(h, sph(0.066, 10, 8), phong(0x7fd0ff, {shininess:120, transparent:true, opacity:0.85}), [s*0.1, 0.11, 0.4], [1, 1, 0.35], [-0.75, 0, 0]); });
+    [-1, 1].forEach(s => P(g, tor(0.48, 0.03, 30, Math.PI*0.8), 0x3a3a3e, [0, 0.78, 0], [1, 1.32, 1], [0, Math.PI/2, Math.PI/2 + s*0.35]).rotation.set(0, s*0.32, Math.PI/2 - Math.PI*0.4));
+    P(g, tor(0.5, 0.032, 32), 0x3a3a3e, [0, 0.42, 0], [1, 1, 0.96], [Math.PI/2, 0, 0]);
+    [-0.2, 0.2].forEach(x => P(g, rbox(0.08, 0.07, 0.03, 0.01), phong(tc(m)), [x, 0.88, 0.45], 1, [0, x*1.3, 0]));
+    P(g, rbox(0.1, 0.08, 0.04, 0.015), phong(tc(m)), [0, 0.44, 0.49]);
+    const pk = new T.Group(); pk.position.set(0, 0.85, -0.55); g.add(pk); P(pk, rbox(0.44, 0.5, 0.2, 0.08), 0x4a5260, [0, 0, 0]); P(pk, rbox(0.3, 0.12, 0.04, 0.02), 0x6c7684, [0, 0.12, -0.1]);
+    P(pk, sph(0.04, 10, 8), phong(tc(m)), [0.16, -0.1, -0.1]);
+    m.skinFx.str = [-0.12, 0, 0.12].map((x, i) => { const r = new T.Group(); r.position.set(x, 0.22, -0.06); pk.add(r); return chain(r, 4, 0.07, 0.012, 0.01, matC(i === 1 ? tc(m) : 0xe8e8e8)); });
+  },
+  tick:(m, t) => { (m.skinFx.str || []).forEach((sg, j) => sg.forEach((s, i) => { s.rotation.x = -1.2 + Math.sin(t*9 - i*0.9 + j*2)*0.35; s.rotation.z = Math.sin(t*7 - i + j)*0.2; })); },
+}, WR));
+
+// 8. COMANDANTE — farda de gala com medalhas, dragonas douradas, boina e capa curta na cor da tropa
+def('comandante', 'Comandante', 'epico', 0, 'farda de gala verde-escura com botões dourados e medalhas, dragonas com franjas, boina na cor da tropa com brasão e capa curta da tropa que tremula', Object.assign({
+  covers:['hat', 'outfit'], price:550,
+  body:() => bodyMat('comandante', g => { g.fillStyle = '#3b4a2e'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#2e3a24'; g.fillRect(0, rowOf(0.48), W, 12); g.fillStyle = '#d8b24a'; g.fillRect(FX - 9, rowOf(0.48) - 1, 18, 14);
+    g.fillStyle = '#d8b24a'; [0.8, 0.68, 0.58].forEach(y => [FX - 18, FX + 18].forEach(x => { g.beginPath(); g.arc(x, rowOf(y), 4.5, 0, 7); g.fill(); }));
+    const rc = ['#c8323c', '#3e7bd8', '#f2c12e', '#3fae4a', '#ffffff', '#8a4ad8']; for(let r=0;r<2;r++) for(let k=0;k<3;k++){ const x = FX - 82 + k*16, y = rowOf(0.86) + r*9; g.fillStyle = rc[(r*3 + k) % 6]; g.fillRect(x, y, 15, 8); g.fillStyle = 'rgba(255,255,255,.4)'; g.fillRect(x + 5, y, 4, 8); }
+    g.strokeStyle = '#d8b24a'; g.lineWidth = 3; g.beginPath(); g.moveTo(FX + 40, rowOf(1.0)); g.quadraticCurveTo(FX + 90, rowOf(0.85), FX + 60, rowOf(0.62)); g.stroke(); }),
+  limb:0x3b4a2e, legCol:0x22281c,
+  parts:(g, m) => { const gold = phong(0xe0b84a, {shininess:110});
+    const ber = new T.Group(); ber.position.set(0.03, 1.36, -0.02); ber.rotation.z = -0.22; g.add(ber);
+    P(ber, sph(0.33, 18, 12), tc(m), [0.04, 0.02, 0], [1.05, 0.38, 1.0]); P(ber, tor(0.27, 0.035, 22), 0x2b2b26, [0, -0.04, 0], [1, 1, 0.98], [Math.PI/2, 0, 0]);
+    P(ber, ext('bstar', starS(0.06, 0.025, 5), 0.015, 0.008), gold, [-0.18, 0.02, 0.2], 1, [0, -0.6, 0.2]);
+    [-1, 1].forEach(s => { const e = new T.Group(); e.position.set(s*0.4, 1.06, -0.02); e.rotation.z = -s*0.6; g.add(e); P(e, rbox(0.2, 0.04, 0.17, 0.02), gold, [0, 0, 0]);
+      for(let k=0;k<6;k++) P(e, caps(0.012, 0.08), gold, [s*0.09, -0.04, -0.07 + k*0.028]); });
+    [[-0.22, 0xe0b84a], [-0.32, 0xc8ccd4]].forEach(([a, c]) => { const p = onBody(a, 0.76, 0.03); P(g, latheG('medal', [[0.001, 0.01], [0.04, 0.01], [0.045, -0.01], [0.001, -0.01]], 14), phong(c, {shininess:110}), [p[0], p[1], p[2]], 1, [Math.PI/2, 0, -a]); });
+    const cape = new T.Group(); cape.position.set(0, 1.14, -0.43); g.add(cape); m.skinFx.cape = cape; AR(cape, (q, c) => { c.position.z = q && q.vest ? -0.56 : -0.43; return !(q && q.pack); });
+    const cg = G('cape', () => { const c = new T.CylinderGeometry(0.36, 0.56, 0.74, 20, 4, true, Math.PI - 1.1, 2.2); c.translate(0, -0.37, 0.36); return c; });
+    m.skinFx.capeM = P(cape, cg, matC(tc(m), {side:T.DoubleSide}), [0, 0, 0], 1, [0.12, 0, 0]);
+    P(cape, tor(0.04, 0.015, 12), phong(0xe0b84a, {shininess:110}), [0, -0.01, 0.0], 1, [0, 0, 0]);
+  },
+  tick:(m, t) => { const c = m.skinFx.cape; if(!c) return; c.rotation.x = 0.06 + Math.sin(t*2.4)*0.07; c.rotation.y = Math.sin(t*1.7)*0.06; m.skinFx.capeM.scale.y = 1 + Math.sin(t*3.1)*0.03; },
+}, WR));
+
+// 9. OPERAÇÕES ESPECIAIS (lendária) — tático preto, óculos de visão noturna que acendem, luz de identificação da tropa piscando e rádio com antena
+def('operador', 'Operações Especiais', 'lend', 0, 'roupa tática preta com colete de placas, óculos de visão noturna de 4 lentes verdes que acendem, faixas que brilham na cor da tropa, luz de identificação piscando e rádio com antena nas costas', Object.assign({
+  covers:['hat', 'outfit'], price:800,
+  body:() => bodyMat('operador', g => { camo(g, ['#2a2c30', '#202226', '#34373c', '#1a1b1e'], 22, 29);
+    g.fillStyle = '#3a3d42'; [FX, BX].forEach(x => wrapX(xx => { g.beginPath(); g.roundRect ? g.roundRect(xx - 70, rowOf(0.95), 140, rowOf(0.42) - rowOf(0.95), 14) : g.rect(xx - 70, rowOf(0.95), 140, rowOf(0.42) - rowOf(0.95)); g.fill(); }, x));
+    g.fillStyle = '#2a2c30'; for(let k=0;k<3;k++) g.fillRect(FX - 54 + k*38, rowOf(0.6), 30, 34); }),
+  limb:0x2a2c30, legCol:0x1a1b1e,
+  parts:(g, m) => { const gl = matC(tc(m), {emissive:tc(m), emissiveIntensity:0.6}); m.skinFx.gl = gl;
+    P(g, latheG('opsh', [[0.001, 0.26], [0.22, 0.25], [0.36, 0.16], [0.43, 0.02], [0.44, -0.06], [0.42, -0.08]], 24), phong(0x34373c, {shininess:40}), [0, 1.22, -0.02]);
+    [-1, 1].forEach(s => P(g, rbox(0.12, 0.05, 0.3, 0.02), 0x202226, [s*0.42, 1.18, -0.02], 1, [0, 0, s*0.3]));
+    const nv = new T.Group(); nv.position.set(0, 1.38, 0.27); nv.rotation.x = -0.75; g.add(nv); m.skinFx.nv = nv;
+    P(nv, rbox(0.2, 0.08, 0.1, 0.03), 0x1a1b1e, [0, 0, 0]); const lens = matC(0x4dff6a, {emissive:0x30d040}); m.skinFx.lens = lens;
+    [-0.105, -0.035, 0.035, 0.105].forEach(x => { P(nv, latheG('nvt', [[0.032, 0], [0.032, 0.11], [0.03, 0.12]], 12), 0x22242a, [x, 0.02, 0.04], 1, [Math.PI/2, 0, 0]); P(nv, sph(0.026, 10, 8), lens, [x, 0.02, 0.165], [1, 1, 0.4]); });
+    P(g, tor(0.5, 0.012, 40), gl, [0, 0.55, 0], [1, 1, 0.96], [Math.PI/2, 0, 0]); P(g, tor(0.5, 0.012, 40), gl, [0, 0.95, 0], [0.92, 1, 0.9], [Math.PI/2, 0, 0]);
+    m.skinFx.ir = P(g, rbox(0.06, 0.04, 0.04, 0.015), new T.MeshBasicMaterial({color:tc(m)}), [0.38, 1.12, -0.18], 1, [0, 0.6, 0.3]);
+    const rad = new T.Group(); rad.position.set(0, 0.85, -0.5); g.add(rad); P(rad, rbox(0.3, 0.36, 0.14, 0.04), 0x2a2c30, [0, 0, 0]); P(rad, sph(0.025, 8, 6), gl, [0.08, 0.1, -0.07]);
+    const ant = new T.Group(); ant.position.set(0.1, 0.18, 0); rad.add(ant); m.skinFx.ant = chain(ant, 4, 0.12, 0.01, 0.007, matC(0x1a1b1e)); ant.rotation.x = Math.PI;
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(!fx.gl) return; fx.gl.emissiveIntensity = 0.45 + Math.sin(t*2.5)*0.25; fx.ir.visible = (t % 1.0) < 0.12 || ((t % 1.0) > 0.22 && (t % 1.0) < 0.3);
+    fx.lens.emissive.setRGB(0.15, 0.7 + Math.sin(t*13)*0.05 + Math.sin(t*0.9)*0.1, 0.22);
+    (fx.ant || []).forEach((s, i) => { s.rotation.x = Math.sin(t*3 - i*0.6)*0.12; s.rotation.z = Math.sin(t*2.2 - i*0.5)*0.1; }); },
+}, WR));
+
 // ---------- COSMÉTICOS NOVOS (chapéu/óculos/roupa) ----------
 // formato compatível com addCos do jogo: COS[id](g, col, m) monta as peças no grupo g (preso no tilt). Devolve uma função tick opcional.
 const COS = {}, CINFO = [];
@@ -2826,7 +3203,7 @@ function remove(m, color){ if(m.skinG){ m.skinG.parent && m.skinG.parent.remove(
   const v = findVisor(m); if(v && m.visorMat0) v.material = m.visorMat0;
   if(color !== undefined && m.setColor) m.setColor(color); }
 function apply(m, id, color){ remove(m); const s = byId(id); if(!s) return null;
-  m.skin = s; m.skinFx = {};
+  m.skin = s; m.skinFx = {}; m.skinCol = color;
   const bm = s.body(color); m.body.material = bm;
   const lm = s.limbMat ? s.limbMat() : s.useColor ? matC(color) : matC(s.limb, s.limbEm ? {emissive:s.limbEm} : undefined), legm = s.legMat ? s.legMat() : s.legCol ? matC(s.legCol) : lm;
   m.arms.forEach(a => a.material = lm); m.legs.forEach(l => l.material = legm);
@@ -9512,7 +9889,7 @@ const SHOP = {
   hat:[['h0','Nada',0,'—'],['h1','Boné',60,'🧢'],['h2','Chapéu de festa',50,'🎉'],['h3','Cartola',120,'🎩'],['h4','Orelhas de gato',90,'🐱'],['h5','Hélice',150,'🚁'],['h6','Chifres viking',140,'🤘'],['h7','Flor',80,'🌼'],['h8','Chef',110,'🍰'],['h9','Coroa',400,'👑',10],['hp1','Chapéu de palha',250,'👒',0,0,0,1],['hp2','Folhas de abacaxi',250,'🍍',0,0,0,1],['hp3','Auréola',500,'😇',0,0,0,1],['hp4','Chapéu de cangaceiro',-1,'🌙',99,8],['hp5','Lenço de chita',-1,'🌸',99,17],['hp6','Coroa de milho',-1,'🌽',99,28],['h10','Fone de ouvido',110,'🎧'],['h11','Chapéu de mago',160,'🧙']],
   glasses:[['g0','Nada',0,'—'],['g1','Óculos escuros',60,'🕶️'],['g2','Óculos redondos',70,'👓'],['g3','Óculos de coração',90,'💖'],['g4','Máscara de herói',120,'🦸'],['g5','Óculos 3D',100,'🎬'],['gp1','Óculos de mergulho',250,'🤿',0,0,0,1],['gp2','Óculos estrela',250,'⭐',0,0,0,1],['gp3','Óculos de fogueira',-1,'🔥',99,5],['gp4','Bigodão caipira',-1,'🥸',99,23],['g6','Óculos de aviador',90,'🥽']],
   outfit:[['o0','Nada',0,'—'],['o1','Gravata borboleta',50,'🎀'],['o2','Cachecol',80,'🧣'],['o3','Capa',200,'🦇'],['o4','Boia',120,'⭕'],['o5','Mochila',150,'🎒'],['op1','Colar havaiano',250,'🌺',0,0,0,1],['op3','Prancha',250,'🏄',0,0,0,1],['op2','Asas douradas',500,'✨',0,0,0,1],['op4','Bandeirinhas',-1,'🎏',99,11],['op5','Lenço xadrez',-1,'🧣',99,20],['op6','Balão junino',-1,'🏮',99,30],['o6','Violão nas costas',180,'🎸']],
-  skin:[['s0','Nada',0,'—'],['sp1','Melancia',350,'🍉',0,0,'melancia',1],['sp2','Salva-vidas',350,'🛟',0,0,'salva',1],['sp3','Casquinha',350,'🍦',0,0,'sorvete',1],['sp4','Tubarão',350,'🦈',0,0,'tubarao',1],['sp5','Caranguejo',500,'🦀',0,0,'caranguejo',1],['sp6','Abacaxi',500,'🍍',0,0,'abacaxi',1],['sp7','Boia de patinho',350,'🦆',0,0,'patinho',1],['sp8','Sol de Verão',800,'☀️',0,0,'sol',1],['sp9','Caipira',-1,'🤠',99,4,'caipira'],['sp10','Pipoca',-1,'🍿',99,7,'pipoca'],['sp11','Espiga de milho',-1,'🌽',99,10,'milho'],['sp12','Noivinha da quadrilha',-1,'👰',99,13,'noiva'],['sp13','Espantalho',-1,'🐦',99,16,'espantalho'],['sp14','Maçã do amor',-1,'🍎',99,19,'maca'],['sp15','Sanfoneiro',-1,'🪗',99,22,'sanfona'],['sp16','Fogueira de São João',-1,'🔥',99,29,'fogueira'],['sp17','Astronauta',400,'🧑‍🚀',0,0,'astronauta',1],['sp18','Ninja',300,'🥷',0,0,'ninja',1],['sp19','Robô',450,'🤖',0,0,'robo',1],['sp20','Dinossauro',350,'🦖',0,0,'dino',1],['sp21','Abelha',300,'🐝',0,0,'abelha',1],['sp22','Nuvem de chuva',400,'🌧️',0,0,'nuvem',1],['sp23','Água-viva',400,'🪼',0,0,'aguaviva',1],['sp24','DJ Feijão',400,'🎧',0,0,'dj',1],['sp25','Foguete',550,'🚀',0,0,'foguete',1],['sp26','Bola de discoteca',550,'🪩',0,0,'disco',1],['sp27','Dragão',800,'🐉',0,0,'dragao',1],['sp28','Galáxia',800,'🌌',0,0,'galaxia',1]],
+  skin:[['s0','Nada',0,'—'],['sp1','Melancia',350,'🍉',0,0,'melancia',1],['sp2','Salva-vidas',350,'🛟',0,0,'salva',1],['sp3','Casquinha',350,'🍦',0,0,'sorvete',1],['sp4','Tubarão',350,'🦈',0,0,'tubarao',1],['sp5','Caranguejo',500,'🦀',0,0,'caranguejo',1],['sp6','Abacaxi',500,'🍍',0,0,'abacaxi',1],['sp7','Boia de patinho',350,'🦆',0,0,'patinho',1],['sp8','Sol de Verão',800,'☀️',0,0,'sol',1],['sp9','Caipira',-1,'🤠',99,4,'caipira'],['sp10','Pipoca',-1,'🍿',99,7,'pipoca'],['sp11','Espiga de milho',-1,'🌽',99,10,'milho'],['sp12','Noivinha da quadrilha',-1,'👰',99,13,'noiva'],['sp13','Espantalho',-1,'🐦',99,16,'espantalho'],['sp14','Maçã do amor',-1,'🍎',99,19,'maca'],['sp15','Sanfoneiro',-1,'🪗',99,22,'sanfona'],['sp16','Fogueira de São João',-1,'🔥',99,29,'fogueira'],['sp17','Astronauta',400,'🧑‍🚀',0,0,'astronauta',1],['sp18','Ninja',300,'🥷',0,0,'ninja',1],['sp19','Robô',450,'🤖',0,0,'robo',1],['sp20','Dinossauro',350,'🦖',0,0,'dino',1],['sp21','Abelha',300,'🐝',0,0,'abelha',1],['sp22','Nuvem de chuva',400,'🌧️',0,0,'nuvem',1],['sp23','Água-viva',400,'🪼',0,0,'aguaviva',1],['sp24','DJ Feijão',400,'🎧',0,0,'dj',1],['sp25','Foguete',550,'🚀',0,0,'foguete',1],['sp26','Bola de discoteca',550,'🪩',0,0,'disco',1],['sp27','Dragão',800,'🐉',0,0,'dragao',1],['sp28','Galáxia',800,'🌌',0,0,'galaxia',1],['sp29','Bailarina',300,'🩰',0,0,'bailarina',1],['sp30','Gatinha',400,'🐱',0,0,'gatinha',1],['sp31','Sereia',550,'🧜',0,0,'sereia',1],['sp32','Unicórnio',550,'🦄',0,0,'unicornio',1],['sp33','Borboleta',550,'🦋',0,0,'borboleta',1],['sp34','Moranguinho',300,'🍓',0,0,'moranguinho',1],['sp35','Pop Star',400,'🎤',0,0,'popstar',1],['sp36','Fada das Flores',800,'🧚',0,0,'fada',1],['sp37','Soldado de Selva',300,'🪖',0,0,'selva',1],['sp38','Soldado do Deserto',300,'🏜️',0,0,'deserto',1],['sp39','Médico de Combate',300,'⛑️',0,0,'medico',1],['sp40','Soldado da Neve',400,'❄️',0,0,'neve',1],['sp41','Soldado Urbano',400,'🏙️',0,0,'urbano',1],['sp42','Atirador Camuflado',400,'🌿',0,0,'ghillie',1],['sp43','Paraquedista',550,'🪂',0,0,'paraquedista',1],['sp44','Comandante',550,'🎖️',0,0,'comandante',1],['sp45','Operações Especiais',800,'🥽',0,0,'operador',1]],
 };
 const SLOTS = {color:'Cores', hat:'Chapéus', glasses:'Óculos', outfit:'Roupas', skin:'Skins'};
 const SAVE = (() => { let s = null; try{ s = JSON.parse(localStorage.getItem('feijao-save')); }catch(e){} s = s && typeof s === 'object' ? s : {};
@@ -11266,7 +11643,8 @@ function wdStart(){
   wdZones(); wdNextZone(true);
   const ROLES = ['rifle', 'rifle', 'smg', 'shotgun', 'lmg', 'sniper', 'rifle', 'smg'];
   players.forEach(p => { p.wdM = WD.M0; p.wdCart = []; p.wdResp = null; p.wdK = 0; p.wdD = 0; p.wdS = 0; p.wdRole = ROLES[p.i % ROLES.length]; p.kills = 0;
-    if(p.isBot) dress(p.m, botLook(WD_T[p.squad].c)); wdSpawn(p, true); });
+    if(p.isBot) dress(p.m, botLook(WD_T[p.squad].c)); else if(p.m.skin && p.m.skin.war){ SKINS.apply(p.m, p.m.skin.id, WD_T[p.squad].c); p.m.armK = null; }   // skin de soldado pega a cor da tropa
+    wdSpawn(p, true); });
   const me = you(); yaw = Math.atan2(me.pos.x - WD.cz.x, me.pos.z - WD.cz.z); pitch = 0.2; if(players[1] && twoP){ cam2.yaw = yaw; cam2.pitch = pitch; }
   wdHudBuild();
   banner('⚔️ Guerra de Times', `Você é da <b style="color:${WD_T[me.squad].s}">${WD_T[me.squad].n}</b> (25 feijões). Segure a zona de controle (feixe de luz branco): a tropa com mais gente lá dentro faz ponto, e a zona quente laranja vale o dobro. ${WD.GOAL} pontos vence. Morreu? Volta na base em ${WD.RESP} s. Na base, <kbd>B</kbd> abre a loja.`, 5200);
@@ -12483,6 +12861,7 @@ function netEvIn(e, from){ const P = n => NET.byNid[n]; NET.stat.rx[e.t] = (NET.
   case 'sup': { if(NET.host || !zoneP) return; const g = BRE.supplyCrate(); g.position.set(+e.x, +e.y, +e.z); world.add(g); drops.push({g, x:+e.x, z:+e.z, y:+e.y}); banner('Suprimento chegando!', 'Uma caixa com arma lendária está caindo (★ no minimapa)', 2000); sfx('beep'); return; }
   case 'car': { const p = P(e.n), c = cars[e.c]; if(!p || own(p)) return; NET.quiet = true;
     try{ if(p.car) leaveCar(p, true); if(e.on && c && p.alive){ if(c.driver && c.driver !== p) leaveCar(c.driver, true); enterCar(p, c); } } finally { NET.quiet = false; } return; }
+  case 'dr': { if(typeof FJD === 'undefined' || !netBR()) return; const d = FJD.L[e.i | 0]; if(d) fjDoorSet(d, !!e.o, true, true); return; }
   case 'up': { const q = P(e.to), by = P(e.by); if(!q || !own(q) || !q.alive || !q.down) return; q.down = false; q.hp = 30; q.dhp = 0; q.hitCD = 0;
     if(!q.isBot){ banner('De pé de novo!', `${by ? nm(by) : 'Seu time'} te levantou`, 1600); sfx('heal'); } return; }
   case 'back': { const q = P(e.to), by = P(e.by); if(!q || !own(q) || q.alive || q.cardUsed || R1.phase !== 'play') return;
@@ -12504,6 +12883,8 @@ function netWatchMates(){ if(!netBR() || R1.phase !== 'play') return; const me =
     if(p._nd && p.alive && !p.down && !p._upS){ p._upS = true; netEv({t:'up', to:p.nid, by:me.nid}); }
     if(p._na === false && p.alive && !p._bkS){ p._bkS = true; netEv({t:'back', to:p.nid, by:me.nid, x:r2(p.pos.x), y:r2(p.pos.y), z:r2(p.pos.z)}); } } }
 // ---- ganchos nas funções do jogo ----
+// portas dos prédios (Version 172): quem abre/fecha avisa todo mundo; porta pros bots só o líder abre
+if(typeof FJD !== 'undefined'){ FJ_DOOR_NET = (i, o) => { if(netBR()) netEv({t:'dr', i, o}); }; FJ_DOOR_BOTS = () => !NET.match || NET.host; }
 const _startGame = startGame, _startRound = startRound, _nextRound = nextRound, _endRound = endRound, _eliminate = eliminate, _finish = finishPlayer, _knock = knock, _botInput = botInput, _stepPlayer = stepPlayer, _showResult = showResult, _toMenu = toMenu, _pause = pause, _updateDrop = updateDrop, _usePower = usePower, _tick = tick, _createPlayers = createPlayers;
 const _hurt = hurt, _fireW = fireW, _throwNade = throwNade, _addLoot = addLoot, _removeLoot = removeLoot, _pickUp = pickUp, _dropAll = dropAll, _enterCar = enterCar, _leaveCar = leaveCar, _nextZone = nextZone, _supplyDrop = supplyDrop, _updateDrops = updateDrops, _updateShoot = updateShoot;
 startGame = function(){ if(!NET.match) return _startGame();
