@@ -11803,6 +11803,15 @@ function fjProvaGrid(){ if(BIG || !world) return;
   for(const b of solids){ const q = b._pb; if(!q) continue; if(Math.abs(b.min.x - q[0]) > 0.8 || Math.abs(b.min.z - q[1]) > 0.8 || Math.abs(b.max.x - q[2]) > 0.8 || Math.abs(b.max.z - q[3]) > 0.8){
     b._pg.forEach(L => { const k = L.indexOf(b); if(k >= 0) L.splice(k, 1); }); fjPgCells(b); } } }
 { const _t = tick; tick = function(dt){ fjProvaGrid(); return _t(dt); }; }
+// transparência: o corte termina antes do próprio feijão (caixa real do modelo, não o ponto atrasado da câmera)
+const fjOccMe = {s:new THREE.Sphere(), v:new V3()};
+{ const _o = window.fjOccSet; window.fjOccSet = function(c, cam, on){ _o(c, cam, on); const O = window.FJ_OCC, R = O.R; if(!(R.x > 0)) return;
+  const me = c === cam1 ? players[0] : c === cam2 ? players[1] : null, m = me && me.m; if(!m || !m.g || !m.g.visible) return;
+  const M = cam.matrixWorldInverse, S = fjOccMe.s, v = fjOccMe.v; let lo = Infinity;
+  m.g.traverse(o => { if(!o.isMesh || !o.visible || o === m.line) return; const g = o.geometry; if(!g.boundingSphere) g.computeBoundingSphere();
+    S.copy(g.boundingSphere).applyMatrix4(o.matrixWorld); if(S.radius > 3) return; v.copy(S.center).applyMatrix4(M);
+    const s = (v.x*O.P.x + v.y*O.P.y + v.z*O.P.z)/O.P.w - S.radius; if(s < lo) lo = s; });
+  if(lo < Infinity) R.y = Math.max(0.3, Math.min(R.y, lo - 0.1)); }; }
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
