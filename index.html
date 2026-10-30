@@ -5899,7 +5899,7 @@ function fjUsina(){ const g = fjR('Usina'), [, cx, cz, , Y] = g, used = []; let 
 // casa vermelha do Blender (Fazenda Jalo): visual = 1 malha/1 textura; colisão = caixas invisíveis do CV_COL
 const CV = {ok:false};
 function cvLoad(){ if(!THREE.GLTFLoader || typeof CV_GLB === 'undefined') return;
-  new THREE.GLTFLoader().parse(fjB64(CV_GLB).buffer, '', gl => { gl.scene.updateMatrixWorld(true); gl.scene.traverse(o => { if(o.isMesh && !CV.geo){ const t = o.material.map; t.encoding = THREE.LinearEncoding; t.anisotropy = 4;
+  new THREE.GLTFLoader().parse(fjB64(CV_GLB).buffer, '', gl => { gl.scene.updateMatrixWorld(true); gl.scene.traverse(o => { if(o.isMesh && (!o.material.map || /vidro/.test(o.name + o.material.name))){ CV.vgeo = o.geometry; CV.vm = o.matrixWorld.clone(); CV.vmat = new THREE.MeshLambertMaterial({color:0xcfe6f2, transparent:true, opacity:0.22, depthWrite:false}); } else if(o.isMesh && !CV.geo){ const t = o.material.map; t.encoding = THREE.LinearEncoding; t.anisotropy = 4;
     CV.geo = o.geometry; CV.m = o.matrixWorld.clone(); CV.mat = new THREE.MeshLambertMaterial({map:t}); } }); CV.ok = !!CV.geo; }, e => { console.warn('casa vermelha', e); CV.fail = true; }); }
 addEventListener('load', () => setTimeout(cvLoad, 350));
 // x, z = centro do bloco da casa; rot = 0..3 (vezes 90 graus; 0 = porta pra +z). Ocupa x -6..8,8 e z -4,6..8,3 (com o quintal)
@@ -5911,6 +5911,7 @@ function casaVermelha(x, z, y, rot){ const c = Math.cos(rot*Math.PI/2), sn = Mat
   CV_COL.forEach(([a0, a1, y0, y1, b0, b1, f]) => { const [u0, u1, w0, w1] = R(a0, a1, b0, b1); box(u0, u1, y + y0, y + y1, w0, w1, 0, f ? {invisible:true, noClimb:true} : {invisible:true}); });
   const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot*Math.PI/2; world.add(g);
   const m = new THREE.Mesh(CV.geo, CV.mat); m.matrixAutoUpdate = false; m.matrix.copy(CV.m); m.castShadow = m.receiveShadow = true; m.userData.keep = true; g.add(m);
+  if(CV.vgeo){ const v = new THREE.Mesh(CV.vgeo, CV.vmat); v.matrixAutoUpdate = false; v.matrix.copy(CV.vm); v.renderOrder = 2; v.userData.keep = true; g.add(v); }   // vidros transparentes (dá pra ver dentro e fora)
   for(let i = n0; i < solids.length; i++) solids[i].mesh = m;
   FJ_BLD.push([bx0, bx1, bz0, bz1, 0xa3301f, 'z1', 2, y, 'pitch']); const [wx0, wx1, wz0, wz1] = R(-1.4, 2.8, 4, 5.8); FJ_BLD.push([wx0, wx1, wz0, wz1, 0xa3301f]);
   return y + 4.65; }
