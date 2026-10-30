@@ -5955,7 +5955,9 @@ function pnPlace(k, x, z, y, rot){ const M = PNV.M[k]; if(!M) return null; const
   const m = new THREE.Mesh(M.geo, M.mat); m.matrixAutoUpdate = false; m.matrix.copy(M.m); m.castShadow = m.receiveShadow = true; m.userData.keep = true; g.add(m);
   if(M.vgeo){ const v = new THREE.Mesh(M.vgeo, PNV.vmat); v.matrixAutoUpdate = false; v.matrix.copy(M.vm); v.renderOrder = 2; v.userData.keep = true; g.add(v); }
   for(let i = n0; i < solids.length; i++) solids[i].mesh = m;
-  const [bx0, bx1, bz0, bz1] = R(...M.bb); FJ_BLD.push([bx0, bx1, bz0, bz1, M.c]); PNV.placed = (PNV.placed || []).concat([k]); PNV.at = (PNV.at || []).concat([[k, x, z, y, rot]]); return m; }
+  const [bx0, bx1, bz0, bz1] = R(...M.bb); FJ_BLD.push([bx0, bx1, bz0, bz1, M.c]);
+  // árvores, moitas e pedras (fjNature) evitam o terreno todo do prédio (quintal, garagem, estacionamento): círculos ao longo do lado comprido
+  { const [l0, l1, l2, l3] = R(...M.lot), w = l1 - l0, d = l3 - l2, r = Math.min(w, d)/2 + 2.5, L = Math.max(w, d), n = Math.max(1, Math.ceil(L/r)); for(let i = 0; i < n; i++){ const t = n > 1 ? i/(n - 1) : 0.5, cx = w >= d ? l0 + r - 2.5 + (w - 2*(r - 2.5))*t : (l0 + l1)/2, cz = w >= d ? (l2 + l3)/2 : l2 + r - 2.5 + (d - 2*(r - 2.5))*t; FJ_CLR.push([cx, cz, r]); } } PNV.placed = (PNV.placed || []).concat([k]); PNV.at = (PNV.at || []).concat([[k, x, z, y, rot]]); return m; }
 // procura em espiral um terreno (w x d) sem estrada, sem prédio e com pouca subida; devolve [x, z]
 function pnSpot(x, z, w, d, used, maxR, slope, minH, rmin){ const ST = TM.st || [];
   const ok = (x, z) => { const x0 = x - w/2 - 1, x1 = x + w/2 + 1, z0 = z - d/2 - 1, z1 = z + d/2 + 1;
