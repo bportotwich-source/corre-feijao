@@ -1011,7 +1011,7 @@ body.wdOn #brTop .bp.mode{display:none}
     <div class="phead"><h2>Modo 100</h2><button class="back" data-close>← Voltar <kbd>Esc</kbd></button></div>
     <button class="map bigparty" id="btnBigParty"><span class="mart" style="--mc:#ffd23f">🏁<em>Party</em></span><span class="mtxt"><b>Partida completa com 100 feijões</b><span>Corrida gigante com 4 caminhos (100) → Ponte de Vidro (~60) → Salas (~30) → Final: Battle Royale ou Blocos Caindo. Os mapas se ajustam a quantos sobraram.</span></span></button>
     <h3 class="bigsub">Só Battle Royale</h3>
-    <div class="seg tabs" id="bigMap"><button data-m="feijoada" class="on">🗺️ Ilha Feijoada <i class="newtag">novo</i></button><button data-m="vale">🌾 Vale do Feijão</button><button data-m="serra">🏔️ Serra Gelada <i class="newtag">novo</i></button><button data-m="lego">🏢 Torre Feijão <i class="newtag">novo</i></button><button data-m="ilha">🎯 Parque Tomate <i class="newtag">novo</i></button><button data-m="mata">🌲 Mata Paintball <i class="newtag">novo</i></button><button data-m="front">⚔️ Front do Feijão <i class="newtag">só Guerra</i></button></div>
+    <div class="seg tabs" id="bigMap"><button data-m="feijoada" class="on">🗺️ Ilha Feijoada <i class="newtag">novo</i></button><button data-m="vale">🌾 Vale do Feijão</button><button data-m="serra">🏔️ Serra Gelada <i class="newtag">novo</i></button><button data-m="lego">🏢 Torre Feijão <i class="newtag">novo</i></button><button data-m="ilha">🎯 Parque Tomate <i class="newtag">novo</i></button><button data-m="mata">🌲 Mata Paintball <i class="newtag">novo</i></button><button data-m="metro">🏙️ Metrópole Feijão <i class="newtag">novo</i></button><button data-m="front">⚔️ Front do Feijão <i class="newtag">só Guerra</i></button></div>
     <div class="maps bigmodes"><button class="map" data-sq="1"><span class="mart" style="--mc:#ff3b4e">🧍<em>Solo</em></span><span class="mtxt"><b>Solo</b><span>Cada um por si. 100 feijões e só 1 leva a coroa.</span></span></button><button class="map" data-sq="2"><span class="mart" style="--mc:#4d7cff">👯<em>Dupla</em></span><span class="mtxt"><b>Dupla</b><span>50 duplas. Seu par não leva dano seu e vocês vencem juntos.</span></span></button><button class="map" data-sq="3"><span class="mart" style="--mc:#ff9f1c">👨‍👩‍👦<em>Trio</em></span><span class="mtxt"><b>Trio</b><span>33 times de 3. Combinem quem cobre quem: o último trio de pé vence.</span></span></button><button class="map" data-sq="4"><span class="mart" style="--mc:#38d16a">👨‍👩‍👧‍👦<em>Squad</em></span><span class="mtxt"><b>Squad</b><span>25 times de 4. Fiquem juntos: o último time de pé vence.</span></span></button><button class="map" id="btnBigTest"><span class="mart" style="--mc:#9b5cff">🧪<em>Teste</em></span><span class="mtxt"><b>Teste de gameplay</b><span>Só você no mapa, sem bots e sem zona. Pra experimentar armas, itens, tratores e o mapa com calma. Esc sai.</span></span></button></div>
     <p class="hint">Pule do avião (Espaço), comece só com a Pistola de Tomate e ache armas melhores, cura e escudo pelo mapa (E pega, 1 2 3 troca, botão direito mira com a sniper). Quem cai deixa tudo no chão. A zona fecha em 5 fases.</p>
   </div>
@@ -1433,6 +1433,28 @@ else (typeof self !== 'undefined' ? self : this).MeshoptDecoder = MeshoptDecoder
 <script src="dados/pn_predio_loft.js" async></script>
 <script src="dados/pn_predio_tijolo.js" async></script>
 <script src="dados/pn_supermercado.js" async></script>
+<script src="dados/pn_ac_deco.js" async></script>
+<script src="dados/pn_ac_escalonado.js" async></script>
+<script src="dados/pn_ac_hotel.js" async></script>
+<script src="dados/pn_ac_residencial.js" async></script>
+<script src="dados/pn_ac_tijolo.js" async></script>
+<script src="dados/pn_ac_vidro.js" async></script>
+<script src="dados/pn_amarelo_torreoes.js" async></script>
+<script src="dados/pn_bege_fabrica.js" async></script>
+<script src="dados/pn_cafe.js" async></script>
+<script src="dados/pn_flores.js" async></script>
+<script src="dados/pn_frontao.js" async></script>
+<script src="dados/pn_frontao_alto.js" async></script>
+<script src="dados/pn_livraria.js" async></script>
+<script src="dados/pn_moderno_ripas.js" async></script>
+<script src="dados/pn_padaria.js" async></script>
+<script src="dados/pn_paris_esquina.js" async></script>
+<script src="dados/pn_paris_haussmann.js" async></script>
+<script src="dados/pn_paris_mansao.js" async></script>
+<script src="dados/pn_torre_escalonada.js" async></script>
+<script src="dados/pn_torre_relogio.js" async></script>
+<script src="dados/pn_vidro_sacadas.js" async></script>
+
 
 <script>
 // árvores da Ilha Feijoada feitas no Blender (corre-feijao/blender/arvores.py): árvore ~10 m, pinheiro ~13 m e moita, cor nos vértices
@@ -3136,7 +3158,7 @@ function fjGrassCell(s, ci, cj){
   let sd = (ci*73856093 ^ cj*19349663) >>> 0; const rnd = () => (sd = (sd*1664525 + 1013904223) >>> 0)/4294967296;
   for(let k = 0; k < Q.T; k++){ const i = s*Q.T + k, x = (ci + rnd())*Q.C, z = (cj + rnd())*Q.C, ry = rnd()*6.283, s0 = 0.75 + rnd()*0.6, cv = rnd(); let ok = !!TER && Math.abs(x) < TER.X && Math.abs(z) < TER.Z;
     const h = ok ? TER.h(x, z) : 0;
-    if(ok && (h < 3.0 || h > 33 || fjSlope(x, z) > 0.7 || roadD(x, z) < 3.4)) ok = false;
+    if(ok && (h < 3.0 || h > 33 || fjSlope(x, z) > 0.7 || roadD(x, z) < 3.4 || cdPaved(x, z))) ok = false;
     if(ok) for(const b of solidsAt(x, z)){ if(b.max.y > h - 0.3 && b.min.y < h + 1.2 && x > b.min.x - 0.2 && x < b.max.x + 0.2 && z > b.min.z - 0.2 && z < b.max.z + 0.2){ ok = false; break; } }
     if(!ok){ m.setMatrixAt(i, Z0); continue; }
     M.compose(v.set(x, h - 0.03, z), qt.setFromAxisAngle(up, ry), sc.set(s0, s0*(0.8 + cv*0.5), s0)); m.setMatrixAt(i, M);
@@ -3191,7 +3213,7 @@ function fjLodInit(){
     FJL.list.push({hi:o, lo, n, M, C, X}); });
 }
 function fjLod(cam){
-  if(!TER){ return; } if(FJL.w !== world) fjLodInit(); if(!FJL.list.length) return;
+  pnLod(cam); if(!TER){ return; } if(FJL.w !== world) fjLodInit(); if(!FJL.list.length) return;
   const P = cam.position; if(FJL.t-- > 0 && FJL.p && Math.abs(FJL.p.x - P.x) + Math.abs(FJL.p.z - P.z) < 3) return; FJL.t = 30; FJL.p = {x:P.x, z:P.z};
   const R2 = FJL.NEAR*FJL.NEAR, F2 = (scene.fog.far + 15)**2, hs = [P];
   if(twoP && typeof cam2 !== 'undefined' && cam2.pos) hs.push(cam2.pos);
@@ -4252,7 +4274,7 @@ const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
-const lookFor = r => BIG && r === 20 ? ({vale:'dia', lego:'manha', ilha:'tarde', serra:'manha', feijoada:'dia', mata:'manha', front:'tarde'})[BIGMAP] || 'dia' : LOOK_OF[r] || 'dia';
+const lookFor = r => BIG && r === 20 ? ({vale:'dia', lego:'manha', ilha:'tarde', serra:'manha', feijoada:'dia', mata:'manha', front:'tarde', metro:'tarde'})[BIGMAP] || 'dia' : LOOK_OF[r] || 'dia';
 function setDark(on){ farIsles.visible = !on; birds.forEach(o => o.b.visible = !on); if(!on){ sky.visible = true; applyLook(curLook); return; } hemiL.intensity = 0.07; sun.intensity = 0.05; scene.background.setHex(0x0b0820); scene.fog.color.setHex(0x0b0820); sky.visible = false; }
 function buildDark(){
   clearWorld();
@@ -5470,7 +5492,7 @@ function updateRev(dt){
 }
 function buildShoot(){
   clearWorld(); shots = []; smokes = []; utils = []; pings = []; pingMarks.forEach(m => m.visible = false); hearts = []; hpBars = []; bushes = []; FJ_MOITA.clear();
-  const FR = BIG && BIGMAP === 'front', FJ = BIG && (BIGMAP === 'feijoada' || FR), VL = BIG && BIGMAP === 'vale', PB = BIG && BIGMAP === 'ilha', MT = BIG && BIGMAP === 'mata', TT = FJ || VL || PB || MT; FJBIG = FJ; setTM(FR ? 'fr' : VL ? 'vale' : PB ? 'pb' : MT ? 'mt' : 'fj'); BIG_W = FR ? 470 : FJ ? 270 : (VL || PB || MT) ? 70 : 64; TER = null; RX0 = FR ? 920 : FJ ? 640 : (VL || PB || MT) ? 300 : 230; farIsles.visible = !TT; bigMapOn = false;
+  const MC = BIG && BIGMAP === 'metro', FR = BIG && (BIGMAP === 'front' || MC), FJ = BIG && (BIGMAP === 'feijoada' || FR), VL = BIG && BIGMAP === 'vale', PB = BIG && BIGMAP === 'ilha', MT = BIG && BIGMAP === 'mata', TT = FJ || VL || PB || MT; FJBIG = FJ; setTM(MC ? 'mc' : FR ? 'fr' : VL ? 'vale' : PB ? 'pb' : MT ? 'mt' : 'fj'); BIG_W = FR ? 470 : FJ ? 270 : (VL || PB || MT) ? 70 : 64; TER = null; RX0 = FR ? 920 : FJ ? 640 : (VL || PB || MT) ? 300 : 230; farIsles.visible = !TT; bigMapOn = false;
   scene.fog.near = FJ ? 90 : (VL || PB || MT) ? 75 : 60; scene.fog.far = FJ ? 330 : (VL || PB || MT) ? 210 : 160; camera.far = FJ ? 700 : 400; camera.updateProjectionMatrix();
   const W = BIG ? BIG_W : BR_W, R0 = FR ? 640 : FJ ? 312 : BIG ? 92 : 30*BRK, WX = BIG ? W : BRX, WZ = BIG ? W : BRZ;
   spinners = []; if(!TT) box(-WX, WX, -1, 0, -WZ, WZ, BIG && BIGMAP === 'lego' ? 0x8d8f8a : BIG && BIGMAP === 'vale' ? 0x86cf6a : BIG && BIGMAP === 'serra' ? 0xe3ecf6 : 0xf3d9a4); if(!BIG) for(let z=-WZ + 2; z<WZ; z+=4) stripes(-WX, WX, z, 0xe8c98a);
@@ -5495,7 +5517,7 @@ var TER = null;
 const FJ_WL = 1.6, FJ_SWIM = 1.0, TERB = {kind:'terr', active:true, delta:new V3(), min:new V3(), max:new V3()};
 // nome, x, z, raio da área plana, altura do chão (0 = sem área plana), cor do chão, quente
 const FJ_K = 1.2, fjKs = L => L.map(([x, z]) => [x*FJ_K, z*FJ_K]); // Ilha Feijoada 20% maior: espalha regiões, rio e estradas
-let FJ_REG, FJ_REG0 = [['Grão Capital', 0, 0, 44, 5, 0xb9a98c, 1], ['Porto Fradinho', 150, 112, 36, 2.6, 0xa9a8a2, 1], ['Usina Feijão Preto', 150, -60, 32, 15, 0x8f8a7d, 1], ['Base Azuki', -190, -142, 16, 10, 0x8b8f6a, 1],
+let FJ_REG, FJ_REG0 = [['Grão Capital', 0, 0, 74, 5, 0xb9a98c, 1], ['Porto Fradinho', 150, 112, 36, 2.6, 0xa9a8a2, 1], ['Usina Feijão Preto', 150, -60, 32, 15, 0x8f8a7d, 1], ['Base Azuki', -190, -142, 16, 10, 0x8b8f6a, 1],
   ['Morro Rajado', 0, -128, 0, 0, 0x9a8466, 0], ['Vila Carioca', -128, 98, 32, 5, 0xc9b48e, 0], ['Fazenda Jalo', -160, -6, 38, 4.2, 0xc8c36a, 0], ['Resort Manteiga', 22, 124, 26, 20, 0xe0d2a8, 0], ['Floresta Vagem', 128, 26, 0, 0, 0x4f7a3a, 0]].map(g => { g = g.slice(); g[1] *= FJ_K; g[2] *= FJ_K; return g; });
 let FJ_RIV, FJ_RIV0 = fjKs([[-40, -86], [-70, -40], [-72, 10], [-82, 60], [-72, 110], [-84, 190]]);
 function fjNoise(){ const P = new Uint8Array(512); let s = 1234567; for(let i=0;i<256;i++) P[i] = i; for(let i=255;i>0;i--){ s = s*16807 % 2147483647; const j = s % (i + 1); [P[i], P[j]] = [P[j], P[i]]; } for(let i=0;i<256;i++) P[i + 256] = P[i];
@@ -5532,15 +5554,19 @@ function fjHeight(x, z, fb){ const X0 = x, Z0 = z; x /= FJ_K; z /= FJ_K;
   if(isl > 0) h = Math.max(h, -6 + isl*(8 + 8 + fb(x*0.09, z*0.09, 2)*3));
   // áreas planas das regiões (reservadas pros prédios)
   x = X0; z = Z0;
-  for(const [, rx, rz, R, H] of FJ_REG){ if(!R) continue; const w = sstep(R + 16, R, Math.hypot(x - rx, z - rz)); if(w > 0) h = h*(1 - w) + H*w; }
+  for(const [nm, rx, rz, R, H] of FJ_REG){ if(!R) continue; const w = sstep(R + 16, R, nm === 'Grão Capital' && R > 60 ? Math.pow((x - rx)**6 + (z - rz)**6, 1/6) : Math.hypot(x - rx, z - rz)); if(w > 0) h = h*(1 - w) + H*w; }
   // rio: leito 0,6 m abaixo da água, barrancos dos lados
   if(e < 1.08){ const d = segDist(x, z, FJ_RIV) + fb(x*0.05, z*0.05, 2)*3; if(d < 18){ const k = sstep(18, 7, d); h = h*(1 - k) + Math.min(h, 1.0)*k; } }
   return h; }
 
 // estradas de terra (parte 2): ligam as regiões em curvas suaves, passam pelos desfiladeiros da serra; pontes de madeira onde cruzam o rio
+// cidade densa: a estrada que sai do centro (0, 0) começa no anel em volta da Capital (|x| ou |z| = 72)
+function cdClip(W){ if(W[0][0] || W[0][1]) return W; const E = 72, out = (p) => Math.max(Math.abs(p[0]), Math.abs(p[1])) > E;
+  for(let i=1; i<W.length; i++) if(out(W[i])){ const [ax, az] = W[i - 1], [bx, bz] = W[i]; let lo = 0, hi = 1; for(let k=0; k<30; k++){ const m = (lo + hi)/2; if(out([ax + (bx - ax)*m, az + (bz - az)*m])) hi = m; else lo = m; }
+    return [[ax + (bx - ax)*lo, az + (bz - az)*lo]].concat(W.slice(i)); } return W; }
 let FJ_ROADS, FJ_ROADS0 = [[[0, 0], [55, 38], [108, 80], [150, 112]], [[0, 0], [58, -22], [108, -46], [150, -60]], [[0, 0], [-38, 28], [-76, 58], [-104, 84], [-128, 98]],
   [[0, 0], [-40, -4], [-76, 2], [-118, -6], [-160, -6]], [[0, 0], [8, 58], [20, 98], [22, 124]], [[150, 112], [146, 64], [128, 26], [146, -20], [150, -60]],
-  [[-128, 98], [-152, 52], [-160, -6]], [[150, -60], [104, -76], [76, -96], [60, -118], [24, -126]], [[-160, -6], [-118, -46], [-72, -86], [-36, -118], [-12, -128]], [[22, 124], [70, 120], [108, 116], [150, 112]]].map(fjKs);
+  [[-128, 98], [-152, 52], [-160, -6]], [[150, -60], [104, -76], [76, -96], [60, -118], [24, -126]], [[-160, -6], [-118, -46], [-72, -86], [-36, -118], [-12, -128]], [[22, 124], [70, 120], [108, 116], [150, 112]]].map(fjKs).map(cdClip);
 let FJ_RP = null, ROADD = null, FJ_BR = [];
 // ---------- Vale do Feijão (Modo 100): vale cercado de serra, riacho que cruza de oeste pra leste e vira a Lagoa Azul, morro do mirante ----------
 const VL_REG = [['Praça do Moinho', 0, 2, 24, 5, 0xd8c39a, 1], ['Fazenda Rosinha', 29, 29, 22, 5, 0xc8c36a, 0], ['Vila Quindim', -34, 33, 18, 5, 0xc9b48e, 0], ['Pomar Doce', -38, -38, 12, 6.5, 0x8fb85a, 0],
@@ -5696,16 +5722,16 @@ function srOrganic(){ if(!SERRA.ok) return; const L = {srPine:[], srRock:[], srD
   solids.forEach(b => { if(!b.mesh || !gone.has(b.mesh)) return; for(const [list, im] of by) if(im && list.includes(b.mesh)) b.mesh = im; }); }
 
 function fjNature(){ const fb = TER.fb; let s = 777; const sr = () => (s = s*16807 % 2147483647)/2147483647; const trees = [], pines = [], rocks = [], bushes = [], NEW = ARV.ok;
-  const okSpot = (x, z, gap) => { const h = TER.h(x, z); if(h < 2.9 || fjSlope(x, z) > (TM.valT && h > 10 ? 1.8 : 0.8)) return false; for(const [, rx, rz, R] of FJ_REG) if(R && Math.hypot(x - rx, z - rz) < R + 4) return false; if(segDist(x, z, FJ_RIV) < TM.rivD || roadD(x, z) < 5 || FJ_CLR.some(([a, b, r]) => Math.hypot(x - a, z - b) < r)) return false; return !trees.concat(pines, rocks).some(t => Math.abs(t[0] - x) < gap && Math.abs(t[1] - z) < gap); };
+  const okSpot = (x, z, gap) => { const h = TER.h(x, z); if(h < 2.9 || fjSlope(x, z) > (TM.valT && h > 10 ? 1.8 : 0.8)) return false; for(const [, rx, rz, R] of FJ_REG) if(R && Math.hypot(x - rx, z - rz) < R + 4) return false; if(segDist(x, z, FJ_RIV) < TM.rivD || roadD(x, z) < 5 || cdPaved(x, z) || FJ_CLR.some(([a, b, r]) => Math.hypot(x - a, z - b) < r)) return false; return !trees.concat(pines, rocks).some(t => Math.abs(t[0] - x) < gap && Math.abs(t[1] - z) < gap); };
   // mata fechada: na Floresta Vagem e em manchas pela ilha as árvores ficam coladas e moitas tapam os vãos (estrada, rio e regiões ficam livres)
   const mataAt = (x, z, forest) => NEW && (forest > 0.45 || fb(x*0.013 + 7, z*0.013 - 3, 2) > 0.3) && (!TM.valT || TER.h(x, z) > 12);
   for(let t=0; t<(NEW ? 40000 : 26000) && trees.length + pines.length < (NEW ? TM.nTree : TM.nTree*0.7); t++){ const x = (sr()*2 - 1)*TM.ax, z = (sr()*2 - 1)*TM.az, h = TER.h(x, z), forest = TM.forF ? TM.forF(x, z) : TM.forest ? sstep(TM.forest[2], TM.forest[3], Math.hypot(x - TM.forest[0], z - TM.forest[1])) : 0, hi = sstep(12, 22, h);
     const dens = (0.04 + forest*0.9 + hi*0.35 + Math.max(0, fb(x*0.02, z*0.02, 2))*0.5)*(TM.valT && hi < 0.5 ? TM.valT : 1), mata = mataAt(x, z, forest); if(sr() > (mata ? dens + 0.5 : dens) || !okSpot(x, z, mata ? 2.3 : NEW ? 3.4 : 2.6)) continue; (hi > 0.5 || (forest < 0.3 && sr() < 0.3) ? pines : trees).push([x, z, h, 0.8 + sr()*0.6, sr(), mata]); }
   if(NEW){ const M = trees.concat(pines).filter(t => t[5]);
     for(let i = 0; i < M.length; i++) for(let j = i + 1; j < M.length; j++){ const A = M[i], B = M[j], d = Math.hypot(A[0] - B[0], A[1] - B[1]); if(d > 4.8 || d < 1.6) continue;
-      const x = (A[0] + B[0])/2, z = (A[1] + B[1])/2; if(roadD(x, z) < 5 || segDist(x, z, FJ_RIV) < TM.rivD || FJ_CLR.some(([a, b, r]) => Math.hypot(x - a, z - b) < r) || bushes.some(q => Math.abs(q[0] - x) < 1.4 && Math.abs(q[1] - z) < 1.4)) continue; bushes.push([x, z, TER.h(x, z), 0.85 + sr()*0.4, sr()]); } }
+      const x = (A[0] + B[0])/2, z = (A[1] + B[1])/2; if(roadD(x, z) < 5 || segDist(x, z, FJ_RIV) < TM.rivD || cdPaved(x, z) || FJ_CLR.some(([a, b, r]) => Math.hypot(x - a, z - b) < r) || bushes.some(q => Math.abs(q[0] - x) < 1.4 && Math.abs(q[1] - z) < 1.4)) continue; bushes.push([x, z, TER.h(x, z), 0.85 + sr()*0.4, sr()]); } }
   for(let t=0; t<9000 && rocks.length < TM.nRock; t++){ const x = (sr()*2 - 1)*TM.ax, z = (sr()*2 - 1)*TM.az, h = TER.h(x, z); if(h < 2.2) continue; const sl = fjSlope(x, z), want = 0.08 + sstep(0.3, 0.9, sl)*0.7 + sstep(14, 30, h)*0.4; if(sr() > want) continue;
-    let bad = false; for(const [, rx, rz, R] of FJ_REG) if(R && Math.hypot(x - rx, z - rz) < R + 2) bad = true; if(roadD(x, z) < 4.5 || FJ_CLR.some(([a, b, r]) => Math.hypot(x - a, z - b) < r)) bad = true; if(bad || trees.concat(pines, rocks).some(o => Math.abs(o[0] - x) < 3 && Math.abs(o[1] - z) < 3)) continue; rocks.push([x, z, h, 0.6 + sr()*1.9, sr()]); }
+    let bad = false; for(const [, rx, rz, R] of FJ_REG) if(R && Math.hypot(x - rx, z - rz) < R + 2) bad = true; if(roadD(x, z) < 4.5 || cdPaved(x, z) || FJ_CLR.some(([a, b, r]) => Math.hypot(x - a, z - b) < r)) bad = true; if(bad || trees.concat(pines, rocks).some(o => Math.abs(o[0] - x) < 3 && Math.abs(o[1] - z) < 3)) continue; rocks.push([x, z, h, 0.6 + sr()*1.9, sr()]); }
   const o = new THREE.Object3D(), c = new THREE.Color();
   const mk = (geo, color, list, set) => { const im = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({color:0xffffff}), list.length); list.forEach((t, i) => { set(o, t); o.updateMatrix(); im.setMatrixAt(i, o.matrix); c.setHex(color).multiplyScalar(0.82 + t[4]*0.3); im.setColorAt(i, c); }); im.castShadow = true; im.receiveShadow = true; im.userData.keep = true; world.add(im); return im; };
   const rk = mk(new THREE.DodecahedronGeometry(1, 0), 0x8f8c86, rocks, (o, t) => { o.position.set(t[0], t[2] + t[3]*0.35, t[1]); o.scale.set(t[3]*1.2, t[3]*0.85, t[3]); o.rotation.set(t[4]*2, t[4]*7, t[4]); });
@@ -5768,7 +5794,7 @@ function fjWaterTower(x, z, y){ const H = 12; fjTowerDeco(x, z, y, H, 1.8, 0x8a8
   box(x - 0.35, x + 0.35, y, y + H, z + 1.6, z + 1.75, 0x5a5f68); box(x - 2.2, x + 2.2, y + H, y + H + 0.3, z - 2.2, z + 2.2, 0x6c7078);
   [[-2.2, 2.2, -2.2, -2.05], [-2.2, 2.2, 2.05, 2.2], [-2.2, -2.05, -2.05, 2.05]].forEach(([a, b, e, g]) => box(x + a, x + b, y + H + 0.3, y + H + 1.2, z + e, z + g, 0x5a5f68));
   disc(x, z - 0.6, 1.5, y + H + 0.3, y + H + 3.2, 0xdfe6ee, 18); bonusLoot.push(['sniper', x + 1.2, y + H + 0.3, z + 1.2]); }
-function fjCapital(){ const [, cx, cz, , Y] = FJ_REG[0]; let s = 4242; const sr = () => (s = s*16807 % 2147483647)/2147483647;
+function fjCapital(){ const [, cx, cz, , Y] = FJ_REG[0]; let s = 4242; const sr = () => (s = s*16807 % 2147483647)/2147483647; CDV.box = null; CDV.G = null; if(cdOk()) return cdCidade(cx, cz, Y);
   // asfalto nas avenidas e calçada na praça
   const pave = (x, z, w, d, col, y=0.03) => { const m = mesh(new THREE.PlaneGeometry(w, d), mat(col), world); m.rotation.x = -Math.PI/2; m.position.set(x, Y + y, z); m.castShadow = false; m.userData.keep = true; };
   pave(cx, cz, 14, 84, 0x6e6a66); pave(cx, cz, 84, 14, 0x6e6a66); pave(cx, cz, 20, 20, 0xcfc4b0, 0.05);
@@ -5938,11 +5964,11 @@ function cvLot(g, x, z, used, tx, tz){ const p = fjLot(g, x, z, 15, 15, used); r
 // prédios novos do Blender (corre-feijao/predios-novos): 1 malha com textura + vidro por prédio; colisão = caixas invisíveis do .json
 const PNV = {ok:false, M:{}, n:0, done:0};
 function pnLoad(){ const D = window.PN_D; if(!D || !THREE.GLTFLoader || typeof MeshoptDecoder === 'undefined'){ PNV.fail = true; return; }
-  const keys = Object.keys(D); PNV.n = keys.length; PNV.vmat = new THREE.MeshLambertMaterial({color:0xcfe6f2, transparent:true, opacity:0.22, depthWrite:false});
+  const keys = Object.keys(D); PNV.n = keys.length; PNV.vmat = new THREE.MeshLambertMaterial({color:0xcfe6f2, transparent:true, opacity:0.22, depthWrite:false}); PNV.vfar = new THREE.MeshLambertMaterial({color:0x7d97a8});
   const fin = () => { if(++PNV.done === PNV.n) PNV.ok = true; };
   MeshoptDecoder.ready.then(() => { const L = new THREE.GLTFLoader(); L.setMeshoptDecoder(MeshoptDecoder);
     keys.forEach(k => L.parse(fjB64(D[k].glb).buffer, '', gl => { gl.scene.updateMatrixWorld(true); const M = {col:D[k].col, lot:D[k].lot, bb:D[k].bb, c:D[k].c};
-      gl.scene.traverse(o => { if(!o.isMesh) return; if(!o.material.map){ M.vgeo = o.geometry; M.vm = o.matrixWorld.clone(); }
+      gl.scene.traverse(o => { if(!o.isMesh) return; if(o.name === 'cd_far'){ M.fgeo = o.geometry; M.fm = o.matrixWorld.clone(); return; } if(!o.material.map){ M.vgeo = o.geometry; M.vm = o.matrixWorld.clone(); }
         else if(!M.geo){ const t = o.material.map; t.encoding = THREE.LinearEncoding; t.anisotropy = 4; M.geo = o.geometry; M.m = o.matrixWorld.clone(); M.mat = new THREE.MeshLambertMaterial({map:t}); } });
       if(M.geo) PNV.M[k] = M; D[k].glb = null; fin(); }, e => { console.warn('prédio novo', k, e); fin(); })); }).catch(() => { PNV.fail = true; }); }
 addEventListener('load', () => setTimeout(pnLoad, 400));
@@ -5954,6 +5980,9 @@ function pnPlace(k, x, z, y, rot){ const M = PNV.M[k]; if(!M) return null; const
   const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot*Math.PI/2; world.add(g);
   const m = new THREE.Mesh(M.geo, M.mat); m.matrixAutoUpdate = false; m.matrix.copy(M.m); m.castShadow = m.receiveShadow = true; m.userData.keep = true; g.add(m);
   if(M.vgeo){ const v = new THREE.Mesh(M.vgeo, PNV.vmat); v.matrixAutoUpdate = false; v.matrix.copy(M.vm); v.renderOrder = 2; v.userData.keep = true; g.add(v); }
+  if(M.fgeo){ const f = new THREE.Mesh(M.fgeo, M.mat), [l0, l1, l2, l3] = R(...M.lot); f.matrixAutoUpdate = false; f.matrix.copy(M.fm); f.castShadow = f.receiveShadow = true; f.userData.keep = true; f.visible = false; g.add(f); m.userData.far = f;
+    let vf = null; if(M.vgeo){ vf = new THREE.Mesh(M.vgeo, PNV.vfar); vf.matrixAutoUpdate = false; vf.matrix.copy(M.vm); vf.userData.keep = true; vf.visible = false; g.add(vf); }
+    (PNV.lod || (PNV.lod = [])).push({m, f, v:g.children[1] && g.children[1].material === PNV.vmat ? g.children[1] : null, vf, x:(l0 + l1)/2, z:(l2 + l3)/2, w:world, s:0, g, k}); }
   for(let i = n0; i < solids.length; i++) solids[i].mesh = m;
   const [bx0, bx1, bz0, bz1] = R(...M.bb); FJ_BLD.push([bx0, bx1, bz0, bz1, M.c]);
   // árvores, moitas e pedras (fjNature) evitam o terreno todo do prédio (quintal, garagem, estacionamento): círculos ao longo do lado comprido
@@ -5983,7 +6012,7 @@ function pnCapital(cx, cz, Y){ const skip = new Set(), Q = [[-1, -1], [1, -1], [
   [['predio_frances', -1, -1], ['predio_grande', -1, 1], ['bloco', 1, 1]].forEach(([n, sx, sz]) => pnLot(n, cx + sx*31, cz + sz*31, cx + sx*31, cz, used, 9, 1.2, Y - 0.4, undefined, 0.3));
   return skip; }
 // borda da Capital (supermercado, bloco se não coube), casas em volta da Vila, galpão no Porto
-function pnRest(){ const [, cx, cz, R] = FJ_REG[0], used = [];
+function pnRest(){ const [, cx, cz, R] = FJ_REG[0], used = CDV.box ? [CDV.box] : [];
   const ring = (k, x0, z0, rr, tx, tz, maxR, slope, minH) => { for(let i=0; i<12; i++){ const a = i/12*6.283; if(pnLot(k, x0 + Math.cos(a)*rr, z0 + Math.sin(a)*rr, tx, tz, used, maxR, slope, minH)) return true; } return false; };
   const miss = k => { if(!(PNV.placed || []).includes(k)) FJ_MISS.push('prédio novo ' + k); };
   ring('supermercado', cx, cz, R + 18, cx, cz, 12, 2.0) || ring('supermercado', cx, cz, R + 32, cx, cz, 14, 2.6) || ring('supermercado', cx, cz, R + 48, cx, cz, 14, 3.0);
@@ -5991,6 +6020,116 @@ function pnRest(){ const [, cx, cz, R] = FJ_REG[0], used = [];
   const V = FJ_REG[5]; ['casa_enxaimel', 'casa_azul', 'casa_garagem', 'bangalo'].forEach((k, i) => { for(let j=0; j<16; j++){ const a = (i*0.25 + j*0.13)*6.283, rr = V[3] + (j < 8 ? 12 : 24); if(pnLot(k, V[1] + Math.cos(a)*rr, V[2] + Math.sin(a)*rr, V[1], V[2], used, 10, j < 8 ? 1.6 : 2.4)) break; } });
   const P = fjR('Porto'); ring('galpao', P[1], P[2], 20, P[1], P[2], 12, 0.8, P[4] - 0.3) || ring('galpao', P[1], P[2], 34, P[1], P[2], 12, 1.4, P[4] - 0.3);
   ['supermercado', 'bloco', 'casa_enxaimel', 'casa_azul', 'casa_garagem', 'bangalo', 'galpao'].forEach(miss); }
+// cidade densa (corre-feijao/cidade-densa): 16 quarteirões de prédios do Blender colados, cada um com a calçada no próprio modelo
+const CD_K = ['padaria', 'livraria', 'cafe', 'flores', 'frontao', 'frontao_alto', 'moderno_ripas', 'vidro_sacadas', 'bege_fabrica', 'amarelo_torreoes', 'torre_escalonada',
+  'paris_mansao', 'paris_haussmann', 'paris_esquina', 'torre_relogio', 'ac_deco', 'ac_escalonado', 'ac_residencial', 'ac_hotel', 'ac_tijolo', 'ac_vidro',
+  'predio_tijolo', 'escritorio', 'predio_loft', 'predio_frances', 'predio_grande', 'bloco'];
+const CDV = {box:null, G:null, tm:{}, n:0};
+// troca perto/longe a cada 10 quadros (60 m de qualquer câmera); só os prédios do mapa atual
+// perto (< 45 m de alguma câmera): malha cheia + vidro transparente; até 160 m: só a fachada + vidro opaco;
+// mais longe: impostor = caixa com as 4 fachadas e o telhado fotografados uma vez (1 desenho por modelo pra todos os prédios iguais)
+const PN_NEAR = 45, PN_FAR = 160; let pnLodT = 0;
+function pnImp(k){ const M = PNV.M[k]; if(M.imp !== undefined) return M.imp; M.imp = null; if(!M.fgeo || typeof renderer === 'undefined') return null;
+  if(!M.fgeo.boundingBox) M.fgeo.computeBoundingBox(); const bb = M.fgeo.boundingBox.clone().applyMatrix4(M.fm), S = 256, RT = new THREE.WebGLRenderTarget(S*4, S*2);
+  RT.texture.generateMipmaps = true; RT.texture.minFilter = THREE.LinearMipmapLinearFilter; RT.texture.anisotropy = 4;
+  const sc = new THREE.Scene(), add = (g, mt, mm) => { const o = new THREE.Mesh(g, mt); o.matrixAutoUpdate = false; o.matrix.copy(mm); o.updateMatrixWorld(true); sc.add(o); };
+  add(M.fgeo, M.mat, M.fm); if(M.vgeo) add(M.vgeo, PNV.vfar, M.vm);
+  sc.add(new THREE.HemisphereLight(0xffffff, 0x9a9488, 0.7)); const dl = new THREE.DirectionalLight(0xffffff, 0.5); dl.position.set(0.35, 1, 0.6); sc.add(dl);
+  const c = bb.getCenter(new THREE.Vector3()), z = bb.getSize(new THREE.Vector3()), cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 600);
+  const V = [[0, 0, 1, z.x, z.y], [0, 0, -1, z.x, z.y], [1, 0, 0, z.z, z.y], [-1, 0, 0, z.z, z.y], [0, 1, 0, z.x, z.z]], r = renderer;
+  const old = r.getRenderTarget(), oc = r.getClearColor(new THREE.Color()), oa = r.getClearAlpha(), ac = r.autoClear;
+  r.setRenderTarget(RT); r.setClearColor(0x000000, 0); r.autoClear = false; r.clear();
+  V.forEach(([dx, dy, dz, w, h], i) => { cam.left = -w/2; cam.right = w/2; cam.top = h/2; cam.bottom = -h/2; cam.updateProjectionMatrix();
+    cam.position.set(c.x + dx*300, c.y + dy*300, c.z + dz*300); cam.up.set(0, dy ? 0 : 1, dy ? -1 : 0); cam.lookAt(c); cam.updateMatrixWorld();
+    RT.viewport.set((i % 4)*S, Math.floor(i/4)*S, S, S); RT.scissor.copy(RT.viewport); RT.scissorTest = true; r.setRenderTarget(RT); r.render(sc, cam); });
+  r.setRenderTarget(old); r.setClearColor(oc, oa); r.autoClear = ac;
+  // caixa: cada face pega a sua foto no atlas (4 x 2); um pouco mais escuro dos lados
+  const P = [], U = [], C = [], [x0, y0, z0, x1, y1, z1] = [bb.min.x, bb.min.y, bb.min.z, bb.max.x, bb.max.y, bb.max.z];
+  const face = (q, i, sh) => { const cu = (i % 4)/4, cv = Math.floor(i/4)/2, t = [[0, 0], [1, 0], [1, 1], [0, 1]];
+    [0, 1, 2, 0, 2, 3].forEach(j => { P.push(...q[j]); U.push(cu + t[j][0]/4, cv + t[j][1]/2); C.push(sh, sh, sh); }); };
+  face([[x0, y0, z1], [x1, y0, z1], [x1, y1, z1], [x0, y1, z1]], 0, 0.95); face([[x1, y0, z0], [x0, y0, z0], [x0, y1, z0], [x1, y1, z0]], 1, 0.85);
+  face([[x1, y0, z1], [x1, y0, z0], [x1, y1, z0], [x1, y1, z1]], 2, 0.9); face([[x0, y0, z0], [x0, y0, z1], [x0, y1, z1], [x0, y1, z0]], 3, 0.8);
+  face([[x0, y1, z1], [x1, y1, z1], [x1, y1, z0], [x0, y1, z0]], 4, 1.0);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+  return M.imp = {g, mat:new THREE.MeshBasicMaterial({map:RT.texture, alphaTest:0.5, vertexColors:true})}; }
+// monta os impostores do mapa atual: 1 InstancedMesh por modelo, cada prédio é uma instância (escondida = escala 0)
+function pnImpBuild(){ PNV.impW = world; const by = {}; PNV.lod.forEach(e => (by[e.k] = by[e.k] || []).push(e));
+  Object.entries(by).forEach(([k, L]) => { const I = pnImp(k); if(!I) return; const im = new THREE.InstancedMesh(I.g, I.mat, L.length); im.frustumCulled = false; im.userData.keep = true; im.castShadow = false;
+    L.forEach((e, i) => { e.g.updateMatrix(); e.im = im; e.ii = i; e.mx = e.g.matrix.clone(); im.setMatrixAt(i, PN_Z0); }); world.add(im); }); }
+const PN_Z0 = new THREE.Matrix4().makeScale(0, 0, 0);
+function pnLod(cam){ const L = PNV.lod; if(!L || pnLodT-- > 0) return; pnLodT = 10; const hs = [cam.position]; if(twoP && typeof cam2 !== 'undefined' && cam2.pos) hs.push(cam2.pos);
+  if(L.some(e => e.w !== world)) PNV.lod = L.filter(e => e.w === world); if(PNV.impW !== world && PNV.lod.length) pnImpBuild();
+  for(const e of PNV.lod){ let d2 = 1e12; for(const h of hs){ const q = (e.x - h.x)**2 + (e.z - h.z)**2; if(q < d2) d2 = q; }
+    const s = d2 < PN_NEAR*PN_NEAR ? 0 : d2 < PN_FAR*PN_FAR || !e.im ? 1 : 2; if(s === e.s) continue; e.s = s;
+    e.m.visible = s === 0; e.f.visible = s === 1; if(e.v) e.v.visible = s === 0; if(e.vf) e.vf.visible = s === 1;
+    if(e.im){ e.im.setMatrixAt(e.ii, s === 2 ? e.mx : PN_Z0); e.im.instanceMatrix.needsUpdate = true; } } }
+// grade do chão da cidade (2 m): marca asfalto, calçada e quarteirão; grama, árvores, moitas e pedras não nascem ali
+function cdMark(x0, x1, z0, z1){ const G = CDV.G; if(!G) return; const i0 = Math.max(0, Math.floor((x0 - G.x0)/2)), i1 = Math.min(G.nx - 1, Math.floor((x1 - G.x0)/2)), j0 = Math.max(0, Math.floor((z0 - G.z0)/2)), j1 = Math.min(G.nz - 1, Math.floor((z1 - G.z0)/2));
+  for(let j = j0; j <= j1; j++) G.a.fill(1, j*G.nx + i0, j*G.nx + i1 + 1); }
+function cdPaved(x, z){ const G = CDV.G; if(!G || TM !== CDV.T) return false; const i = Math.floor((x - G.x0)/2), j = Math.floor((z - G.z0)/2); return i >= 0 && j >= 0 && i < G.nx && j < G.nz && G.a[j*G.nx + i] === 1; }
+function cdOk(){ return PNV.ok && CD_K.filter(k => PNV.M[k]).length >= 12; }
+// junta retângulos (x0, x1, z0, z1) num chão só (1 malha por cor)
+function cdQuads(R, y, col){ if(!R.length) return; const P = [], N = [];
+  R.forEach(([a, b, c, d]) => { P.push(a, y, c, a, y, d, b, y, d, a, y, c, b, y, d, b, y, c); for(let i=0; i<6; i++) N.push(0, 1, 0); });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3));
+  const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({color:col})); m.receiveShadow = true; m.userData.keep = true; world.add(m); return m; }
+// cidade em grade: LX/LZ = linhas de rua [centro, largura] (as > 10 m são avenidas); entre elas, quarteirões
+// o.kind(x0, x1, z0, z1, i, j) diz o que vai em cada quarteirão: 'tall' / 'mid' / 'low' (prédios), 'skip' (nada, nem calçada), ou outra coisa que o.block(tipo, retângulo) monta
+function cdGrid(o){ let s = o.seed || 9191; const sr = () => (s = s*16807 % 2147483647)/2147483647, {cx, cz, Y} = o, LX = o.LX, LZ = o.LZ || o.LX;
+  if(!CDV.G || CDV.T !== TM){ const nx = Math.ceil(TM.X*2/2), nz = Math.ceil(TM.Z*2/2); CDV.G = {x0:-TM.X, z0:-TM.Z, nx, nz, a:new Uint8Array(nx*nz)}; CDV.T = TM; }
+  const flatAt = (x0, x1, z0, z1) => { for(let i=0; i<=5; i++) for(let j=0; j<=5; j++){ const x = cx + x0 + (x1 - x0)*i/5, z = cz + z0 + (z1 - z0)*j/5, h = TER.h(x, z); if(h < Y - 0.3 || h > Y + 0.25 || segDist(x, z, FJ_RIV) < (o.rivGap || 6)) return false; } return true; };
+  // ruas: trechos entre os cruzamentos + cruzamentos (cada um só se o chão for plano)
+  const asf = [], mk = [], cw = [], lamps = [];
+  const lines = (L, M, t) => L.forEach(([c, wc], li) => { for(let j=0; j<M.length; j++){ const [cj, wj] = M[j];
+    const q = t ? [cj - wj/2, cj + wj/2, c - wc/2, c + wc/2] : [c - wc/2, c + wc/2, cj - wj/2, cj + wj/2]; if(!t && flatAt(...q)) asf.push(q);   // cruzamento
+    if(j === M.length - 1) continue; const [cn, wn] = M[j + 1], a0 = cj + wj/2, a1 = cn - wn/2, r = t ? [a0, a1, c - wc/2, c + wc/2] : [c - wc/2, c + wc/2, a0, a1]; if(!flatAt(...r)) continue; asf.push(r);
+    // faixas: avenida = 2 linhas amarelas no meio; rua = tracejado branco; faixa de pedestre perto de cada cruzamento
+    const along = (u0, u1, off, w, dash) => { for(let u = u0; u < u1 - 0.1; u += dash ? 4 : u1 - u0){ const v1 = Math.min(u1, u + (dash ? 2 : u1 - u0)); mk.push(t ? [u, v1, c + off - w/2, c + off + w/2] : [c + off - w/2, c + off + w/2, u, v1]); } };
+    if(wc > 10){ along(a0 + 4, a1 - 4, -0.2, 0.14, false); along(a0 + 4, a1 - 4, 0.2, 0.14, false); } else along(a0 + 4.5, a1 - 4.5, 0, 0.14, true);
+    [a0 + 1.0, a1 - 3.0].forEach(u => { for(let v = c - wc/2 + 0.6; v < c + wc/2 - 0.6; v += 1.0) cw.push(t ? [u, u + 2.0, v, v + 0.5] : [v, v + 0.5, u, u + 2.0]); });
+    // postes na beira da rua, a cada ~14 m, alternando os lados
+    for(let u = a0 + 6, k = 0; u < a1 - 3; u += 14, k++){ const sd = (k + li + j) % 2 ? 1 : -1, v = c + sd*(wc/2 - 0.35); lamps.push(t ? [u, v, sd, 1] : [v, u, sd, 0]); } } });
+  lines(LX, LZ, 0); lines(LZ, LX, 1);
+  const W = r => [cx + r[0], cx + r[1], cz + r[2], cz + r[3]], Ya = Y + 0.03, pav = asf.map(W); pav.forEach(r => cdMark(...r)); cdQuads(pav, Ya, 0x5f5b58);
+  cdQuads(mk.map(W), Ya + 0.006, 0xf2e6c0); cdQuads(cw.map(W), Ya + 0.008, 0xf4f2ec);
+  // postes (2 malhas instanciadas) + colisão fina
+  if(lamps.length){ const ob = new THREE.Object3D(), pole = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.07, 0.1, 5.2, 8), new THREE.MeshLambertMaterial({color:0x3c4046}), lamps.length),
+      head = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, 0.16, 0.36), new THREE.MeshLambertMaterial({color:0x3c4046, emissive:0x111111}), lamps.length);
+    lamps.forEach(([x, z, sd, t], i) => { x += cx; z += cz; ob.position.set(x, Y + 2.6, z); ob.rotation.set(0, 0, 0); ob.updateMatrix(); pole.setMatrixAt(i, ob.matrix);
+      const dx = t ? 0 : -sd*0.6, dz = t ? -sd*0.6 : 0; ob.position.set(x + dx, Y + 5.15, z + dz); ob.rotation.set(0, t ? Math.PI/2 : 0, 0); ob.updateMatrix(); head.setMatrixAt(i, ob.matrix);
+      box(x - 0.1, x + 0.1, Y, Y + 5.2, z - 0.1, z + 0.1, 0, {invisible:true}); });
+    [pole, head].forEach(m => { m.castShadow = true; m.frustumCulled = false; m.userData.keep = true; world.add(m); }); }
+  // quarteirões: calçada + 2 fileiras de prédios de costas (uma pra cada rua), becos entre os prédios e um corredor no meio
+  const info = CD_K.filter(k => PNV.M[k]).map(k => { const M = PNV.M[k], [a0, a1, b0, b1] = M.lot; return {k, w:a1 - a0, d:b1 - b0, h:Math.max(...M.col.map(c => c[3]))}; });
+  const used = {}, side = [], TINT = [[1, 1, 1], [1.04, 0.97, 0.9], [0.92, 0.96, 1.03], [0.95, 0.93, 0.92]];
+  const WT = {tall:m => m.h > 34 ? 4 : m.h > 20 ? 1.6 : 0.4, mid:m => m.h > 34 ? 0.03 : m.h > 20 ? 0.8 : 1.6, low:m => m.h > 20 ? 0 : 1.6};
+  const fill = (len, maxD, wt) => { let best = null;
+    for(let t=0; t<80; t++){ let u = 0, last = null; const seq = [];
+      for(;;){ const C = info.filter(m => wt(m) > 0 && m.w <= len - u + 0.01 && m.d <= maxD(u, u + m.w) && m.k !== last); if(!C.length){ u += 1; if(u >= len - 6) break; continue; }   // atrás de um prédio fundo (arranha-céu) não cabe nada: pula e tenta mais adiante
+        const P = C.map(m => wt(m)/(1 + (used[m.k] || 0)*0.8)); let r = sr()*P.reduce((a, b) => a + b), p = 0;
+        while(r > P[p] && p < C.length - 1) r -= P[p++]; seq.push([C[p], u]); u += C[p].w + 2.0 + sr()*1.0; last = C[p].k; }   // beco de 2 a 3 m entre um prédio e outro
+      const left = len - seq.reduce((t, [m]) => t + m.w, 0) - 2.5*Math.max(0, seq.length - 1); if(!best || left < best.left - 0.01) best = {seq, left}; if(left < 3) break; }
+    best.seq.forEach(([m]) => used[m.k] = (used[m.k] || 0) + 1); return best; };
+  const IX = [], IZ = []; for(let i=0; i<LX.length - 1; i++) IX.push([LX[i][0] + LX[i][1]/2, LX[i + 1][0] - LX[i + 1][1]/2]); for(let i=0; i<LZ.length - 1; i++) IZ.push([LZ[i][0] + LZ[i][1]/2, LZ[i + 1][0] - LZ[i + 1][1]/2]);
+  IX.forEach(([x0, x1], bi) => IZ.forEach(([z0, z1], bj) => { const kd = o.kind(x0, x1, z0, z1, bi, bj); if(kd === 'skip') return;
+    if(!WT[kd]){ if(o.block) o.block(kd, W([x0, x1, z0, z1]), sr); return; }
+    if(!flatAt(x0, x1, z0, z1)) return; side.push(W([x0, x1, z0, z1]));
+    const alongX = (bi + bj) % 2 === 0, len = alongX ? x1 - x0 : z1 - z0, D = alongX ? z1 - z0 : x1 - x0, tall = kd === 'tall';
+    // fileira 1 de frente pra rua de baixo (z0 ou x0), fileira 2 pra de cima, cada uma no máximo até o corredor do meio
+    const r1 = fill(len, () => tall ? 17 : 13.0, WT[kd]), r2 = fill(len, (u0, u1) => D - 2.5 - Math.max(0, ...r1.seq.filter(([m, u]) => u < u1 - 0.01 && u + m.w > u0 + 0.01).map(([m]) => m.d)), WT[kd]);
+    [[r1, 0], [r2, 1]].forEach(([r, row]) => r.seq.forEach(([m, a]) => { const rot = alongX ? (row ? 0 : 2) : (row ? 1 : 3);
+      const q = alongX ? [x0 + a, x0 + a + m.w, row ? z1 - m.d : z0, row ? z1 : z0 + m.d] : [row ? x1 - m.d : x0, row ? x1 : x0 + m.d, z0 + a, z0 + a + m.w];
+      if(!flatAt(...q)) return; const R0 = pnRot(0, 0, rot), [l0, , l2] = R0(...PNV.M[m.k].lot);
+      const mesh = pnPlace(m.k, cx + q[0] - l0, cz + q[2] - l2, Y, rot); if(!mesh) return; CDV.n++;
+      const ti = Math.floor(sr()*TINT.length); if(ti){ const kk = m.k + ti; mesh.material = CDV.tm[kk] || (CDV.tm[kk] = (() => { const mt = mesh.material.clone(); mt.color.setRGB(...TINT[ti]); return mt; })()); if(mesh.userData.far) mesh.userData.far.material = mesh.material; } })); }));
+  side.forEach(r => cdMark(...r)); cdQuads(side, Y + 0.035, 0xcfc4b0); }
+// Grão Capital: 4 x 4 quarteirões, os 4 do meio com os mais altos; chafariz na rotatória das avenidas
+function cdCidade(cx, cz, Y){ const E = 68, L = [[-71.5, 7], [-38, 7], [0, 14], [38, 7], [71.5, 7]];
+  CDV.box = [cx - E - 8, cx + E + 8, cz - E - 8, cz + E + 8];
+  cdGrid({cx, cz, Y, LX:L, kind:(x0, x1, z0, z1, i, j) => (i === 1 || i === 2) && (j === 1 || j === 2) ? 'tall' : 'mid'});
+  disc(cx, cz, 3.2, Y, Y + 0.7, 0xd8dde6, 24); flat(new THREE.CircleGeometry(2.8, 24), 0xbfe9ff, cx, cz, Y + 0.72).material = new THREE.MeshLambertMaterial({map:waterTex, color:0xbfe9ff}); disc(cx, cz, 0.45, Y + 0.7, Y + 2.4, 0xd8dde6, 12);
+  // árvores e pedras ficam fora da cidade inteira (o círculo da região não cobre os cantos do quadrado)
+  for(let x = -78; x <= 78; x += 12) for(let z = -78; z <= 78; z += 12) FJ_CLR.push([cx + x, cz + z, 9]); }
 // Fazenda Jalo: casarão de 2 andares, celeiro vermelho com mezanino de feno, silo alto, casinha, curral e fardos
 function fjFazenda(){ const g = fjR('Fazenda'), [, cx, cz, R0, Y] = g, used = [], q = Math.min(1, R0/38); let s = 5151; const sr = () => (s = s*16807 % 2147483647)/2147483647; let p;
   if(p = fjLot(g, cx - 14*q, cz - 14*q, 13, 10, used)){ const ty = fjBuilding(p[0] - 6.5, p[1] - 5, 13, 10, 2, {y:Y, c:0xf4ead8, c2:0xd8cfc0, door:'z1', roof:'pitch', rc:0xb5532d, porch:true}); bonusLoot.push(['rifle', p[0] + 3, Y + 3.35, p[1]]); }
@@ -6754,6 +6893,74 @@ function frRegY(n, fb){ if(FR_Y[n] != null) return FR_Y[n]; const g = FR_REG0.fi
 const frForest = (x, z) => { let f = 0; for(const [a, b, r] of FR_FOR) f = Math.max(f, sstep(r, r*0.45, Math.hypot(x - a, z - b))); return f; };
 TMS.fr = {X:480, Z:352, N:32, h:(x, z, fb) => frHeight(x, z, fb), reg:() => FR_REG0, riv:() => FR_RIV0, roads:() => FR_ROADS0, ax:450, az:320, sx:430, sz:300, forest:[0, 0, 1, 2], forF:frForest, nTree:3200, nRock:420, rivD:12, roadW:4.4, rockH:34,
   st:[[0, 60], [-200, 0], [200, 0]], nCar:6, carD:80, rivBoats:3, coast:[], towns:() => frTowns(), life:() => frLife()};
+
+// ===================== METRÓPOLE FEIJÃO: centro de cidade grande (~900 x 640 m), Modo 100 e Guerra =====================
+// avenidas a cada 145 m (x = 0, ±145, ±290; z = 0, ±145), 3 ruas entre elas, anel de rua na borda; 1 unidade = 1 m, +z = sul
+const MC_Y = 5;
+const mcLines = (av, ring) => { const L = [[0, 14]]; let c = 0; for(const a of av){ c += 38; L.push([c, 7]); c += 34.5; L.push([c, 7]); c += 34.5; L.push([c, 7]); c = a; L.push([a, 14]); }
+  for(let k = 0; k < ring; k++){ c += k ? 34.5 : 38; L.push([c, 7]); } return L.slice(1).reverse().map(([a, w]) => [-a, w]).concat(L); };   // ring = ruas depois da última avenida (a última é a da borda)
+const MC_LX = mcLines([145, 290], 3), MC_LZ = mcLines([145], 4);
+// bases da Guerra nos 4 cantos (Pimenta, Mirtilo, Ervilha, Milho), cada uma numa praça aberta
+const MC_HQ = [[-362.5, -217.5], [362.5, 217.5], [362.5, -217.5], [-362.5, 217.5]];
+// nome, x, z, raio, altura, cor do chão, quente (bairros: zonas da Guerra e lugares do Modo 100)
+const MC_REG0 = [['Centro Financeiro', 72, 72, 30, MC_Y, 0x8f8f94, 1], ['Praça da Sé', 40, -40, 30, MC_Y, 0xd8cdb8, 1], ['Parque Central', 178, -72, 0, MC_Y, 0x6f9a4a, 1],
+  ['Estação Central', -217, 40, 30, MC_Y, 0xa9a8a2, 1], ['Porto', 255, 235, 30, MC_Y, 0x9a9890, 1], ['Bairro Antigo', -340, -110, 30, MC_Y, 0xc9b48e, 1],
+  ['Mercado Municipal', -72, 217, 28, MC_Y, 0xc0a882, 1], ['Torres do Norte', 0, -217, 28, MC_Y, 0x8f8f94, 1]];
+// canal: corta de norte a sul a leste do centro, deságua no mar dos dois lados
+const MC_RIV0 = (() => { const L = []; for(let z = -360; z <= 360; z += 20) L.push([215 + 10*Math.sin(z/70), z]); return L; })();
+// estradas = as avenidas (carros nascem nelas; onde cruzam o canal vira ponte)
+const MC_ROADS0 = [...[-290, -145, 0, 145, 290].map(x => [[x, -282], [x, 282]]), ...[-145, 0, 145].map(z => [[-392, z], [392, z]])];
+function mcHeight(x, z, fb){
+  // contorno: retângulo arredondado (igual ao Front), cais reto em volta: plano na cidade, cai pro mar perto da borda
+  const e = Math.pow(Math.pow(Math.abs(x)/452, 4) + Math.pow(Math.abs(z)/322, 4), 0.25)/(1 + 0.012*Math.sin(Math.atan2(z, x)*5 + 0.7));
+  let h = MC_Y + (-6 - MC_Y)*sstep(0.945, 0.985, e);
+  // canal fundo (dá pra lancha) com margem de pedra quase reta
+  const d = segDist(x, z, MC_RIV0); if(d < 13){ const k = sstep(13, 10.5, d); h = h*(1 - k) + -1.8*k; }
+  return h; }
+const mcForest = (x, z) => { const a = Math.max(152 - x, x - 283, -138 - z, z - (-7), 0); return sstep(12, 0, a); };   // árvores só no Parque Central
+TMS.mc = {X:480, Z:352, N:32, h:(x, z, fb) => mcHeight(x, z, fb), reg:() => MC_REG0, riv:() => MC_RIV0, roads:() => MC_ROADS0, ax:450, az:320, sx:430, sz:300, forest:[0, 0, 1, 2], forF:mcForest, nTree:900, nRock:20, rivD:12, roadW:4.4, rockH:34,
+  st:[[40, -40], [-217, 40], [217, -72]], nCar:12, carD:80, rivBoats:2, coast:[], towns:() => mcTowns(), life:() => frLife()};
+// o que vai em cada quarteirão (centro do quarteirão mx, mz)
+function mcKind(x0, x1, z0, z1, i, j, sr){ const mx = (x0 + x1)/2, mz = (z0 + z1)/2, ax = Math.abs(mx), az = Math.abs(mz);
+  if(MC_HQ.some(([x, z]) => Math.abs(mx - x) < 36 && Math.abs(mz - z) < 36)) return 'base';
+  if(mx > 145 && mx < 290 && mz > -145 && mz < 0) return 'park';
+  if(mx > 0 && mx < 76 && mz > -76 && mz < 0) return 'plaza';
+  if(mx > -290 && mx < -145 && mz > 0 && mz < 76 && mx < -183) return 'station';
+  if(mx > 145 && mz > 183) return 'port';
+  if(mx < -36 && mx > -110 && mz > 183 && mz < 256) return 'market';
+  const h = (Math.sin(mx*12.9898 + mz*78.233)*43758.5453) % 1, r = Math.abs(h);
+  if(ax < 145 && az < 145) return r < 0.06 ? 'lot' : 'tall';
+  if(ax > 290) return r < 0.14 ? 'lot' : r < 0.22 ? 'square' : 'low';
+  return r < 0.1 ? 'lot' : r < 0.17 ? 'square' : 'mid'; }
+// quarteirões especiais
+function mcBlock(kd, [x0, x1, z0, z1], sr){ const Y = MC_Y, pv = [];
+  const pave = (a, b, c, d, col, y = 0.035) => { cdMark(a, b, c, d); cdQuads([[a, b, c, d]], Y + y, col); };
+  const plant = (x, z) => { box(x - 1.1, x + 1.1, Y, Y + 0.55, z - 1.1, z + 1.1, 0x9a958a); disc(x, z, 0.12, Y + 0.55, Y + 2.2, 0x6b4a2b, 6); disc(x, z, 1.1, Y + 2.0, Y + 3.6, 0x5f8f3a, 8); };
+  const bench = (x, z, rx) => { const [a, b] = rx ? [1.0, 0.3] : [0.3, 1.0]; box(x - a, x + a, Y, Y + 0.45, z - b, z + b, 0x8a5a33); };
+  if(kd === 'base' || kd === 'lot'){ pave(x0, x1, z0, z1, kd === 'base' ? 0xb9b2a2 : 0x55524f);
+    if(kd === 'lot'){ const L = []; for(let x = x0 + 2.5; x < x1 - 2.5; x += 2.6) [z0 + 1, z1 - 6].forEach(z => L.push([x, x + 0.12, z, z + 5])); cdQuads(L, Y + 0.042, 0xf4f2ec); } return; }
+  if(kd === 'plaza'){ pave(x0, x1, z0, z1, 0xd8cdb8); const L = []; for(let x = x0; x < x1 - 0.1; x += 3) for(let z = z0; z < z1 - 0.1; z += 3) if(((x - x0)/3 + (z - z0)/3) % 2 < 1) L.push([x, Math.min(x1, x + 3), z, Math.min(z1, z + 3)]);
+    cdQuads(L, Y + 0.04, 0xc8bca4); const mx = (x0 + x1)/2, mz = (z0 + z1)/2;
+    [[x0 + 3, z0 + 3], [x1 - 3, z0 + 3], [x0 + 3, z1 - 3], [x1 - 3, z1 - 3]].forEach(([x, z]) => plant(x, z)); bench(mx - 5, mz, false); bench(mx + 5, mz, false);
+    disc(mx, mz, 3.4, Y, Y + 0.6, 0xd8dde6, 20); disc(mx, mz, 0.9, Y + 0.6, Y + 1.4, 0xbfc6cf, 12); box(mx - 0.45, mx + 0.45, Y + 1.4, Y + 6.5, mz - 0.45, mz + 0.45, 0xe8e2d4); return; }   // obelisco
+  if(kd === 'square'){ const mx = (x0 + x1)/2, mz = (z0 + z1)/2; pave(mx - 1.2, mx + 1.2, z0, z1, 0xd8c8a0, 0.04); pave(x0, x1, mz - 1.2, mz + 1.2, 0xd8c8a0, 0.04);
+    [[x0 + 5, z0 + 5], [x1 - 5, z0 + 5], [x0 + 5, z1 - 5], [x1 - 5, z1 - 5]].forEach(([x, z]) => plant(x, z)); bench(mx - 3, mz - 2.5, true); bench(mx + 3, mz + 2.5, true); return; }
+  if(kd === 'park'){ const mx = (x0 + x1)/2, mz = (z0 + z1)/2; if(segDist(mx, mz, MC_RIV0) < 16) return; pave(mx - 1.5, mx + 1.5, z0, z1, 0xd8c8a0, 0.04); pave(x0, x1, mz - 1.5, mz + 1.5, 0xd8c8a0, 0.04); bench(mx - 3.5, mz - 3, true); return; }
+  if(kd === 'station' || kd === 'market'){ pave(x0, x1, z0, z1, 0xb9b2a2); const k = kd === 'station' ? (sr() < 0.5 ? 'galpao' : 'supermercado') : 'galpao', M = PNV.M[k]; if(!M) return;
+    const rot = 0, R0 = pnRot(0, 0, rot), [l0, l1, l2, l3] = R0(...M.lot), w = l1 - l0, d = l3 - l2; if(w > x1 - x0 || d > z1 - z0) return;
+    pnPlace(k, (x0 + x1)/2 - (l0 + l1)/2, z1 - l3, Y, rot); return; }
+  if(kd === 'port'){ if(segDist((x0 + x1)/2, (z0 + z1)/2, MC_RIV0) < 18) return; let ok = true; for(const [x, z] of [[x0, z0], [x1, z0], [x0, z1], [x1, z1]]) if(TER.h(x, z) < Y - 0.3) ok = false; if(!ok) return;
+    pave(x0, x1, z0, z1, 0x9a9890); const C = [0xc0392b, 0x2e6da4, 0x2f8f5b, 0xd9a43a, 0x7d5ba6, 0xe0e0dc];
+    for(let x = x0 + 2; x < x1 - 7; x += 7.5) for(let z = z0 + 2; z < z1 - 3; z += 3.4){ if(sr() < 0.25) continue; const n = 1 + Math.floor(sr()*3);
+      for(let k = 0; k < n; k++) box(x, x + 6.1, Y + k*2.6, Y + (k + 1)*2.6 - 0.02, z, z + 2.44, C[Math.floor(sr()*C.length)]); }   // contêineres
+    return; } }
+function mcTowns(){ FJ_BLD = []; FJ_MISS = []; FJ_T = []; FJ_CLR = []; FJ_LIFE = []; FJ_POI = []; CDV.box = null; CDV.G = null;
+  if(!cdOk()){ FJ_MISS.push('prédios da metrópole'); return; }
+  cdGrid({cx:0, cz:0, Y:MC_Y, LX:MC_LX, LZ:MC_LZ, seed:5151, rivGap:4, kind:mcKind, block:mcBlock});
+  // guindastes do porto na beira do mar
+  for(const x of [170, 230, 300]){ const z = 262, Y = MC_Y; if(TER.h(x, z) < Y - 0.3) continue; [[-3, -3], [3, -3], [-3, 3], [3, 3]].forEach(([a, b]) => box(x + a - 0.3, x + a + 0.3, Y, Y + 18, z + b - 0.3, z + b + 0.3, 0xe0a030));
+    box(x - 3.5, x + 3.5, Y + 18, Y + 20, z - 3.5, z + 3.5, 0xe0a030); box(x - 1, x + 1, Y + 20, Y + 21.6, z - 16, z + 20, 0xe0a030); }
+  CDV.box = [-470, 470, -340, 340]; }
 
 // ---------- construções ----------
 const frR = n => FJ_REG.find(g => g[0] === n);
@@ -9243,7 +9450,7 @@ function buildArena(){
 const COLORS = [0xff4fa3, 0xffd23f, 0x3ee0b0, 0x7fd3ff, 0xff9f1c, 0xb38cff, 0x38d16a, 0xff6b6b, 0xffffff, 0x4d7cff, 0xf2a7ff, 0x9be15d, 0xffb86b, 0x5ce1e6, 0xe35bff, 0xc9a37a];
 const NAMES = ['Você','Pipoca','Tremoço','Jujuba','Paçoca','Chuchu','Pudim','Biscoito','Cocada','Quindim','Pamonha','Bombom','Mingau','Torresmo','Brigadeiro','Farofa'];
 const players = [];
-let BIG = false, BR_SQ = 1, BR_TEST = false, WAR = false, BIGMAP = 'feijoada'; const MAPNAME = () => ({campo:'Campo de Tiro', lego:'Torre Feijão', vale:'Vale do Feijão', ilha:'Parque Tomate', mata:'Mata Paintball', serra:'Serra Gelada', feijoada:'Ilha Feijoada', front:'Front do Feijão'})[BIGMAP]; // Modo 100: tamanho do time (1, 2 ou 4) e mapa
+let BIG = false, BR_SQ = 1, BR_TEST = false, WAR = false, BIGMAP = 'feijoada'; const MAPNAME = () => ({campo:'Campo de Tiro', lego:'Torre Feijão', vale:'Vale do Feijão', ilha:'Parque Tomate', mata:'Mata Paintball', serra:'Serra Gelada', metro:'Metrópole Feijão', feijoada:'Ilha Feijoada', front:'Front do Feijão'})[BIGMAP]; // Modo 100: tamanho do time (1, 2 ou 4) e mapa
 let twoP = false; try{ twoP = localStorage.getItem('feijao-2p') === '1'; }catch(e){}
 const humans = () => players.filter(p => !p.isBot), anyHumanAlive = () => players.some(p => !p.isBot && p.alive), tag = p => twoP ? p.name + ': ' : '';
 let DIFF = 1; try{ const d = parseInt(localStorage.getItem('feijao-diff'), 10); if(d >= 0 && d <= 2) DIFF = d; }catch(e){}
@@ -9517,7 +9724,7 @@ function logMatch(won, me){ if(!me || me.isBot || BR_TEST) return; const H = SAV
   H.unshift({d:Date.now(), m, r:round, bm:BIG ? BIGMAP : '', pl:Math.max(1, rk.indexOf(me) + 1), n:players.length, k:me.kills || 0, w:!!won, xp:earn.xp, co:earn.coins, sq:BIG && SQ() ? BR_SQ : 1});
   if(H.length > 20) H.length = 20; }
 const HMODE = {br:['🍅', 'Modo 100 · Battle Royale'], brp:['🏟️', 'Modo 100 · Partida completa'], pts:['🏅', 'Modo Pontos'], map:['🗺️', ''], full:['👑', 'Partida completa']};
-const BMN = {front:'Front do Feijão', vale:'Vale do Feijão', lego:'Torre Feijão', ilha:'Parque Tomate', mata:'Mata Paintball', serra:'Serra Gelada'};
+const BMN = {front:'Front do Feijão', metro:'Metrópole Feijão', vale:'Vale do Feijão', lego:'Torre Feijão', ilha:'Parque Tomate', mata:'Mata Paintball', serra:'Serra Gelada'};
 function ago(t){ const s = (Date.now() - t)/1000; return s < 60 ? 'agora' : s < 3600 ? `há ${Math.round(s/60)} min` : s < 86400 ? `há ${Math.round(s/3600)} h` : `há ${Math.round(s/86400)} dia${s >= 172800 ? 's' : ''}`; }
 const TITLES = [[1, 'Feijão Novato'], [5, 'Feijão Corredor'], [10, 'Feijão Valente'], [20, 'Feijão Veterano'], [35, 'Lenda do Feijão']];
 let pfTab = 'sum';
@@ -10803,7 +11010,7 @@ for(const id in MICON){ const el = $(id); if(!el) continue; el.style.setProperty
 $('btnPlay').onclick = () => play(0);
 $('btnPts').onclick = () => play(0, false, true);
 $('btnBig').onclick = () => openScreen('bigsel');
-try{ const v = JSON.parse(localStorage.getItem('feijao-big') || '{}'); if(['ilha', 'lego', 'vale', 'serra', 'feijoada', 'mata', 'front'].includes(v.m) && v.v3) BIGMAP = v.m; }catch(e){}
+try{ const v = JSON.parse(localStorage.getItem('feijao-big') || '{}'); if(['ilha', 'lego', 'vale', 'serra', 'feijoada', 'mata', 'front', 'metro'].includes(v.m) && v.v3) BIGMAP = v.m; }catch(e){}
 document.querySelectorAll('#bigMap button').forEach(b => { b.classList.toggle('on', b.dataset.m === BIGMAP); b.onclick = () => { BIGMAP = b.dataset.m; document.querySelectorAll('#bigMap button').forEach(x => x.classList.toggle('on', x === b)); try{ localStorage.setItem('feijao-big', JSON.stringify({m:BIGMAP, v3:1})); }catch(e){} }; });
 document.querySelectorAll('#bigsel [data-sq]').forEach(b => b.onclick = () => { BR_SQ = +b.dataset.sq; BR_TEST = false; play(20, true); });
 $('btnBigParty').onclick = () => { BR_SQ = 1; BR_TEST = false; play(0, true); };
@@ -11143,7 +11350,7 @@ function wdShopRender(){ const el = $('wdShop'); if(!el || el.hidden) return; co
 // botão do modo e tecla B
 { const g = document.querySelector('#bigsel .bigmodes'), t = $('btnBigTest'); if(g && t){ const b = document.createElement('button'); b.className = 'map'; b.id = 'btnWar';
     b.innerHTML = '<span class="mart" style="--mc:#ff9f1c">⚔️<em>Guerra</em></span><span class="mtxt"><b>Guerra de Times</b><span>4 tropas de 25. Segure a zona de controle, compre itens na loja da base e volte sempre que cair. 100 pontos vence.</span><small>novo · estilo Wardogs</small></span>';
-    g.insertBefore(b, t); b.onclick = () => { if(!['feijoada', 'front'].includes(BIGMAP)){ BIGMAP = 'feijoada'; document.querySelectorAll('#bigMap button').forEach(x => x.classList.toggle('on', x.dataset.m === BIGMAP)); } BR_SQ = 25; BR_TEST = false; WAR = true; play(20, true); }; } }
+    g.insertBefore(b, t); b.onclick = () => { if(!['feijoada', 'front', 'metro'].includes(BIGMAP)){ BIGMAP = 'feijoada'; document.querySelectorAll('#bigMap button').forEach(x => x.classList.toggle('on', x.dataset.m === BIGMAP)); } BR_SQ = 25; BR_TEST = false; WAR = true; play(20, true); }; } }
 document.addEventListener('click', e => { if(e.target.closest('#bigsel [data-sq], #btnBigParty, #btnBigTest, #btnRoomStart, #btnPlay, #btnPts')) WAR = false; }, true);
 addEventListener('keydown', e => { if(!WAR || !BIG || round !== 20 || !inMatch()) return;
   if(e.code === 'KeyB' && !e.repeat && !PAUSED){ wdShopOpen(!WD.shop); e.preventDefault(); e.stopImmediatePropagation(); }
@@ -11665,7 +11872,7 @@ document.addEventListener('click', e => { const b = e.target.closest('#wdShop [d
 const frOn = () => BIG && BIGMAP === 'front';
 // o Front é só da Guerra: Battle Royale com ele escolhido vai pra Ilha Feijoada
 { const _bs = buildShoot; buildShoot = function(...a){ if(BIG && BIGMAP === 'front' && !WAR) BIGMAP = 'feijoada'; return _bs(...a); }; }
-{ const _hs = wdHQSpot; wdHQSpot = function(sx, sz){ if(!frOn()) return _hs(sx, sz); const H = FR_HQ.find(([x, z]) => Math.sign(x) === sx && Math.sign(z) === sz); return H ? H.slice() : _hs(sx, sz); }; }
+{ const _hs = wdHQSpot; wdHQSpot = function(sx, sz){ if(BIG && BIGMAP === 'metro'){ const H = MC_HQ.find(([x, z]) => Math.sign(x) === sx && Math.sign(z) === sz); if(H) return H.slice(); } if(!frOn()) return _hs(sx, sz); const H = FR_HQ.find(([x, z]) => Math.sign(x) === sx && Math.sign(z) === sz); return H ? H.slice() : _hs(sx, sz); }; }
 { const _wz = wdZones; wdZones = function(){ if(!frOn()) return _wz();
     WD.zones = FR_ZN.map(n => frR(n)).filter(Boolean).map(g => { const c = {n:g[0], x:g[1], z:g[2], r:g[0] === 'Forte da Colina' ? 36 : 28}; c.y = gY(c.x, c.z); c.far = Math.max(...WD.hq.map(H => Math.hypot(H.x - c.x, H.z - c.z))); return c; }); }; }
 // antena do radar gira
@@ -11677,7 +11884,7 @@ const WD_BK = ['cz', 'hz', 'own', 'contest', 'zt', 'ht', 'next', 'prev', 'zid', 
 const wdLead = () => typeof NET === 'undefined' || !NET.match || NET.host;
 const wdNet = () => typeof NET !== 'undefined' && !!NET.match;
 function wdSwap(fn){ const B = WD.B; if(!B) return; const sw = () => WD_BK.forEach(k => { const v = WD[k]; WD[k] = B[k]; B[k] = v; }); sw(); WD.inB = true; try{ return fn(); } finally { WD.inB = false; sw(); } }
-const wdTwo = () => !WAR ? 0 : frOn() ? 2 : BIGMAP === 'feijoada' ? 1 : 0;   // 2 = sempre, 1 = às vezes
+const wdTwo = () => !WAR ? 0 : frOn() || BIGMAP === 'metro' ? 2 : BIGMAP === 'feijoada' ? 1 : 0;   // 2 = sempre, 1 = às vezes
 function wdBOpen(){ wdSwap(() => { WD._oth = WD.B.cz; const c = wdPickZone(); WD.prev = null; WD.cz = c; WD.next = null; WD.zt = wdTwo() === 2 && !WD.bOpened ? WD.ZT/2 : 0; WD.zid++; WD.own = -1; WD.contest = false; wdHot(); wdPlaceVis(); });
   if(WD.bOpened) { banner('📍 Segunda zona aberta!', `Agora também vale <b>${WD.B.cz.n}</b>. Divida a tropa`, 2200); sfx('beep'); } WD.bOpened = true; WD.bOff = 0; }
 function wdBClose(){ const B = WD.B; if(!B || !B.cz) return; if(B.vis) Object.values(B.vis).forEach(o => world.remove(o)); B.cz = null; B.next = null; B.own = -1; WD.bOff = 0; say('📍 A segunda zona fechou: todo mundo pra ' + (WD.cz ? `<b>${WD.cz.n}</b>` : 'a zona'), true); }
@@ -11779,7 +11986,7 @@ const mmMapName = m => m === 'feijoada' ? 'Ilha Feijoada' : (BMN[m] || 'Ilha Fei
 function mmInfo(m){
   if(m.k === 'map' && ROUND_INFO[m.r]) return ['🎲', ROUND_INFO[m.r], `Uma prova só · ${NPL} feijões`];
   if(m.k === 'br') return ['🎯', 'Battle Royale · ' + (['', 'Solo', 'Dupla', 'Trio', 'Squad'][m.sq] || 'Solo'), mmMapName(BIGMAP) + ' · 100 feijões'];
-  if(m.k === 'war') return ['⚔️', 'Guerra de Times', mmMapName(['feijoada', 'front'].includes(BIGMAP) ? BIGMAP : 'feijoada') + ' · 4 tropas de 25'];
+  if(m.k === 'war') return ['⚔️', 'Guerra de Times', mmMapName(['feijoada', 'front', 'metro'].includes(BIGMAP) ? BIGMAP : 'feijoada') + ' · 4 tropas de 25'];
   const L = MM_BY[m.k] || MM_BY.full; return [L[1], L[2], L[3]()]; }
 function mmSave(m){ MM = m; try{ localStorage.setItem('feijao-modo', JSON.stringify(m)); }catch(e){} mmRender(); }
 function mmRender(){ const [ic, nm, sub] = mmInfo(MM); $('mmIc').textContent = ic; $('mmName').textContent = nm; $('mmSub').textContent = sub;
@@ -11792,7 +11999,7 @@ function mmPickRender(){ const k = MM.k, ae = document.activeElement, fa = ae &&
   const opt = (kk, ic, nm, sub, cls = '') => `<button class="mpo${cls}${k === kk ? ' on' : ''}" data-k="${kk}"><i>${ic}</i><span><b>${nm}</b><small>${sub}</small></span><em>${k === kk ? 'escolhido' : ''}</em></button>`;
   const chip = (at, v, txt, on) => `<button class="mpc${on ? ' on' : ''}" data-${at}="${v}">${txt}</button>`;
   const maps = [...document.querySelectorAll('#bigMap button')].map(b => [b.dataset.m, b.childNodes[0].textContent.trim()]);
-  const brMap = BIGMAP === 'front' ? 'feijoada' : BIGMAP, sq = MM.sq || mmSq(), warMap = BIGMAP === 'front' ? 'front' : 'feijoada';
+  const brMap = BIGMAP === 'front' ? 'feijoada' : BIGMAP, sq = MM.sq || mmSq(), warMap = ['front', 'metro'].includes(BIGMAP) ? BIGMAP : 'feijoada';
   $('mPickL').innerHTML =
     `<section class="mpcol"><h3>🏁 Provas</h3>${opt('full', '🏁', 'Partida completa', `${NPL > 40 ? 5 : NPL > 16 ? 4 : 3} provas sorteadas e a final`)}${opt('pts', '🏆', 'Modo Pontos', 'Todo mundo joga as 5 provas. Ganha quem somar mais')}
       ${opt('map', '🎲', 'Uma prova só', k === 'map' && ROUND_INFO[MM.r] ? `${ROUND_INFO[MM.r]} · clique pra trocar` : 'Escolha um dos mapas de prova')}
@@ -11802,7 +12009,7 @@ function mmPickRender(){ const k = MM.k, ae = document.activeElement, fa = ae &&
       <div class="mpg">Mapa</div><div class="mpms">${maps.filter(([m]) => m !== 'front').map(([m, nm]) => `<button class="mpo sub${k === 'br' && brMap === m ? ' on' : ''}" data-bm="${m}"><i>${nm.split(' ')[0]}</i><span><b>${nm.split(' ').slice(1).join(' ')}</b></span></button>`).join('')}</div>
       <div class="mpg">Com provas antes</div>${opt('big', '👑', 'Partida completa com 100', 'Corrida gigante, provas e a final no BR')}</section>` +
     `<section class="mpcol"><h3>⚔️ Mais modos</h3>${opt('war', '⚔️', 'Guerra de Times', '4 tropas de 25, zona de controle e loja da base')}
-      <div class="mpcs">${[['feijoada', 'Ilha Feijoada'], ['front', 'Front do Feijão']].map(([m, t]) => chip('wm', m, t, k === 'war' && warMap === m)).join('')}</div>
+      <div class="mpcs">${[['feijoada', 'Ilha Feijoada'], ['front', 'Front do Feijão'], ['metro', 'Metrópole']].map(([m, t]) => chip('wm', m, t, k === 'war' && warMap === m)).join('')}</div>
       ${opt('campo', '🔫', 'Campo de Tiro', 'Mesas com todos os itens, alvos e parkour')}${opt('test', '🧪', 'Teste de gameplay', 'Só você no mapa, sem bots e sem zona')}</section>`;
   let f = $('mPickF'); if(!f){ $('mPick').insertAdjacentHTML('beforeend', '<div class="mpf" id="mPickF"><span>Modo: <b id="mpSel"></b></span><button class="go" id="mpGo">Jogar</button></div>'); $('mpGo').onclick = () => { mmPick(false); mmGo(); }; }
   const [, nm, sub] = mmInfo(MM); $('mpSel').textContent = nm + ' · ' + sub;
@@ -11921,7 +12128,7 @@ const NET_MODES = [
   ['br2', 'Battle Royale Dupla', 'Times de 2 na ordem da sala'],
   ['br3', 'Battle Royale Trio', 'Times de 3 na ordem da sala'],
   ['br4', 'Battle Royale Squad', 'Times de 4 na ordem da sala']];
-const NET_MAPS = [['feijoada', 'Ilha Feijoada'], ['vale', 'Vale do Feijão'], ['serra', 'Serra Gelada'], ['lego', 'Cidade de Lego'], ['ilha', 'Ilha dos Tomates']].concat(typeof frHeight === 'function' ? [['front', 'Front do Feijão (só Guerra)']] : []);
+const NET_MAPS = [['feijoada', 'Ilha Feijoada'], ['vale', 'Vale do Feijão'], ['serra', 'Serra Gelada'], ['lego', 'Cidade de Lego'], ['ilha', 'Ilha dos Tomates']].concat(typeof mcHeight === 'function' ? [['metro', 'Metrópole Feijão']] : [], typeof frHeight === 'function' ? [['front', 'Front do Feijão (só Guerra)']] : []);
 const NET_POOL = [1, 3, 6, 9, 10, 11, 12, 13, 15, 21], NET_FINALS = [3, 15];   // provas que já funcionam online
 const netClient = () => NET.on && !NET.host;
 const netBR = () => !!NET.match && BIG && round === 20;
@@ -12604,7 +12811,7 @@ NET.lb = LBY;
 // O líder decide as bases, a zona, o placar e o fim. Cada PC cuida do próprio feijão (renascer, grãos, loja); os bots são do líder.
 // Veículo: quem dirige manda posição e vida (sem motorista, quem comprou; se ele saiu, o líder). Amigo da mesma tropa sobe de carona com E.
 NET_MODES.push(['war', 'Guerra de Times', '4 tropas de 25: zona de controle, loja na base e veículos']);
-const WN_MAPS = typeof frHeight === 'function' ? ['feijoada', 'front'] : ['feijoada', 'vale', 'ilha'];   // Guerra só na Ilha Feijoada e no Front do Feijão
+const WN_MAPS = typeof frHeight === 'function' ? ['feijoada', 'front'].concat(typeof mcHeight === 'function' ? ['metro'] : []) : ['feijoada', 'vale', 'ilha'];   // Guerra só na Ilha Feijoada, no Front do Feijão e na Metrópole
 const WN = {wt:{}, sq:[], set:null, zT:0, vT:0, vs:0, vc:0};
 const wnOn = () => WAR && !!NET.match && !NET.match.lobby && BIG && round === 20;
 const wnTeam = (id, k) => WN.wt[id] ?? (k % 4);
