@@ -3678,7 +3678,7 @@ function buildLanes(fn, n, w){
   solids = solids.filter(b => b.mesh || b.max.x - b.min.x > 0.35 || !seams.some(s => Math.abs((b.min.x + b.max.x)/2 - s) < 0.4));
 }
 // sorteia a prova na hora, pelo número de vivos (só as que aguentam essa quantidade)
-const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30];
+const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33];
 const ROUND_OFF = [8, 16, 17, 19]; // provas tiradas do jogo (Frutas, Apagão, Cabo de Guerra, Domínio)
 // Sorteio (parte 6): cada partida tem um roteiro de tipos. Começa com corrida (todo mundo junto),
 // depois mistura sobrevivência, times e rodadas do Round 6 (Ponte de Vidro, Salas) sem repetir o tipo seguido.
@@ -4648,7 +4648,7 @@ const LOOKS = {
   manha:{top:0x58b8f5, hor:0xd8f4ff, sun:0xfffbe8, si:0.66, hs:0xf0fbff, hg:0x7fa0c0, hi:0.55, off:[-10, 22, 14], dir:[-0.35, 0.32, 0.88], wc:0xf2fbff},
   tarde:{top:0x4a8ee0, hor:0xffe2b8, sun:0xffdcaa, si:0.7, hs:0xfff2e2, hg:0x9a7a9a, hi:0.54, off:[20, 16, -12], dir:[0.6, 0.16, -0.78], wc:0xfff8f0},
   rosa:{top:0x7a6ae0, hor:0xffc4da, sun:0xffd0dc, si:0.64, hs:0xffeef6, hg:0x9a84cc, hi:0.58, off:[-18, 16, -12], dir:[-0.6, 0.14, -0.78], wc:0xfff4f8}};
-const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde', 28:'rosa', 29:'tarde', 30:'dia'};
+const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde', 28:'rosa', 29:'tarde', 30:'dia', 31:'manha', 32:'dia', 33:'tarde'};
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
@@ -4727,7 +4727,7 @@ function buildField(color, stripe){
   [[-9, -16], [9, 16], [-16, 9], [16, -9], [0, -19.5], [0, 19.5]].forEach(([x, z]) => box(x - 1.2, x + 1.2, 0, 1.6, z - 1.2, z + 1.2, 0xff4fa3));
   robot = null;
 }
-const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde', 28:'Dança das Cadeiras', 29:'O Chão é Lava', 30:'Estoura-Balão'};
+const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde', 28:'Dança das Cadeiras', 29:'O Chão é Lava', 30:'Estoura-Balão', 31:'Pula-Corda Gigante', 32:'Descida de Paraquedas', 33:'Revezamento'};
 const RACE = r => r === 1 || r === 6 || r === 9 || r === 10 || r === 11 || r === 12 || r === 21;
 
 // Gangorras: corrida por gangorras que inclinam com o peso
@@ -5934,6 +5934,159 @@ function botBalloons(p, dt, inp){ if(!bl) return inp; const sk = p.skill || 0.8;
   // de frente pro atacante: vira pra encarar quem chega (protege os balões)
   const att = nearest(p, q => q.blN > 0 && q.blT === p); if(att && att.d < 3 && Math.random() < 0.5*sk){ p.face = Math.atan2(att.q.pos.x - p.pos.x, att.q.pos.z - p.pos.z); }
   if(d < 1.6 && back && p.pushCD <= 0 && T.blImm <= 0 && Math.random() < dt*(0.5 + sk*0.7)){ p.face = Math.atan2(T.pos.x - p.pos.x, T.pos.z - p.pos.z); inp.push = true; }
+  return inp; }
+
+// ---------- Provas novas (lote 2, pedido do Bruno 31/10): Pula-Corda Gigante (31), Descida de Paraquedas (32), Revezamento (33) ----------
+function l2Reset(){ players.forEach(p => { if(p.glide && round !== 20){ p.glide = false; } if(p.m && p.m.chute) p.m.chute.visible = false; if(p.rlBat){ p.m.g.remove(p.rlBat); p.rlBat = null; } p.jrCD = 0; p.pcS = 0; p.pcLand = null; p.rlSt = null; }); }
+const l2Wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+
+// ===== Pula-Corda Gigante (31): braços giram rentes ao chão em volta de um pilar. Pule na hora certa!
+// A corda pega = voa longe (e pode cair da plataforma). Fica mais rápido com o tempo e a borda vai caindo.
+let jr = null;
+function buildRope(n){ clearWorld(); const T = 2, N = [5, 7, 10][SZ], W = N*T, tiles = [];
+  for(let i = 0; i < 2*N; i++) for(let j = 0; j < 2*N; j++){ const x = -W + (i + 0.5)*T, z = -W + (j + 0.5)*T, ring = Math.max(Math.abs(i - N + 0.5), Math.abs(j - N + 0.5)) - 0.5;
+    tiles.push({b:box(x - T/2, x + T/2, -1.2, 0, z - T/2, z + T/2, (i + j) % 2 ? 0xffe9a8 : 0xffd06b), ring, f:0}); }
+  box(-1.3, 1.3, 0, 2.6, -1.3, 1.3, 0x6b4fd8); const top = mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.4, 20), mat(0xffd23f), world); top.position.y = 2.8;
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(500, 500), new THREE.MeshLambertMaterial({color:0x3ec7ff})); sea.rotation.x = -Math.PI/2; sea.position.y = -5; world.add(sea);
+  const k = [2, 2, 3][SZ], len = W*1.45, arms = [], wMax = 2*Math.PI/(k*1.15);
+  for(let a = 0; a < k; a++){ const g = new THREE.Group(); g.position.y = 0.45; world.add(g);
+    const rod = mesh(new THREE.CylinderGeometry(0.18, 0.18, len, 10), mat([0xff3b4e, 0x3e8bff, 0x2cc597][a]), g); rod.rotation.x = Math.PI/2; rod.position.z = len/2 + 1.3;
+    for(let s = 2; s < len; s += 2.4){ const st = mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.5, 10), mat(0xffffff), g); st.rotation.x = Math.PI/2; st.position.z = s; }
+    const tip = mesh(new THREE.SphereGeometry(0.35, 12, 10), mat(0xffd23f), g); tip.position.z = len + 1.3; arms.push({g, a:a/k*Math.PI*2}); }
+  jr = {W, N, T, tiles, arms, k, w:wMax*0.45, wMax, dir:1, t:0, keep:L1_KEEP(n), fallT:40, ring:N - 1, flip:false}; }
+function jrSpawn(alive){ const c = Math.ceil(Math.sqrt(alive.length)), st = Math.min(1.7, (2*jr.W - 4)/c); alive.forEach((p, k) => { let x = -(c - 1)*st/2 + (k % c)*st, z = -(c - 1)*st/2 + Math.floor(k/c)*st; if(Math.hypot(x, z) < 2.2){ const l = Math.hypot(x, z) || 1; x = x/l*2.4; z = z/l*2.4; } p.pos.set(x, 0, z); p.face = Math.atan2(x, z); p.jrCD = 0; p.jrJ = null; }); }
+// quanto tempo até o braço mais próximo chegar no ângulo do feijão
+function jrTime(p){ const th = Math.atan2(p.pos.x, p.pos.z); let best = 1e9; for(const A of jr.arms){ let d = (th - A.a)*jr.dir; d = ((d % (Math.PI*2)) + Math.PI*2) % (Math.PI*2); best = Math.min(best, d/jr.w); } return best; }
+function updateRope(dt){ if(!jr) return;
+  for(const t of jr.tiles) if(t.f > 0){ t.f += dt; if(t.b.mesh){ t.b.mesh.position.y = -0.6 - t.f*t.f*6; if(t.f > 3) t.b.mesh.visible = false; } }
+  if(R1.phase !== 'play'){ jr.arms.forEach(A => A.g.rotation.y = A.a); return; }
+  jr.t += dt; jr.w = Math.min(jr.wMax, jr.wMax*(0.45 + jr.t/85));
+  if(!jr.flip && jr.t > 30){ jr.flip = true; jr.dir = -1; banner('Mudou de lado!', 'Agora a corda gira pro outro lado', 1300); sfx('red'); }
+  jr.arms.forEach(A => { A.a += jr.w*jr.dir*dt; A.g.rotation.y = A.a; });
+  // a borda cai de tempos em tempos
+  if(jr.t > jr.fallT && jr.ring >= 2){ jr.fallT += 18; const r = jr.ring--; jr.tiles.forEach(t => { if(t.ring === r){ t.b.active = false; t.f = 0.001; } }); sfx('red'); banner('Cuidado!', 'A borda caiu', 1100); }
+  for(const p of players){ if(!p.alive || p.dying > 0) continue; p.jrCD = Math.max(0, (p.jrCD || 0) - dt); if(p.jrCD > 0 || p.pos.y > 0.66 || jr.t < 1.5) continue;
+    const r = Math.hypot(p.pos.x, p.pos.z); if(r < 1.4) continue; const th = Math.atan2(p.pos.x, p.pos.z);
+    for(const A of jr.arms){ if(Math.abs(l2Wrap(th - A.a))*r > 0.5) continue;
+      const tx = Math.cos(A.a)*jr.dir, tz = -Math.sin(A.a)*jr.dir, ox = p.pos.x/r, oz = p.pos.z/r, V = 7 + jr.w*r*0.5;
+      p.hitCD = 0; knock(p, tx*V + ox*5, 6, tz*V + oz*5, 0.8, 'bar'); p.jrCD = 1; if(near(p, 30)) puff(p.pos.x, 0.6, p.pos.z, 6, 0xffffff, 0.12, 2); sfxNear(p, 'hit', 30); break; } }
+  if(players.filter(p => p.alive).length <= jr.keep) endRound(); }
+const jrInfo = () => !jr ? '' : `Pule a corda! · Vivos ${players.filter(p => p.alive).length} · passam ${jr.keep}`;
+function botRope(p, dt, inp){ if(!jr) return inp; const sk = p.skill || 0.8, r = Math.hypot(p.pos.x, p.pos.z), safe = (jr.ring + 0.5)*jr.T;
+  // fica numa distância boa: longe do pilar e longe da borda
+  if(!p.jrGo || Math.random() < dt*0.25){ const a = Math.atan2(p.pos.x, p.pos.z) + rand(-0.5, 0.5), R = rand(2.6, Math.max(3, safe - 2.2)); p.jrGo = [Math.sin(a)*R, Math.cos(a)*R]; }
+  if(r > safe - 1.2) p.jrGo = [p.pos.x*0.6, p.pos.z*0.6];
+  pqGo(p, inp, p.jrGo[0], p.jrGo[1], 0.45);
+  const t = jrTime(p); if(p.jrJ === null || p.jrJ === undefined) p.jrJ = 0.32 + rand(-0.2, 0.2)*(1.4 - sk) + (Math.random() < 0.09*(1.3 - sk) ? rand(0.4, 0.7) : 0);
+  if(p.grounded && t < p.jrJ){ inp.jump = true; p.jrJ = null; }
+  return inp; }
+
+// ===== Descida de Paraquedas (32): todo mundo pula lá do alto. Passe por dentro dos anéis (dourado vale 3), abra o paraquedas
+// e pouse no alvo da ilha. Errou a ilha = mar. No fim, metade com mais pontos passa.
+let pc = null; const PC_GEO = {};
+function buildSky(n){ clearWorld(); const R = [14, 20, 27][SZ], H = 300, rings = [];
+  for(let z = -R; z < R; z += 2){ const zc = z + 1, hw = Math.sqrt(Math.max(0, R*R - zc*zc)); if(hw > 0.5) box(-hw, hw, -6, 0, z, z + 2, 0, {invisible:true}); }
+  const isl = mesh(new THREE.CylinderGeometry(R, R + 2.5, 6, 48), mat(0x7ee05a), world); isl.position.y = -3;
+  const sand = mesh(new THREE.CylinderGeometry(R + 2.6, R + 4, 1, 48), mat(0xffe3a3), world); sand.position.y = -3.4;
+  [[11, 0xff3b4e], [7, 0xffffff], [3, 0xff3b4e]].forEach(([r, c], k) => { const d = new THREE.Mesh(new THREE.CircleGeometry(r, 40), new THREE.MeshLambertMaterial({color:c})); d.rotation.x = -Math.PI/2; d.position.y = 0.02 + k*0.01; world.add(d); });
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshLambertMaterial({color:0x3ec7ff})); sea.rotation.x = -Math.PI/2; sea.position.y = -2.4; world.add(sea);
+  for(let k = 0; k < [5, 8, 12][SZ]; k++){ const a = k/[5, 8, 12][SZ]*Math.PI*2 + 0.3, x = Math.sin(a)*(R - 1.5), z = Math.cos(a)*(R - 1.5); box(x - 0.2, x + 0.2, 0, 3.4, z - 0.2, z + 0.2, 0x9a6b3c);
+    const f = mesh(new THREE.ConeGeometry(1.6, 1, 7), mat(0x2cc597), world); f.position.set(x, 3.6, z); }
+  const G = PC_GEO.n ? PC_GEO : Object.assign(PC_GEO, {n:new THREE.TorusGeometry(2.6, 0.2, 6, 26), g:new THREE.TorusGeometry(1.9, 0.22, 6, 22)});
+  const mN = new THREE.MeshBasicMaterial({color:0x3ec7ff}), mG = new THREE.MeshBasicMaterial({color:0xffd23f}), per = [3, 5, 8][SZ], RR = R + 9;
+  for(let y = H - 22; y > 22; y -= 11) for(let k = 0; k < per; k++){ const gold = Math.random() < 0.13, a = rand(0, Math.PI*2), r = Math.sqrt(Math.random())*RR, m = new THREE.Mesh(gold ? G.g : G.n, gold ? mG : mN);
+    m.rotation.x = Math.PI/2; m.position.set(Math.sin(a)*r, y, Math.cos(a)*r); world.add(m); rings.push({m, x:m.position.x, y, z:m.position.z, r:gold ? 1.9 : 2.6, v:gold ? 3 : 1, got:new Set()}); }
+  pc = {R, H, rings, keep:L1_KEEP(n), endT:null}; }
+function pcSpawn(alive){ alive.forEach(p => { const a = rand(0, Math.PI*2), r = Math.sqrt(Math.random())*(pc.R + 5); p.pos.set(Math.sin(a)*r, pc.H + rand(0, 8), Math.cos(a)*r); p.skyY = p.pos.y; p.pcY = p.pos.y;
+  p.glide = 'fall'; p.wantChute = false; p.chuteCD = 0; if(!p.m.chute) chute(p); p.m.chute.visible = false; p.pcS = 0; p.pcLand = null; p.pcT = null; p.pcJ = false; p.vel.set(0, 0, 0); p.face = Math.atan2(-p.pos.x, -p.pos.z); }); }
+// Espaço abre o paraquedas (e fecha de novo, enquanto estiver alto)
+function pcInput(p, inp){ const j = !!inp.jump, edge = j && !p.pcJ; p.pcJ = j;
+  if(R1.phase === 'play' && edge && p.glide === 'fall' && p.pos.y < p.skyY - 3) p.wantChute = true;
+  else if(R1.phase === 'play' && edge && p.glide === 'chute' && p.pos.y > 30){ p.glide = 'fall'; p.m.chute.visible = false; sfx('whoosh'); }
+  if(p.glide) inp.jump = false; return inp; }
+function pcLanded(p){ p.glide = false; if(p.m.chute) p.m.chute.visible = false; if(p.pcLand !== null) return; p.pcLand = R1.t; const d = Math.hypot(p.pos.x, p.pos.z), b = d < 3 ? 5 : d < 7 ? 3 : d < 11 ? 1 : 0; p.pcS += b;
+  if(b && near(p, 40)) ringFx(p.pos.x, 0.1, p.pos.z, b >= 5 ? 0xffd23f : 0xff3b4e, 3); if(!p.isBot) banner(tag(p) + (b >= 5 ? 'NO CENTRO!' : b ? 'Pousou no alvo!' : 'Pousou'), `${b ? '+' + b + ' · ' : ''}Total ${p.pcS} pontos`, 1500); sfxNear(p, b ? 'ding' : 'jump', 30); }
+function updateSky(dt){ if(!pc) return; pc.rings.forEach(g => g.m.rotation.z += dt*(g.v > 1 ? 2 : 0.6));
+  for(const p of players){ if(!p.alive || p.dying > 0) continue;
+    if(p.grounded){ if(p.glide || p.pcLand === null) pcLanded(p); continue; }
+    if(!p.glide) continue;
+    if(R1.phase !== 'play'){ p.vel.set(0, 0, 0); p.pos.y = p.skyY; continue; }
+    if(p.glide === 'fall'){ p.vel.y = Math.max(p.vel.y, -17);
+      if((p.pos.y < 16 && p.vel.y < 0) || p.wantChute){ p.wantChute = false; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
+    else p.vel.y = Math.max(p.vel.y, -5);
+    const y0 = p.pcY ?? p.pos.y, y1 = p.pos.y; p.pcY = y1;
+    for(const g of pc.rings){ if(g.y > y0 || g.y < y1 || g.got.has(p)) continue; if(Math.hypot(p.pos.x - g.x, p.pos.z - g.z) > g.r) continue; g.got.add(p); p.pcS += g.v;
+      if(!p.isBot){ sfx('ding'); say(`${g.v > 1 ? '⭐ Anel dourado' : 'Anel'} +${g.v} · total <b>${p.pcS}</b>`, true); g.m.material = g.m.material.clone(); g.m.material.color.setHex(0x7ee05a); } } }
+  if(R1.phase !== 'play') return;
+  const air = players.some(p => p.alive && p.dying <= 0 && p.pcLand === null);
+  if(!air && pc.endT === null) pc.endT = 2; if(pc.endT !== null){ pc.endT -= dt; if(pc.endT <= 0) endRound(); } }
+function pcEnd(){ if(!pc) return; const al = players.filter(p => p.alive).sort((a, b) => a.pcS - b.pcS || Math.random() - 0.5), cut = Math.max(0, al.length - pc.keep);
+  al.slice(0, cut).forEach(p => eliminate(p, `Fez só ${p.pcS} ponto${p.pcS === 1 ? '' : 's'} na descida`)); }
+const pcInfo = p => !pc ? '' : `${p && p.alive ? `Seus pontos ${p.pcS} · ` : ''}${p && p.glide === 'fall' ? 'Passe pelos anéis · Espaço abre o paraquedas' : p && p.glide === 'chute' ? 'Mire no centro do alvo!' : 'Esperando o pessoal pousar'} · passam ${pc.keep}`;
+function botSky(p, dt, inp){ if(!pc) return inp; const sk = p.skill || 0.8;
+  if(!p.glide){ if(p.grounded && Math.random() < dt*0.8) inp.jump = true; return inp; }
+  let tx = 0, tz = 0; const low = p.pos.y < 50;
+  if(!low){ if(!p.pcT || p.pcT.y > p.pos.y - 1 || p.pcT.got.has(p) || Math.random() < dt*0.2){ let best = null, bs = 1e9;
+      for(const g of pc.rings){ if(g.y > p.pos.y - 3 || g.got.has(p) || g.y < 40) continue; const t = (p.pos.y - g.y)/17, d = Math.hypot(g.x - p.pos.x, g.z - p.pos.z); if(d > t*15*0.8*sk + 1) continue;
+        const s = (p.pos.y - g.y) - g.v*6 + d*0.3 + rand(0, 6); if(s < bs){ bs = s; best = g; } } p.pcT = best; }
+    if(p.pcT){ tx = p.pcT.x; tz = p.pcT.z; } else { tx = p.pos.x*0.7; tz = p.pos.z*0.7; } }
+  else { if(!p.pcAim) p.pcAim = [rand(-1, 1)*7*(1.3 - sk), rand(-1, 1)*7*(1.3 - sk)]; tx = p.pcAim[0]; tz = p.pcAim[1]; }
+  const dx = tx - p.pos.x, dz = tz - p.pos.z, d = Math.hypot(dx, dz); if(d > 0.3){ const k = Math.min(1, d/3); inp.mx = dx/d*k; inp.mz = dz/d*k; }
+  return inp; }
+
+// ===== Revezamento (33): cada time tem uma pista. Leve o bastão até o próximo do seu time (pule as barreiras, cuidado com a lama).
+// Time que chegar por último sai.
+let rl = null;
+function buildRelay(n){ clearWorld(); const nT = R1.teams.length, sizes = R1.teams.map(t => players.filter(p => p.alive && p.team === t).length), legs = Math.max(1, Math.min([4, 6, 8][SZ], ...sizes)), LEG = 18, L = legs*LEG, LW = 6.4, x0 = -nT*LW/2, lanes = {};
+  const tint = c => new THREE.Color(c).lerp(new THREE.Color(0xffffff), 0.55).getHex();
+  R1.teams.forEach((t, i) => { const xl = x0 + i*LW, xr = xl + LW; box(xl, xr, -1, 0, -7, L + 9, tint(TEAMS[t].col)); lanes[t] = {t, x:(xl + xr)/2, cur:0, run:[], done:false, place:0, z:0}; });
+  for(let i = 0; i <= nT; i++){ const x = x0 + i*LW; box(x - 0.2, x + 0.2, 0, 1.3, -7, L + 9, 0xffffff); }
+  box(x0 - 0.2, -x0 + 0.2, 0, 1.3, -7.4, -7, 0xffffff);
+  const line = (z, c, h = 0.6) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(nT*LW, h), new THREE.MeshBasicMaterial({color:c})); m.rotation.x = -Math.PI/2; m.position.set(0, 0.03, z); world.add(m); };
+  for(let k = 0; k < legs; k++) line(k*LEG, 0xffd23f); for(let i = 0; i < 8; i++) line(L + 0.3 + i*0.6 - 0.3, i % 2 ? 0x222222 : 0xffffff, 0.6);
+  const hurd = [], steps = [], mud = [];
+  for(let k = 0; k < legs; k++){ const z0 = k*LEG + 3, kind = k % 3;
+    if(kind === 0){ hurd.push(z0 + 3, z0 + 9); }
+    else if(kind === 1){ mud.push([z0 + 1.5, z0 + 8.5]); hurd.push(z0 + 11); }
+    else { steps.push([z0 + 4, z0 + 6.5]); hurd.push(z0 + 11); } }
+  R1.teams.forEach((t, i) => { const xl = x0 + i*LW + 0.2, xr = xl + LW - 0.4;
+    hurd.forEach(z => { box(xl, xr, 0.55, 0.75, z - 0.12, z + 0.12, 0xff5ab4); [xl + 0.3, xr - 0.3].forEach(x => box(x - 0.08, x + 0.08, 0, 0.55, z - 0.08, z + 0.08, 0xffffff)); });
+    steps.forEach(([a, b]) => { box(xl, xr, 0, 1.1, a, b, 0x8a6fc1); });
+    mud.forEach(([a, b]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(xr - xl, b - a), new THREE.MeshLambertMaterial({color:0x7a5230})); m.rotation.x = -Math.PI/2; m.position.set((xl + xr)/2, 0.025, (a + b)/2); world.add(m); }); });
+  rl = {nT, legs, LEG, L, LW, lanes, hurd, steps, mud, place:0, endT:null}; }
+function rlBaton(p){ if(p.rlBat) return; const g = new THREE.Group(), c = mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.55, 10), mat(0xffd23f), g); c.rotation.x = Math.PI/2.4; g.position.set(0.45, 1.0, 0.25); p.m.g.add(g); p.rlBat = g; }
+function rlGive(lane, p, from){ if(from && from.rlBat){ from.m.g.remove(from.rlBat); from.rlBat = null; } rlBaton(p); lane.run[lane.cur] = p;
+  if(!p.isBot) banner(tag(p) + 'Pegou o bastão!', 'Corre! Pule as barreiras', 1200); else if(from && !from.isBot) banner(tag(from) + 'Passou o bastão!', 'Agora torça pelo time', 1100); sfxNear(p, 'ding', 30); }
+function rlSpawn(alive){ R1.teams.forEach(t => { const lane = rl.lanes[t], m = alive.filter(p => p.team === t).sort(() => Math.random() - 0.5), byS = [];
+    for(let s = 0; s < rl.legs; s++) byS.push([]); m.forEach((p, k) => byS[k % rl.legs].push(p));
+    byS.forEach((g, s) => { const h = g.find(p => !p.isBot); if(h){ g.splice(g.indexOf(h), 1); g.unshift(h); } lane.run[s] = g[0];
+      g.forEach((p, k) => { p.rlSt = s; const side = k === 0 ? 0 : (k % 2 ? -1 : 1)*(1.7 + 0.8*(Math.floor((k - 1)/2) % 2)), fw = k === 0 ? 1.4 : 1.0 + Math.floor((k - 1)/4)*1.1;
+        p.pos.set(lane.x + side, 0, s*rl.LEG + fw); p.face = 0; p.rlHome = [p.pos.x, p.pos.z]; }); });
+    rlBaton(lane.run[0]); }); }
+const rlScore = t => { const l = rl && rl.lanes[t]; return !l ? 0 : l.done ? rl.L + (rl.nT - l.place) : Math.floor(clamp(l.z, 0, rl.L)); };
+function updateRelay(dt){ if(!rl) return;
+  for(const t of R1.teams){ const lane = rl.lanes[t]; if(lane.done) continue; let r = lane.run[lane.cur];
+    if(!r || !r.alive){ const sub = players.find(p => p.alive && p.team === t && p.rlSt === lane.cur) || players.find(p => p.alive && p.team === t); if(!sub) continue; rlGive(lane, sub, r); r = sub; }
+    lane.z = Math.max(lane.z, r.pos.z);
+    if(R1.phase !== 'play') continue;
+    if(lane.cur < rl.legs - 1 && r.pos.z >= (lane.cur + 1)*rl.LEG - 0.6){ lane.cur++; const nx = lane.run[lane.cur] && lane.run[lane.cur].alive ? lane.run[lane.cur] : players.find(p => p.alive && p.team === t && p.rlSt === lane.cur) || r; rlGive(lane, nx, r); }
+    else if(lane.cur === rl.legs - 1 && r.pos.z >= rl.L){ lane.done = true; lane.place = ++rl.place; lane.z = rl.L; sfx(humans().some(h => h.team === t) ? 'win' : 'ding');
+      say(`Time <b>${TEAMS[t].name}</b> chegou em ${lane.place}º!`, true); if(rl.place >= rl.nT - 1 && rl.endT === null) rl.endT = 1.2; } }
+  for(const p of players){ if(!p.alive || p.dying > 0 || p.rlSt === null || p.rlSt === undefined) continue; const lane = rl.lanes[p.team]; if(!lane) continue;
+    // quem ainda não correu espera na área de troca do seu trecho
+    if(p.rlSt > lane.cur || (p.rlSt === lane.cur && lane.run[lane.cur] !== p && !lane.done)){ const zl = p.rlSt*rl.LEG; p.pos.z = clamp(p.pos.z, zl + 0.3, zl + 4.5); if(p.pos.z === zl + 4.5 && p.vel.z > 0) p.vel.z = 0; }
+    if(p.grounded) for(const [a, b] of rl.mud) if(p.pos.z > a && p.pos.z < b){ p.slow = Math.max(p.slow, 0.1); if(near(p, 25) && Math.random() < dt*6) puff(p.pos.x, 0.1, p.pos.z, 1, 0x7a5230, 0.1, 0.8); } }
+  if(rl.endT !== null && R1.phase === 'play'){ rl.endT -= dt; if(rl.endT <= 0) endRound(); } }
+const rlInfo = p => { if(!rl || !p || !rl.lanes[p.team]) return ''; const l = rl.lanes[p.team], me = l.run[l.cur] === p && !l.done;
+  return l.done ? `Seu time chegou em ${l.place}º!` : me ? `Você está com o bastão! Leve até ${l.cur < rl.legs - 1 ? 'o próximo do time' : 'a CHEGADA'} · trecho ${l.cur + 1}/${rl.legs}` : p.rlSt > l.cur ? `Espere o bastão: você corre o trecho ${p.rlSt + 1} · seu time está no ${l.cur + 1}/${rl.legs}` : `Torça! Seu time está no trecho ${l.cur + 1}/${rl.legs}`; };
+function botRelay(p, dt, inp){ if(!rl) return inp; const lane = rl.lanes[p.team]; if(!lane) return inp; const sk = p.skill || 0.8;
+  if(lane.run[lane.cur] !== p || lane.done){ // esperando ou já correu: fica no lugar e comemora
+    if(p.rlHome && p.rlSt >= lane.cur) pqGo(p, inp, p.rlHome[0], p.rlHome[1], 0.5); if(p.grounded && Math.random() < dt*(lane.done ? 2 : 0.3)) inp.jump = true; return inp; }
+  const goal = lane.cur < rl.legs - 1 ? (lane.cur + 1)*rl.LEG + 1 : rl.L + 3; pqGo(p, inp, lane.x + (p.rlOff || 0), goal, 1);
+  if(Math.random() < dt) p.rlOff = rand(-0.8, 0.8);
+  if(p.grounded){ const z = p.pos.z; if(p.rlJ === undefined || p.rlJ === null) p.rlJ = 1.2 + rand(-0.6, 0.6)*(1.4 - sk);
+    const ahead = rl.hurd.some(h => h - z > 0 && h - z < p.rlJ) || rl.steps.some(([a, b]) => a - z > 0 && a - z < p.rlJ*0.8);
+    if(ahead && Math.random() < dt*30*sk){ inp.jump = true; p.rlJ = null; } }
   return inp; }
 
 // Guerra de Tomate: battle royale. Cada tomate tira vida, a zona fecha e quem zerar a vida sai
@@ -10206,7 +10359,7 @@ let earn = null;
 const newEarn = () => ({coins:0, xp:0, done:false, res:null});
 function reward(c, x){ if(!earn || earn.done) return; earn.coins += Math.round(c*[0.7, 1, 1.4][DIFF]); earn.xp += x; }
 function rec(k, t){ const old = SAVE.st[k]; if(!old || t < old){ SAVE.st[k] = Math.round(t*10)/10; if(old) say(`<b>Novo recorde!</b> ${t.toFixed(1)}s`, true); } }
-const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
+const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33];
 const ACH = [
   ['a1', 'Primeira coroa', 'Vença uma partida completa', () => st('crowns') >= 1, 50],
   ['a2', 'Tricampeão', 'Ganhe 3 coroas', () => st('crowns') >= 3, 150],
@@ -10526,7 +10679,7 @@ function stepPlayer(p, dt, inp){
   if(control && inp.dive){ const fx = Math.sin(p.face), fz = Math.cos(p.face); p.vel.x = fx*12; p.vel.z = fz*12; p.vel.y = p.grounded ? 2 : Math.max(p.vel.y, 1); p.dive = 0.6; p.grounded = false; sfxNear(p, 'dive'); if(!p.isBot) bump('dives'); }
   if(control && inp.push && p.pushCD <= 0) doPush(p);
   if(control && inp.item && p.power && R1.phase === 'play') usePower(p);
-  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && ![27, 28, 29, 30].includes(round)) doGrab(p);
+  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && ![27, 28, 29, 30, 31, 32, 33].includes(round)) doGrab(p);
   if(p.dive > 0 && (p.grounded || p.dive > 0.3)) p.dive -= dt;
   if(p.grounded && p.ground && p.ground.kind === 'seesaw') p.pos.x -= Math.sin(p.ground.ang)*11*dt; // escorrega pro lado mais baixo
   p.vel.y += GRAV*dt;
@@ -10565,7 +10718,7 @@ function separate(){
 }
 
 // ---------- Bots ----------
-function botInput(p, dt){ const inp = botInput0(p, dt); if(![27, 28, 29, 30].includes(round)) botPower(p, dt, inp); return inp; }
+function botInput(p, dt){ const inp = botInput0(p, dt); if(![27, 28, 29, 30, 31, 32, 33].includes(round)) botPower(p, dt, inp); return inp; }
 function botInput0(p, dt){
   const inp = {mx:0, mz:0, jump:false, dive:false, push:false};
   if(R1.phase !== 'play' || p.done || !p.alive) return inp;
@@ -10588,6 +10741,9 @@ function botInput0(p, dt){
   if(round === 28) return botChairs(p, dt, inp);
   if(round === 29) return botLava(p, dt, inp);
   if(round === 30) return botBalloons(p, dt, inp);
+  if(round === 31) return botRope(p, dt, inp);
+  if(round === 32) return botSky(p, dt, inp);
+  if(round === 33) return botRelay(p, dt, inp);
   if(round === 20) return botShoot(p, dt, inp);
   if(round === 8) return botFruit(p, dt, inp);
   if(round === 4 || round === 5) return botTag(p, dt, inp);
@@ -10778,8 +10934,8 @@ function startGame(){
 function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round]) : null;
   if(PTS){ const back = players.filter(p => !p.alive).length; players.forEach(p => { p.alive = true; p.elT = 0; }); if(back && stage) say(`<b>${back}</b> feijões voltaram pra essa prova`, true); }
   const alive = players.filter(p => p.alive); SZ = szFor(alive.length); LX = [0]; LW = 14; RBIG = round === 1 && (BIG || SZ === 2); setTiles([[0, 0]]); TUPS = TAG_UPS; SPOTF = null; setNests(12.5);
-  if([7, 17, 18, 19, 25, 26, 27].includes(round) && alive.length < 4){ round = 2; plan[stage] = 2; }
-  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; pqReset(); pq = null; l1Reset(); dc = null; lv = null; bl = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
+  if([7, 17, 18, 19, 25, 26, 27, 33].includes(round) && alive.length < 4){ round = 2; plan[stage] = 2; }
+  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; pqReset(); pq = null; l1Reset(); dc = null; lv = null; bl = null; l2Reset(); jr = null; pc = null; rl = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
   alive.forEach(p => { p.item = false; p.passCD = 0; p.done = false; p.place = 0; p.vel.set(0,0,0); p.dive = 0; p.stun = 0; p.dying = 0; p.m.g.visible = true; p.m.g.scale.setScalar(1); p.redPos = null; });
   players.filter(p => !p.alive).forEach(p => p.m.g.visible = false);
   rev = null; players.forEach(p => { p.rev = false; p.revWait = 0; p.revUsed = false; p.card = false; p.cardUsed = false; p.stT = 0; }); R1.finished = 0; R1.t = 0; curLook = lookFor(round); setDark(false); mingle = null; tug = null; paint = null; zones = []; shots = []; hearts = []; hpBars = []; brZone = null; zoneP = null; plane = null; loot = []; drops = []; cars = []; players.forEach(p => p.car = null);
@@ -10809,6 +10965,15 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   } else if(round === 22){
     setupTeams(alive, 2); buildFut(alive.length); R1.timeLeft = fut.A.t; futSpawn(alive);
     banner('Futebol Arena', `${youTeamTxt()} Chute com F, mergulhe na bola pra bater forte e pule pra cabecear. A bola sobe nas paredes curvas! Pise nos círculos laranja pra correr mais. O time com menos gols sai!`, 3800);
+  } else if(round === 31){
+    buildRope(alive.length); R1.timeLeft = 150; jrSpawn(alive);
+    banner('Pula-Corda Gigante', `A corda gira rente ao chão: pule quando ela chegar! Se pegar, você voa longe. Passam ${jr.keep}.`, 3600);
+  } else if(round === 32){
+    buildSky(alive.length); R1.timeLeft = 75; pcSpawn(alive);
+    banner('Descida de Paraquedas', `Passe por dentro dos anéis (dourado vale 3) e pouse no centro do alvo. Espaço abre o paraquedas. Caiu no mar, sai! Passam ${pc.keep}.`, 3800);
+  } else if(round === 33){
+    setupTeams(alive, teamsN(alive.length)); buildRelay(alive.length); R1.timeLeft = [60, 80, 100][SZ]; rlSpawn(alive);
+    banner('Revezamento', `${youTeamTxt()} Leve o bastão até o próximo do seu time. Pule as barreiras! O time que chegar por último sai.`, 3800);
   } else if(round === 28){
     buildChairs(alive.length); R1.timeLeft = 999; dcSpawn(alive);
     banner('Dança das Cadeiras', `Dance enquanto a música toca. Quando parar, as cadeiras aparecem: sente rápido! Passam ${dc.keep}.`, 3600);
@@ -10891,8 +11056,8 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   $('hRound').textContent = BIG && single ? `${MAPNAME()} · ${(WAR ? 'Guerra de Times' : ['', 'Solo', 'Dupla', 'Trio', 'Squad'][BR_SQ])}` : single ? ROUND_INFO[round] : isFinal() ? 'Final · ' + ROUND_INFO[round] : `Prova ${stage+1} de ${plan.length - 1} · ${ROUND_INFO[round]}`; if(PTS && !single) $('hRound').textContent += ` · ${you().pts || 0} pts`; if(!BIG && players.length > 16) $('hRound').textContent += ` · ${SZ_NAME[SZ]}`;
   if(LX.length > 1){ const r0 = round, s0 = stage; setTimeout(() => { if(round === r0 && stage === s0) say(`Prova ${SZ_NAME[SZ]}: ${LX.length} pistas lado a lado. Nas áreas largas dá pra trocar de pista`, true); }, 3200); }
   if(RACE(round)){ R1.quota = Math.max(2, Math.ceil(alive.length*(BIG ? 0.6 : 0.65))); if(!single && !PTS && !BIG && stage === plan.length - 2) R1.quota = Math.min(R1.quota, 12); banner(ROUND_INFO[round], ({6:'Equilibre-se nas gangorras e', 9:'Suba até o topo e', 10:'Algumas portas quebram, outras não. Ache o caminho e', 11:'O chão escorrega! Faça as curvas com calma e', 12:'Cada trecho tem 3 caminhos. Escolha o seu e', 21:'Suba a torre! No meio tem 3 caminhos até o alto. Escolha o seu e'}[round] || '') + ` chegue entre os ${R1.quota} primeiros`, 2800); }
-  const yawOf = p => round === 22 || round === 25 || round === 26 ? (p.team === 'a' ? -Math.PI/2 : Math.PI/2) : round === 20 ? Math.atan2(p.pos.x, p.pos.z) : round === 17 ? (p.team === 'a' ? Math.PI : 0) : [7, 18, 19].includes(round) && TEAMS[p.team] ? Math.atan2(TEAMS[p.team].nest[0], TEAMS[p.team].nest[1]) : (round <= 2 || RACE(round) || round === 13) ? Math.PI : 0;
-  yaw = yawOf(you()); if(round === 20) pitch = 0.2; if(players[1]) cam2.yaw = yawOf(players[1]); cam2.pitch = pitch; R1.phase = 'intro'; $('light').hidden = true;
+  const yawOf = p => round === 22 || round === 25 || round === 26 ? (p.team === 'a' ? -Math.PI/2 : Math.PI/2) : round === 20 ? Math.atan2(p.pos.x, p.pos.z) : round === 17 ? (p.team === 'a' ? Math.PI : 0) : [7, 18, 19].includes(round) && TEAMS[p.team] ? Math.atan2(TEAMS[p.team].nest[0], TEAMS[p.team].nest[1]) : (round <= 2 || RACE(round) || round === 13 || round === 33) ? Math.PI : 0;
+  yaw = yawOf(you()); if(round === 20) pitch = 0.2; else if(round === 32) pitch = 1.05; else if(pitch > 0.95) pitch = 0.38; if(players[1]) cam2.yaw = yawOf(players[1]); cam2.pitch = pitch; R1.phase = 'intro'; $('light').hidden = true;
   PAL = null; themeDeco();
   players.forEach(p => { p.power = null; p.slow = 0; });
   setupItems();
@@ -10922,6 +11087,8 @@ function endRound(){ stopRev(); players.forEach(p => p.revWait = 0);
   else if(round === 19) elimLowest(zoneScore, 'Seu time fez menos pontos nas zonas');
   else if(round === 22) elimLowest(futScore, 'Seu time fez menos gols');
   else if(round === 27) pqEnd();
+  else if(round === 32) pcEnd();
+  else if(round === 33) elimLowest(rlScore, 'Seu time chegou por último no revezamento');
   else if(round === 26){ players.forEach(p => { if(p.pbF) pbDrop(p); }); elimLowest(pbRank, pb && pb.score.a === pb.score.b ? 'Empate nas bandeiras: seu time ficou menos tempo com a bandeira do outro' : 'Seu time trouxe menos bandeiras'); }
   else if(round === 25) elimLowest(qzScore, 'Seu time ficou com menos gente na quadra');
   else if(round === 4){ sfx('hit'); shake = 0.6; players.forEach(p => { if(p.alive && p.item){ p.item = false; eliminate(p, 'A batata explodiu na sua mão'); } }); }
@@ -10987,6 +11154,9 @@ function showResult(won){
     : round === 13 ? 'O vidro quebrou ou o tempo acabou na Ponte de Vidro. Dica: espere alguém testar a fileira da frente. Quando um vidro quebra, o outro é seguro.'
     : round === 14 ? 'Você ficou fora de uma sala com o número certo nas Salas. Dica: corra pra uma sala mais vazia assim que o número aparecer, e empurre quem sobrar (F).'
     : round === 15 ? 'O chão sumiu embaixo de você nos Blocos Caindo. Dica: não fique parado, fuja dos blocos piscando em vermelho e guarde um cantinho seguro.'
+    : round === 31 ? 'A corda te jogou longe. Dica: fique longe da borda e pule um pouquinho antes da corda chegar.'
+    : round === 32 ? 'Poucos pontos na descida. Dica: mire nos anéis logo abaixo de você, os dourados valem 3, e abra o paraquedas em cima do centro do alvo.'
+    : round === 33 ? 'Seu time chegou por último. Dica: pule as barreiras sem parar e passe direto pela lama.'
     : round === 28 ? 'Ficou sem cadeira. Dica: dance perto do meio, onde caem mais cadeiras, e empurre (F) quem chegar junto.'
     : round === 29 ? 'A lava te pegou. Dica: suba logo no começo, sempre pro meio do morro, e pule pros blocos mais altos.'
     : round === 30 ? 'Estouraram seus balões. Dica: não deixe ninguém chegar por trás e ataque quem está distraído.'
@@ -11201,7 +11371,7 @@ const SONGS = {
   menu:{bpm:96, bass:[131,0,0,0,110,0,0,0,87,0,0,0,98,0,0,0], lead:[659,0,784,0,659,0,523,0,587,0,523,0,494,0,392,0], wave:'triangle', kick:[0,10], snare:[], soft:true},
   battle:{bpm:124, bass:[110,0,110,131,0,110,0,98,87,0,87,104,0,87,98,0], lead:[440,0,523,587,0,523,440,0,349,0,440,523,0,659,587,0], wave:'sawtooth', kick:[0,3,8,10], snare:[4,12], minor:true},
 };
-const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky', 28:'bounce', 29:'epic', 30:'hyper'};
+const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky', 28:'bounce', 29:'epic', 30:'hyper', 31:'bounce', 32:'epic', 33:'hyper'};
 let mStep = 0, mNext = 0, mTimer = null;
 const mKick = (w, d) => { tone(150, 0.16, 'sine', 0.5, 0.3, w, d); noise(0.02, 0.08, 3000, 0, 'highpass', 1, w, d); };
 const mSnare = (w, d) => { noise(0.14, 0.22, 1900, 1200, 'bandpass', 0.8, w, d); tone(190, 0.08, 'triangle', 0.12, 0.7, w, d); };
@@ -11295,7 +11465,7 @@ function animateBean(p, dt){
   if(p.pushAnim > 0) m.arms.forEach(a => a.position.z += 0.45);
   if(R1.phase === 'podium' && p.rank === 0) m.arms.forEach((a, k) => a.position.y += 0.35 + Math.sin(clock*8 + k*3)*0.12);
   if(p.climb){ const s = Math.sin(p.climbPh || 0); m.arms.forEach((a, k) => { a.position.y = 1.2 + (k ? -s : s)*0.16; a.position.z = 0.3; }); m.legs[0].position.y = 0.2 + Math.max(0, -s)*0.16; m.legs[1].position.y = 0.2 + Math.max(0, s)*0.16; m.legs[0].position.z = m.legs[1].position.z = 0.12; }
-  m.hat.visible = [7, 17, 18, 19, 22, 25, 26].includes(round) && R1.phase !== 'podium' && R1.phase !== 'menu'; if(m.hat.visible) m.hat.material = mat((TEAMS[p.team] || TEAMS.a).col); if(round === 27 && pq){ m.hat.visible = !!p.pqHunt && R1.phase !== 'podium'; if(m.hat.visible) m.hat.material = mat(0xff3b4e); }
+  m.hat.visible = [7, 17, 18, 19, 22, 25, 26, 33].includes(round) && R1.phase !== 'podium' && R1.phase !== 'menu'; if(m.hat.visible) m.hat.material = mat((TEAMS[p.team] || TEAMS.a).col); if(round === 27 && pq){ m.hat.visible = !!p.pqHunt && R1.phase !== 'podium'; if(m.hat.visible) m.hat.material = mat(0xff3b4e); }
   if(m.cos.hat) m.cos.hat.visible = !m.hat.visible; if(m.spin) m.spin.rotation.y += dt*(p.grounded ? 5 : 22); if(!m.far){ if(m.skin) SKINS.tick(m, clock + p.i, dt); if(m.cosFx) SKINS.tickCos(m, clock + p.i); }
   m.bomb.visible = round === 4 && p.item; m.tail.visible = round === 5 && p.item;
   if(m.bomb.visible) m.spark.scale.setScalar(0.7 + Math.random()*0.8);
@@ -11315,12 +11485,12 @@ function animateBean(p, dt){
 }
 
 function teamHUD(){
-  const on = [7, 17, 18, 19, 22, 25, 26].includes(round) && R1.teams && R1.phase !== 'podium', bar = $('teamBar');
+  const on = [7, 17, 18, 19, 22, 25, 26, 33].includes(round) && R1.teams && R1.phase !== 'podium', bar = $('teamBar');
   bar.hidden = !on; if(!on){ teamHUD.last = ''; return false; }
   const hex = c => '#' + c.toString(16).padStart(6, '0');
   let sc, unit;
   if(round === 17){ const fa = tug ? tugForce('a') : 0, fb = tug ? tugForce('b') : 0, pa = Math.round(fa/(fa + fb + 0.01)*100); sc = {a:pa, b:100 - pa}; unit = 'força %'; }
-  else { const f = round === 26 ? pbScore : round === 25 ? qzScore : round === 22 ? futScore : round === 7 ? eggScore : round === 18 ? paintScore : zoneScore; sc = {}; R1.teams.forEach(t => sc[t] = f(t)); unit = round === 26 ? 'bandeiras' : round === 25 ? 'na quadra' : round === 22 ? 'gols' : round === 7 ? 'ovos' : round === 18 ? 'pisos' : 'pontos'; }
+  else { const f = round === 33 ? rlScore : round === 26 ? pbScore : round === 25 ? qzScore : round === 22 ? futScore : round === 7 ? eggScore : round === 18 ? paintScore : zoneScore; sc = {}; R1.teams.forEach(t => sc[t] = f(t)); unit = round === 33 ? 'metros' : round === 26 ? 'bandeiras' : round === 25 ? 'na quadra' : round === 22 ? 'gols' : round === 7 ? 'ovos' : round === 18 ? 'pisos' : 'pontos'; }
   const best = Math.max(...R1.teams.map(t => sc[t])), lead = R1.teams.filter(t => sc[t] === best).length === 1 && best > 0;
   let html = R1.teams.map(t => { const T = TEAMS[t], mine = humans().filter(h => h.team === t), alive = players.filter(p => p.alive && p.team === t).length;
     const me = mine.length ? (twoP ? mine.map(h => h.name).join(' + ') : 'VOCÊ') : '';
@@ -11354,6 +11524,9 @@ function updateHUD(){
   else if(round === 28){ $('hInfo').textContent = dcInfo(you()); }
   else if(round === 29){ $('hInfo').textContent = lvInfo(); }
   else if(round === 30){ $('hInfo').textContent = blInfo(you()); }
+  else if(round === 31){ $('hInfo').textContent = jrInfo(); }
+  else if(round === 32){ $('hInfo').textContent = pcInfo(you()); }
+  else if(round === 33){ $('hInfo').textContent = rlInfo(you()); }
   else if(round === 13){ $('hInfo').textContent = `Atravessaram ${players.filter(p => p.alive && p.done).length} · Vivos ${alive}`; }
   else if(round === 14 && mingle){ $('hInfo').textContent = mingle.state === 'run' ? `Grupos de ${mingle.n}! · Vivos ${alive}` : `Vivos ${alive} · Rodada ${Math.min(mingle.cycle + 1, mingle.cycles)} de ${mingle.cycles}`; }
   else if(round === 5){ $('hInfo').textContent = `Com rabo ${players.filter(p => p.alive && p.item).length}/${alive}` + (twoP ? humans().filter(h => h.alive).map(h => ` · ${h.name} ${h.item ? 'tem' : 'NÃO tem'}`).join('') : you().alive ? (you().item ? ' · você tem' : ' · você NÃO tem') : ''); }
@@ -11387,7 +11560,7 @@ function tick(dt){
   R1.t += dt;
   if(R1.phase === 'intro' && R1.t > 2.8){ R1.phase = 'count'; R1.t = 0; countN = 4; }
   if(R1.phase === 'count'){ const n = 3 - Math.floor(R1.t); if(n !== countN && n >= 1){ countN = n; banner(String(n), '', 800); sfx('beep'); } if(R1.t >= 3){ R1.phase = 'play'; R1.t = 0; banner('Vai!', '', 700); sfx('go'); if(round === 16){ setDark(true); banner('Apagão!', 'Empurre e não caia', 1200); } if(round === 2){ lightT = 0; light = 'green'; } } }
-  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 27) updatePique(dt); if(round === 28) updateChairs(dt); if(round === 29) updateLava(dt); if(round === 30) updateBalloons(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
+  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 27) updatePique(dt); if(round === 28) updateChairs(dt); if(round === 29) updateLava(dt); if(round === 30) updateBalloons(dt); if(round === 31) updateRope(dt); if(round === 32) updateSky(dt); if(round === 33) updateRelay(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
   if(R1.phase === 'play'){
     R1.timeLeft -= dt; if(round === 2) updateLight(dt);
     if(round === 4){
@@ -11409,7 +11582,7 @@ function tick(dt){
   const playing = R1.phase === 'play' || R1.phase === 'end';
   for(const p of players){
     if(!p.alive && !p.dying && !p.rev) continue;
-    const inp0 = p.rev ? revInput(p) : playing && p.alive ? (p.isBot ? botInput(p, dt) : playerInput(p)) : {mx:0, mz:0}, inp = p.rev ? inp0 : round === 17 ? tugInput(p, inp0, dt) : round === 20 ? shootInput(p, inp0) : inp0;
+    const inp0 = p.rev ? revInput(p) : playing && p.alive ? (p.isBot ? botInput(p, dt) : playerInput(p)) : {mx:0, mz:0}, inp = p.rev ? inp0 : round === 17 ? tugInput(p, inp0, dt) : round === 20 ? shootInput(p, inp0) : round === 32 ? pcInput(p, inp0) : inp0;
     if(!p.isBot && !playing) Object.assign(Q[p.i], {jump:false, dive:false, push:false, item:false, grab:false});
     const vyBefore = p.vel.y, wasG = p.grounded;
     stepPlayer(p, dt, inp); if(round === 17 && R1.phase !== 'podium') tugPin(p);
@@ -11425,12 +11598,12 @@ function tick(dt){
       if(p.grounded && p.ground && p.ground.kind !== 'mover' && p.ground.kind !== 'lift'){ if(LX.length > 1) p.lx = laneAt(p.pos.x); for(const [th, rz, rx, ry] of course.cps){ if(p.pos.z > th){ if(rz > p.cp.z){ p.cp.set(0, ry || 0, rz); p.cpX = rx; } break; } } }
       if(p.pos.y < -5){ if(!p.isBot || Math.random() < (players.length > 16 ? 0.05 : 0.3)) say(`${nm(p)} caiu na água!`, !p.isBot); DBG.falls[Math.round(p.pos.z/4)*4] = (DBG.falls[Math.round(p.pos.z/4)*4]||0) + 1; { const g = round === 6 ? solidAt(p.lx || 0, p.cp.z + 0.6, 0, 2) : null; p.pos.set((g && g.kind === 'seesaw' ? g.cx : RBIG ? RTX[raceTrack(p)] : (p.lx || 0)) + rand(-p.cpX, p.cpX), p.cp.y + 0.5, p.cp.z + rand(-0.5, 0.5)); } p.vel.set(0, 0, 0); p.stun = 0; p.dive = 0; if(p.isBot && Math.random() < 0.4) p.route = null; if(!p.isBot){ sfx('dive'); bump('falls'); } }
       if(!p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) { finishPlayer(p); if(R1.finished >= R1.quota) endRound(); }
-    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30].includes(round)){
+    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33].includes(round)){
       if(p.pos.y < -4){ p.alive = false; p.elT = R1.t; elimOrder.push(p); say(`${nm(p)} caiu e está fora!`, true); p.m.g.visible = false; sfxNear(p, 'zap', 40);
         if(!p.isBot){ bump('falls'); banner(tag(p) + 'Caiu!', `${twoP ? p.name : 'Você'} foi parar na água`, 2000); sfx('lose'); if(!anyHumanAlive()) setTimeout(() => showResult(false), 2200); } }
       if(round === 13 && p.alive && !p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) finishPlayer(p);
       if(R1.phase === 'play' && round === 13 && players.every(q => !q.alive || q.done)) endRound();
-      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22, 27, 28, 29, 30].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
+      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22, 27, 28, 29, 30, 31, 32, 33].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
     } else {
       if(!p.done && p.pos.z > 130){ p.done = true; if(!p.isBot){ banner(tag(p) + 'Passou!', 'Agora é só esperar', 1600); sfx('win'); reward(8, 20); rec('t2', R1.t); } }
       if(R1.phase === 'play' && players.every(q => !q.alive || q.done)) endRound();
@@ -11659,6 +11832,9 @@ const MAPS = [
   [24, 'Bombas caem do céu: fuja dos anéis vermelhos. A explosão arremessa e racha os pisos', '#ff6f3c'],
   [25, 'Em times: queimada. Pegue a bola e queime os adversários. Do cemitério dá pra voltar', '#3ec7ff'],
   [26, 'Em times: pegue a bandeira do outro time e leve pra sua base. No seu lado, F pega o invasor', '#38d16a'],
+  [31, 'A corda gira rente ao chão: pule na hora certa ou voa longe', '#ffb23f'],
+  [32, 'Pule lá do alto, passe pelos anéis e pouse no centro do alvo (Espaço abre o paraquedas)', '#3ec7ff'],
+  [33, 'Revezamento: leve o bastão até o próximo do seu time pulando as barreiras', '#2cc597'],
   [28, 'A música para e as cadeiras aparecem: sente rápido! Quem ficar em pé sai', '#ff5ab4'],
   [29, 'A lava sobe: pule de bloco em bloco até o alto do morro', '#ff6f3c'],
   [30, 'Três balões nas costas: chegue por trás de alguém e aperte F pra estourar um. Sem balão, sai', '#3ec7ff'],
@@ -11667,9 +11843,9 @@ const MAPS = [
   [20, 'Battle royale: jogue tomates, a zona fecha e quem zerar a vida sai', '#ff3b4e'],
   [3, 'A final: seja o último em cima da arena', '#ffd23f'],
 ];
-const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 28:'surv', 29:'surv', 30:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
+const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 28:'surv', 29:'surv', 30:'surv', 31:'surv', 32:'surv', 33:'team', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
 const CAT_NAME = {race:'Corrida', surv:'Sobrevivência', team:'Equipe', crab:'Crab Game', final:'Final'};
-const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈', 28:'🪑', 29:'🌋', 30:'🎈'};
+const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈', 28:'🪑', 29:'🌋', 30:'🎈', 31:'🪢', 32:'🪂', 33:'🏃'};
 function renderMaps(cat='all'){
   $('maps').innerHTML = '';
   MAPS.filter(([id]) => !ROUND_OFF.includes(id)).filter(([id]) => cat === 'all' || (cat === 'final' ? FINALS.includes(id) : MAP_CAT[id] === cat)).forEach(([id, desc, col]) => { const b = document.createElement('button'); b.className = 'map' + (cat === 'final' || id === 3 ? ' final' : ''); b.id = 'map-' + id;
