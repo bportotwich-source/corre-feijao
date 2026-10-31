@@ -9495,7 +9495,7 @@ function shootInput(p, inp){
     if(inp.push && p.useT > 0) p.useT = 0;
     if(inp.item && !p.glide && !p.climb){ if(p.ride) wdUnride(p, p.ride.heli && p.ride.y - gY(p.ride.x, p.ride.z) > 5); else if(p.car) leaveCar(p); else { const L = nearLoot(p, 1.8, L => !!WPN[L.k] && !boxLock(L, p)); if(L) pickUp(p, L); else if(p === players[0] && !twoP && nearBox(p)){ const B = nearBox(p); if(B.chest) chestOpen(B); bagToggle(true); } else { const c = nearCar(p); if(c) enterCar(p, c); } } } inp.item = false;
     if(p.car){ inp.nade = false; inp.push = false; }
-    if(p.i === 0 && curW(p).auto && (keys.KeyF || mouseHeld)) inp.push = true;
+    if(p.i === 0 && curW(p).auto && !(p.inv && p.inv[p.sel] && p.inv[p.sel].semi) && (keys.KeyF || mouseHeld)) inp.push = true;
     if(p.i === 0 && !twoP){ const hd = mouseHeld || !!keys.KeyF; if(p.nadeLock && !hd) p.nadeLock = false;
       if(p.nadeAim && !p.nadeLock){ if(hd){ if(!p.nadeCook) sfx('click'); p.nadeCook = true; } else if(p.nadeCook){ p.nadeCook = false; nadeGo(p); } }
       if(p.nadeAim || p.nadeLock) inp.push = false; } }
@@ -10196,7 +10196,7 @@ function pickUp(p, L){
 }
 const nearLoot = (p, R, pred) => { let best = null, bd = R; const m = lootGrid(), x0 = Math.floor((p.pos.x - R)/LGC), x1 = Math.floor((p.pos.x + R)/LGC), z0 = Math.floor((p.pos.z - R)/LGC), z1 = Math.floor((p.pos.z + R)/LGC);
   for(let cx = x0; cx <= x1; cx++) for(let cz = z0; cz <= z1; cz++){ const cell = m.get(cx*65536 + cz); if(cell) for(const L of cell){ if(Math.abs(L.pos.y - p.pos.y) > 1.3 || (pred && !pred(L))) continue; const d = Math.hypot(L.pos.x - p.pos.x, L.pos.z - p.pos.z); if(d < bd){ bd = d; best = L; } } } return best; };
-function kickCam(p, w){ const a = p.ads ? 0.6 : 1, kv = w.kick*a*rand(0.85, 1.15), kh = w.kick*a*(w.auto ? 0.45 : 0.25)*(rand(-1, 1) + (w.auto ? 0.35 : 0));
+function kickCam(p, w){ const a = p.ads ? 0.5 : 1, kv = w.kick*a*rand(0.85, 1.15), kh = w.kick*a*(w.auto ? 0.45 : 0.25)*(rand(-1, 1) + (w.auto ? 0.35 : 0));
   pitch = clamp(pitch - kv, p.ads ? -0.55 : 0.05, 1.1); yaw -= kh; p.recV = Math.min(0.3, (p.recV || 0) + kv); p.recT = 0; VM.kick = Math.min(1.4, VM.kick + 0.5 + w.kick*12); }
 function recoverCam(p){ p.recT = (p.recT || 0) + 1/60; if(!(p.recV > 0) || p.recT < 0.09) return; const r = Math.max(0.0006, p.recV*0.12); const d = Math.min(r, p.recV); p.recV -= d; pitch = clamp(pitch + d*0.85, p.ads ? -0.55 : 0.05, 1.1); }
 function fireW(p, dir){ p.lastShot = clock; p.shotFx = true;
@@ -11587,7 +11587,7 @@ addEventListener('keydown', e => {
     if(brK && ['KeyC', 'ControlLeft'].includes(e.code)) Q[0].slide = true; else if(brK && e.code === 'KeyQ'){} else if(brK && e.code === 'Digit5') whHold('q'); else if(brK && e.code === 'KeyV') Q[0].turbo = true;
     else if(brK && e.code === 'KeyX') Q[0].prone = true; else if(brK && e.code === 'KeyZ') Q[0].dive = true; else if(brK && e.code.startsWith('Shift')){}
     else if((twoP ? ['ShiftLeft','KeyC','KeyQ'] : ['ShiftLeft','ShiftRight','KeyC','KeyQ']).includes(e.code)) Q[0].dive = true;
-    if(e.code === 'KeyR') Q[0].reload = true; if(e.code === 'KeyY') zoomFlip(players[0]);
+    if(e.code === 'KeyR') Q[0].reload = true; if(e.code === 'KeyY') zoomFlip(players[0]); if(e.code === 'KeyU') fireMode(players[0]);
     if(['Digit1', 'Digit2', 'Digit3'].includes(e.code)) Q[0].slot = +e.code[5] - 1; if(['Digit1', 'Digit2', 'Digit3', 'KeyH'].includes(e.code) && players[0]) { players[0].nadeAim = false; players[0].nadeCook = false; }
     if(e.code === 'KeyF') Q[0].push = true; if(e.code === 'KeyE') Q[0].item = true; if(e.code === 'KeyG') Q[0].grab = true; if(brK && e.code === 'KeyT') whHold('t'); if(brK && e.code === 'Digit4') Q[0].nadeNext = true; if(brK && e.code === 'KeyH') Q[0].holster = true; if(brK && e.code === 'KeyP'){ CFG.fpp = !CFG.fpp; Platform.save('feijao-cfg', CFG); banner(CFG.fpp ? 'Primeira pessoa' : 'Terceira pessoa', 'Aperte P pra trocar', 800); }
     if(twoP){ if(['Enter','NumpadEnter','Numpad0'].includes(e.code)) Q[1].jump = true; if(['ShiftRight','Numpad1'].includes(e.code)) Q[1].dive = true; if(['ControlRight','Numpad2','Slash'].includes(e.code)) Q[1].push = true; if(['End','Numpad3'].includes(e.code)) Q[1].item = true; if(['PageDown','Numpad5'].includes(e.code)) Q[1].grab = true; }
@@ -12396,6 +12396,7 @@ const SIGHT_K = {reddot:'reddot', holo:'holo', mira2x:'mira2x', luneta:'mira4x',
 const sightOf = it => { const a = (it && it.att) || {}, k = Object.keys(SIGHT_K).find(k => a[k]); return k ? SIGHT_K[k] + (ZVAR[k] && it.zx ? 'z' : '') : 'ferro'; };
 // mirando: Y ou rodinha troca o zoom da luneta 1-6x / vira a lupa 3x do red dot
 let _zfT = 0;
+function fireMode(p){ const it = p && p.inv && p.inv[p.sel]; if(!BIG || !it || !WPN[it.k] || !WPN[it.k].auto || WPN[it.k].flame) return; it.semi = !it.semi; sfx('pickup'); if(!twoP) banner(it.semi ? '1 bala por vez' : 'Automático', 'U troca o modo de tiro', 700); }
 function zoomFlip(p){ const it = p && p.inv && p.inv[p.sel], a = it && it.att; if(!BIG || !a || !(a.lpvo || a.rd3x) || clock - _zfT < 0.22) return false; _zfT = clock; it.zx = !it.zx; sfx('pickup'); if(!twoP) banner(it.zx ? (a.lpvo ? '6x' : '3x') : '1x', '', 450); return true; }
 function armaLoad(){ if(!THREE.GLTFLoader || typeof ARMA_GLB === 'undefined') return; const L = new THREE.GLTFLoader(), lib = {}, b64 = x => fjB64(x).buffer, seen = new Set();
   const fix = o => o.traverse(m => { const M = m.material; if(!M || seen.has(M)) return; seen.add(M); M.color.convertLinearToSRGB(); if(M.emissive) M.emissive.convertLinearToSRGB(); // o jogo não converte a cor na saída
@@ -12411,7 +12412,7 @@ function reticleTex(kind){ const c = document.createElement('canvas'); c.width =
     g.strokeStyle = '#ff2a3a'; g.shadowColor = '#ff3040'; g.shadowBlur = z ? 4 : 12; g.lineWidth = z ? 2.5 : 5; g.beginPath(); g.arc(m, m, z ? 22 : 64, 0, 7); g.stroke(); g.fillStyle = '#ff2a3a'; g.beginPath(); g.arc(m, m, z ? 3 : 6, 0, 7); g.fill(); g.shadowBlur = 0;
     if(z){ g.strokeStyle = '#120a1e'; g.lineWidth = 2; for(let i=1;i<5;i++){ const w = i % 2 ? 14 : 9; g.beginPath(); g.moveTo(m - w, m + 40 + i*24); g.lineTo(m + w, m + 40 + i*24); g.stroke(); } }
     vig(z ? 180 : 215); }
-  else if(kind === 'rd3xz'){ g.fillStyle = '#ff2a3a'; g.shadowColor = '#ff4050'; g.shadowBlur = 26; g.beginPath(); g.arc(m, m, 16, 0, 7); g.fill(); g.fillStyle = '#ffd0d4'; g.shadowBlur = 0; g.beginPath(); g.arc(m, m, 6, 0, 7); g.fill(); vig(190); }
+  else if(kind === 'rd3xz'){ g.fillStyle = '#ff2a3a'; g.shadowColor = '#ff4050'; g.shadowBlur = 6; g.beginPath(); g.arc(m, m, 4, 0, 7); g.fill(); g.fillStyle = '#ffd0d4'; g.shadowBlur = 0; g.beginPath(); g.arc(m, m, 1.5, 0, 7); g.fill(); vig(190); }
   else if(kind === 'reddot'){ g.fillStyle = '#ff2a3a'; g.shadowColor = '#ff4050'; g.shadowBlur = 22; g.beginPath(); g.arc(m, m, 14, 0, 7); g.fill(); g.fillStyle = '#ffd0d4'; g.shadowBlur = 0; g.beginPath(); g.arc(m, m, 5, 0, 7); g.fill(); }
   else if(kind === 'holo'){ g.strokeStyle = '#ff2a3a'; g.fillStyle = '#ff2a3a'; g.shadowColor = '#ff2a3a'; g.shadowBlur = 14; g.lineWidth = 8; g.beginPath(); g.arc(m, m, 104, 0, 7); g.stroke(); g.beginPath(); g.arc(m, m, 11, 0, 7); g.fill(); }
   else { g.strokeStyle = '#120a1e'; g.lineWidth = kind === 'mira8x' ? 2 : 2.5; g.beginPath(); g.moveTo(0, m); g.lineTo(512, m); g.moveTo(m, 0); g.lineTo(m, 512); g.stroke();
@@ -12491,8 +12492,8 @@ function vmStep(c, me, dt){ const sK = c.scK || 0, it = me.inv && me.inv[me.sel]
   const mv = Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6); VM.bob += dt*(6 + mv*5); VM.up = fp && !me.ads ? 0 : Math.min(1, (VM.up || 0) + dt*(WI(it).ads || 1)/0.16); const u = Math.min(VM.up, fp ? c.adsK || 0 : sK), e = u*u*(3 - 2*u), b = mv*(1 - e*0.7); // subida da arma até o olho
   g.visible = !(g.userData.sn && e > 0.92 && me.relT <= 0); VM.e = e; VM.zs = VM.lens ? (e > 0.8 ? VM.lens.Z : 1) : 0;
   const rb = VM.bl ? VM.rel : 0, rn = VM.rel - rb; // Blender: a arma desce um tico e deita de lado (gira em volta dela mesma) pra mostrar o pente
-  g.position.set(0.22*(1 - e) + Math.sin(VM.bob)*0.008*b - rb*0.02, -0.3*(1 - e) - Math.abs(Math.cos(VM.bob))*0.01*b - rn*0.07 + rb*0, 0.06*(1 - e) + VM.kick*0.045 - rb*0.2);
-  g.rotation.set(VM.kick*0.07 - rn*0.3 - 0.18*(1 - e)*e, 0.12*(1 - e), -0.22*(1 - e) + rn*0.35);
+  g.position.set(0.22*(1 - e) + Math.sin(VM.bob)*0.008*b - rb*0.02, -0.3*(1 - e) - Math.abs(Math.cos(VM.bob))*0.01*b - rn*0.07 + rb*0, 0.06*(1 - e) + VM.kick*0.045*(1 - 0.85*e) - rb*0.2);
+  g.rotation.set(VM.kick*0.07*(1 - 0.8*e) - rn*0.3 - 0.18*(1 - e)*e, 0.12*(1 - e), -0.22*(1 - e) + rn*0.35);
   VM.fp = fp; if(fp){ const h = 1 - e; g.position.x += FP_VM[0]*h; g.position.y += FP_VM[1]*h; g.position.z += FP_VM[2]*h; g.rotation.y -= 0.1*h; g.rotation.z += 0.2*h; }
   VM.run = (VM.run || 0) + ((fp && me.sprinting && !me.ads && !(me.relT > 0) ? 1 : 0) - (VM.run || 0))*Math.min(1, dt*9); if(VM.run > 0.01){ const r = AE(VM.run); g.position.x += 0.02*r; g.position.y -= 0.03*r; g.rotation.x += 0.08*r; g.rotation.y += 0.22*r; g.rotation.z -= 0.06*r; }
   if(g.children[0]){ const q = AE(rb); g.children[0].rotation.order = 'YZX'; g.children[0].rotation.set(0.1*q, Math.PI + 0.55*q, 1.1*q); }
