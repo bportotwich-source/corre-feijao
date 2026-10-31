@@ -9360,7 +9360,7 @@ function leanStep(p, dt){ const ok = p.i === 0 && !twoP && p.alive && !p.down &&
 function leanV(p, h){ const L = p.leanK || 0, o = Math.sin(L*LEAN_A)*h; return new V3(-Math.cos(p.face)*o, -(1 - Math.cos(L*LEAN_A))*h, Math.sin(p.face)*o); }
 function leanD(q, P){ if(!q.leanK) return Math.hypot(q.pos.x - P.x, q.pos.z - P.z); const v = leanV(q, Math.max(0, P.y - q.pos.y)); return Math.hypot(q.pos.x + v.x - P.x, q.pos.z + v.z - P.z); }
 function aimDir(p, pt, w){
-  const v = w ? w.v : SHOT_V, gr = w ? w.g : SHOT_G, from = p.pos.clone().add(new V3(0, 1.32, 0)).add(leanV(p, 1.32)), d = pt.clone().sub(from), t = Math.hypot(d.x, d.z)/v;
+  const v = w ? w.v : SHOT_V, gr = w ? w.g : SHOT_G, from = p.pos.clone().add(new V3(0, 1.32, 0)).add(leanV(p, 1.32)), d = pt.clone().sub(from), dh = Math.hypot(d.x, d.z), dg = w && w.drag, t = dg ? (Math.exp(Math.min(6, dg*dh/v)) - 1)/dg : dh/v;
   if(!(w && w.hs)) d.y -= 0.5*gr*t*t; return d.normalize();
 }
 function crossRay(c){
@@ -9481,6 +9481,7 @@ function hurt(q, by, dmg, why, noShield, head){
     if(by && !by.isBot && by !== q){ sfx('kill'); if(by.i === 0 && !twoP) killCall(q, by); }
     const mine = !q.isBot || (by && !by.isBot); if(!BIG || mine || Math.random() < 0.3) say(by ? (BIG ? `${nm(by)} ${by.inv ? curW(by).ic : '🍅'} eliminou ${nm(q)}` : `${nm(by)} acertou o último tomate em ${nm(q)}!`) : `${nm(q)} ficou fora da zona!`, mine); eliminate(q, why); }
 }
+const _trT = new V3();
 function updateShoot(dt){
   if(BIG && round === 20){ stepDown(dt); stepStations(dt); }
   updateSmokes(dt);
@@ -9488,12 +9489,18 @@ function updateShoot(dt){
   for(let i=shots.length - 1;i>=0;i--){ const s = shots[i];
     if(s.w && s.w.boom){ if(boomStep(s, dt)){ world.remove(s.m); shots.splice(i, 1); } continue; }
     if(s.w && s.w.flame){ const u = 1 + s.t*5; s.m.scale.setScalar(u); }
-    s.vel.y += (s.w ? s.w.g : SHOT_G)*dt; s.pos.addScaledVector(s.vel, dt); s.t += dt; s.m.position.copy(s.pos); if(s.spin){ s.m.rotation.x += dt*9; s.m.rotation.z += dt*4; }
-    const fl = TER ? Math.max(FJ_WL - 0.3, TER.h(s.pos.x, s.pos.z)) : 0.05; let gone = s.t > (s.w && s.w.life || 3) || s.pos.y < fl;
+    const spd = s.vel.length(), nst = Math.max(1, Math.ceil(spd*dt/0.25)), hst = dt/nst, drg = s.w && s.w.drag ? Math.exp(-s.w.drag*hst) : 1; let gone = false, fl = 0;
+    const mx = s.pos.x + s.vel.x*dt/2, mz = s.pos.z + s.vel.z*dt/2, rr = spd*dt/2 + 1.6, near = nst > 2 ? players.filter(q => Math.abs(q.pos.x - mx) < rr && Math.abs(q.pos.z - mz) < rr) : players;
+    for(let st = 0; st < nst && !gone; st++){
+    s.vel.y += (s.w ? s.w.g : SHOT_G)*hst; if(drg < 1) s.vel.multiplyScalar(drg); s.pos.addScaledVector(s.vel, hst); s.t += hst;
+    fl = TER ? Math.max(FJ_WL - 0.3, TER.h(s.pos.x, s.pos.z)) : 0.05; gone = s.t > (s.w && s.w.life || 3) || s.pos.y < fl;
     if(!gone) for(const b of solidsAt(s.pos.x, s.pos.z)){ if(b.active && b.mesh && b.kind !== 'ramp' && s.pos.x > b.min.x && s.pos.x < b.max.x && s.pos.y > b.min.y && s.pos.y < b.max.y && s.pos.z > b.min.z && s.pos.z < b.max.z){ gone = true; if(b.wallHP) hitWall(b, s.w ? s.w.dmg*(s.w.splash ? 2 : 1) : 7); break; } }
-    if(!gone) for(const q of players){ if(q === s.owner || !q.alive || q.dying > 0 || mates(q, s.owner) || q.iframe > 0) continue;
+    if(!gone) for(const q of near){ if(q === s.owner || !q.alive || q.dying > 0 || mates(q, s.owner) || q.iframe > 0) continue;
       if(leanD(q, s.pos) < 0.62 && s.pos.y > q.pos.y && s.pos.y < q.pos.y + bodyH(q)){ if(s.w && (s.w.splash || s.w.smoke || s.w.util)){ gone = true; break; } q.hitCD = 0; if(!(s.w && s.w.flame)) knock(q, s.vel.x*(s.w ? 0.04 : 0.1), 2.5, s.vel.z*(s.w ? 0.04 : 0.1), 0.3, 'tomate');
         if(!s.owner.isBot) bump('targets'); const hd = !!s.w && s.pos.y > q.pos.y + headY(q); if(s.w && s.w.kb && !s.w.flame){ q.vel.x += s.vel.x/s.w.v*s.w.kb; q.vel.z += s.vel.z/s.w.v*s.w.kb; q.vel.y = Math.max(q.vel.y, 3); q.stun = Math.max(q.stun, 0.3); } if(s.w && s.w.flame){ q.burnT = 2.4; q.burnBy = s.owner; } hurt(q, s.owner, s.w ? Math.round(s.w.dmg*(hd ? 1.5 : 1)) : BIG ? 7 : BR_DMG, s.w ? `${nm(s.owner)} te pegou com ${s.w.name}${hd ? ' (na cabeça!)' : ''}` : `${nm(s.owner)} te acertou o último tomate`, false, hd); gone = true; break; } }
+    }
+    s.m.position.copy(s.pos); if(s.spin){ s.m.rotation.x += dt*9; s.m.rotation.z += dt*4; }
+    if(s.tr){ const sp = s.vel.length(); s.m.scale.set(1, 1, Math.max(1, Math.min(60, sp*dt*0.9/(2*s.w.r)))); _trT.copy(s.pos).add(s.vel); s.m.lookAt(_trT); }
     if(gone && s.w && s.w.flame){ world.remove(s.m); shots.splice(i, 1); continue; }
     if(gone && s.w && s.w.util){ useUtil(s); world.remove(s.m); shots.splice(i, 1); continue; }
     if(gone && s.t < (s.w && s.w.life || 3)){ let hb = null; if(s.pos.y >= fl) for(const b of solidsAt(s.pos.x, s.pos.z)){ if(b.active && b.mesh && b.kind !== 'ramp' && s.pos.x > b.min.x - 0.05 && s.pos.x < b.max.x + 0.05 && s.pos.y > b.min.y - 0.05 && s.pos.y < b.max.y + 0.05 && s.pos.z > b.min.z - 0.05 && s.pos.z < b.max.z + 0.05){ hb = b; break; } }
@@ -9538,24 +9545,24 @@ function updateShoot(dt){
 const WPN = {
   // tomate: o básico de sempre. cereja: rajada de perto, fraca e espalhada. ervilha: chumbo de perto. milho: rápido, forte e preciso de média distância
   // abóbora: zoom forte, dano enorme, 1 tiro por vez e recarga demorada. coco: explode em área
-  pistol:{name:'Pistola de Tomate', ic:'🍅', rar:0, dmg:9, cd:0.42, v:34, g:-9, n:1, spr:0.012, ammo:Infinity, col:0xff3b4e, r:0.17, rng:26, mag:12, rel:1.1, kb:0.6, kick:0.012},
-  smg:{name:'Metralhadora de Cereja', ic:'🍒', rar:0, dmg:6, cd:0.09, v:40, g:-9, n:1, spr:0.05, ammo:90, col:0xb0002a, r:0.12, auto:true, rng:20, mag:30, rel:1.7, kb:0.3, kick:0.006},
-  shotgun:{name:'Escopeta de Ervilha', ic:'🫛', rar:0, dmg:10, cd:0.95, v:30, g:-9, n:7, spr:0.12, ammo:15, col:0x38d16a, r:0.12, life:0.45, rng:9, mag:5, rel:2.4, kb:1.6, kick:0.03},
-  rifle:{name:'Rifle de Milho', ic:'🌽', rar:1, dmg:16, cd:0.2, v:72, g:-3, n:1, spr:0.013, ammo:75, col:0xffd23f, r:0.14, auto:true, rng:36, mag:25, rel:2.0, kb:0.5, kick:0.009},
-  sniper:{name:'Sniper de Abóbora', ic:'🎃', rar:2, dmg:85, cd:1.2, v:120, g:-1, n:1, spr:0, ammo:8, col:0xff9f1c, r:0.22, rng:70, mag:1, rel:3.2, kb:7, kick:0.06, noscope:0.07},
-  bazooka:{name:'Bazuca de Coco', ic:'🥥', rar:3, dmg:55, cd:2.0, v:26, g:-9, n:1, spr:0, ammo:4, col:0x8a5a2b, r:0.32, splash:3.6, rng:24, mag:1, rel:2.8, kb:0, kick:0.04},
+  pistol:{name:'Pistola de Tomate', ic:'🍅', rar:0, dmg:8, cd:0.24, v:110, g:-9.8, n:1, spr:0.012, ammo:Infinity, col:0xff3b4e, r:0.17, rng:26, mag:12, rel:1.1, kb:0.6, kick:0.012, drag:0.35},
+  smg:{name:'Metralhadora de Cereja', ic:'🍒', rar:0, dmg:6, cd:0.075, v:120, g:-9.8, n:1, spr:0.05, ammo:120, col:0xb0002a, r:0.12, auto:true, rng:20, mag:30, rel:1.7, kb:0.3, kick:0.005, drag:0.45},
+  shotgun:{name:'Escopeta de Ervilha', ic:'🫛', rar:0, dmg:10, cd:0.8, v:110, g:-9.8, n:7, spr:0.12, ammo:15, col:0x38d16a, r:0.12, life:0.15, rng:9, mag:5, rel:2.4, kb:1.6, kick:0.03, drag:1.6},
+  rifle:{name:'Rifle de Milho', ic:'🌽', rar:1, dmg:10, cd:0.09, v:230, g:-9.8, n:1, spr:0.012, ammo:90, col:0xffd23f, r:0.14, auto:true, rng:36, mag:30, rel:2.0, kb:0.5, kick:0.006, drag:0.2},
+  sniper:{name:'Sniper de Abóbora', ic:'🎃', rar:2, dmg:85, cd:1.4, v:300, g:-9.8, n:1, spr:0, ammo:8, col:0xff9f1c, r:0.22, rng:70, mag:1, rel:3.2, kb:7, kick:0.06, noscope:0.07, drag:0.1},
+  bazooka:{name:'Bazuca de Coco', ic:'🥥', rar:3, dmg:55, cd:2.0, v:40, g:-5, n:1, spr:0, ammo:4, col:0x8a5a2b, r:0.32, splash:3.6, rng:24, mag:1, rel:2.8, kb:0, kick:0.04},
   // banana: vai e volta pra mão (acerta na ida e na volta), nunca acaba. uva: pente enorme, mas pesa (anda mais devagar). pimenta: chama curtinha que queima
   banana:{name:'Bumerangue de Banana', ic:'🍌', rar:1, dmg:24, cd:0.35, v:26, g:0, n:1, spr:0.008, ammo:Infinity, col:0xffe14a, r:0.2, rng:18, mag:1, rel:0, kb:1.4, kick:0.01, boom:true, life:3},
-  lmg:{name:'Metralhadora de Uva', ic:'🍇', rar:1, dmg:7, cd:0.1, v:46, g:-6, n:1, spr:0.04, ammo:150, col:0x7b3fb5, r:0.13, auto:true, rng:26, mag:60, rel:3.4, kb:0.35, kick:0.007, heavy:0.85},
+  lmg:{name:'Metralhadora de Uva', ic:'🍇', rar:1, dmg:6, cd:0.08, v:210, g:-9.8, n:1, spr:0.04, ammo:180, col:0x7b3fb5, r:0.13, auto:true, rng:26, mag:60, rel:3.4, kb:0.35, kick:0.006, heavy:0.85, drag:0.22},
   flame:{name:'Lança-chamas de Pimenta', ic:'🌶️', rar:2, dmg:3, cd:0.07, v:15, g:3, n:2, spr:0.08, ammo:160, col:0xff6a1a, r:0.16, auto:true, rng:8, mag:50, rel:2.6, kb:0.08, kick:0.002, life:0.5, flame:true},
   // armas novas (31/10): jabuticaba = revólver de 6, forte e lento. abacate = pistolão pesado. caju = fuzil semiautomático entre o milho e a abóbora
   // grão-de-bico = cano duplo, 2 tiros e abre pra recarregar. limão = submetralhadora rapidinha. cana = besta silenciosa com flecha em arco bem curvo
-  revolver:{name:'Revólver de Jabuticaba', ic:'🫐', rar:1, dmg:22, cd:0.55, v:44, g:-8, n:1, spr:0.01, ammo:36, col:0x4a1d4f, r:0.15, rng:30, mag:6, rel:2.2, kb:1.0, kick:0.03},
-  deagle:{name:'Pistolão de Abacate', ic:'🥑', rar:2, dmg:27, cd:0.5, v:48, g:-7, n:1, spr:0.014, ammo:35, col:0x5a8a2a, r:0.16, rng:30, mag:7, rel:1.8, kb:1.2, kick:0.045},
-  caju:{name:'Fuzil de Caju', ic:'🍎', rar:2, dmg:34, cd:0.38, v:95, g:-2, n:1, spr:0.006, ammo:40, col:0xff5a2a, r:0.14, rng:55, mag:10, rel:2.6, kb:1.0, kick:0.03},
-  grao:{name:'Escopeta de Grão-de-bico', ic:'🫘', rar:1, dmg:12, cd:0.28, v:30, g:-9, n:9, spr:0.14, ammo:14, col:0xd9b26a, r:0.12, life:0.4, rng:8, mag:2, rel:2.2, kb:2.0, kick:0.04},
-  limao:{name:'Submetralhadora de Limão', ic:'🍋', rar:0, dmg:5, cd:0.065, v:40, g:-9, n:1, spr:0.06, ammo:120, col:0x7ed957, r:0.11, auto:true, rng:18, mag:35, rel:1.6, kb:0.25, kick:0.005},
-  besta:{name:'Besta de Cana', ic:'🏹', rar:2, dmg:70, cd:1.4, v:55, g:-14, n:1, spr:0, ammo:10, col:0xe9e2b0, r:0.1, rng:40, mag:1, rel:1.9, kb:2.5, kick:0.02, sil:true},
+  revolver:{name:'Revólver de Jabuticaba', ic:'🫐', rar:1, dmg:22, cd:0.4, v:120, g:-9.8, n:1, spr:0.01, ammo:36, col:0x4a1d4f, r:0.15, rng:30, mag:6, rel:2.2, kb:1.0, kick:0.03, drag:0.35},
+  deagle:{name:'Pistolão de Abacate', ic:'🥑', rar:2, dmg:27, cd:0.35, v:140, g:-9.8, n:1, spr:0.014, ammo:35, col:0x5a8a2a, r:0.16, rng:30, mag:7, rel:1.8, kb:1.2, kick:0.045, drag:0.3},
+  caju:{name:'Fuzil de Caju', ic:'🍎', rar:2, dmg:28, cd:0.25, v:260, g:-9.8, n:1, spr:0.006, ammo:40, col:0xff5a2a, r:0.14, rng:55, mag:10, rel:2.6, kb:1.0, kick:0.03, drag:0.15},
+  grao:{name:'Escopeta de Grão-de-bico', ic:'🫘', rar:1, dmg:12, cd:0.18, v:110, g:-9.8, n:9, spr:0.14, ammo:14, col:0xd9b26a, r:0.12, life:0.14, rng:8, mag:2, rel:2.2, kb:2.0, kick:0.04, drag:1.6},
+  limao:{name:'Submetralhadora de Limão', ic:'🍋', rar:0, dmg:5, cd:0.06, v:110, g:-9.8, n:1, spr:0.06, ammo:140, col:0x7ed957, r:0.11, auto:true, rng:18, mag:35, rel:1.6, kb:0.25, kick:0.005, drag:0.5},
+  besta:{name:'Besta de Cana', ic:'🏹', rar:2, dmg:70, cd:1.4, v:75, g:-9.8, n:1, spr:0, ammo:10, col:0xe9e2b0, r:0.1, rng:40, mag:1, rel:1.9, kb:2.5, kick:0.02, sil:true, drag:0.05},
 };
 // raridade de cada arma que cai no chão: mais rara = mais dano, recarga mais rápida, pente maior e mais precisa
 const RMUL = [{d:1, r:1, m:1, s:1}, {d:1.1, r:0.92, m:1.1, s:0.9}, {d:1.2, r:0.84, m:1.2, s:0.8}, {d:1.32, r:0.75, m:1.3, s:0.7}];
@@ -9999,7 +10006,7 @@ function fireW(p, dir){ p.lastShot = clock; p.shotFx = true;
   p.bloom = Math.min(0.09, (p.bloom || 0) + w.spr*0.7 + 0.004);
   for(let k=0;k<w.n;k++){ const d = dir.clone(); if(sp){ d.x += rand(-sp, sp); d.y += rand(-sp, sp)*0.7; d.z += rand(-sp, sp); d.normalize(); }
     if(w.hs) hitscan(p, from, d, w);
-    else { const m = w.boom ? boomProto().clone() : w.flame ? new THREE.Mesh(shotGeo(w.r), FLAME_M[k % 3]) : new THREE.Mesh(shotGeo(w.r), mat(w.col)); m.position.copy(from); world.add(m); shots.push({pos:from.clone(), vel:d.multiplyScalar(w.v), m, owner:p, t:0, w, hit:w.boom ? new Set() : null}); } }
+    else { const m = w.boom ? boomProto().clone() : w.flame ? new THREE.Mesh(shotGeo(w.r), FLAME_M[k % 3]) : new THREE.Mesh(shotGeo(w.r), mat(w.col)); m.position.copy(from); world.add(m); shots.push({pos:from.clone(), vel:d.multiplyScalar(w.v), m, owner:p, t:0, w, hit:w.boom ? new Set() : null, tr:w.v > 60 && !w.flame && !w.boom}); } }
   if(!p.m.far && !w.sil && !w.flame && !w.boom) puff(from.x, from.y, from.z, 1, 0xfff3a0, 0.13, 0.4);
   if(p.isBot) sfxAt(p.pos, 'w_' + it.k, (it.k === 'sniper' || it.k === 'bazooka' ? 80 : 50)*(w.sil ? 0.35 : 1)); else { sfx('w_' + it.k); if(p.i === 0 && !twoP) kickCam(p, w); }
   p.face = Math.atan2(dir.x, dir.z); p.pushAnim = 0.25;
