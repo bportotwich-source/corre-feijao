@@ -1221,6 +1221,118 @@ body.wdOn #brTop .bp.mode{display:none}
 function fjB64(s){ const b = atob(s), n = b.length, u = new Uint8Array(n); for(let i = 0; i < n; i++) u[i] = b.charCodeAt(i); return u; }
 </script>
 <script>
+/* paraquedas novo (pedido do Bruno 31/10): asa de gomos (ram-air) com bocas abertas na frente, costuras,
+   estabilizadores nas pontas, cordas em cascata até 4 tirantes presos no arnês dos ombros, linhas de freio até as mãos,
+   tecido que tremula na borda de trás e abre inflando. Origem nos pés do feijão, frente = +Z (igual ao antigo). */
+(function(){
+const T = THREE, V3 = T.Vector3, AS = window.ASA = {U:{value:0}, geo:{}};
+const CY = 3.95, RR = 3.3, PH = 0.62, NC = 9, SEGU = 5, SEGV = 9;      // altura do meio da asa, raio do arco, meia abertura (rad), gomos
+const LE = 0.86, TE = -0.62;                                              // borda de ataque (frente) e de fuga (trás), no meio
+const RISER = [[-0.36, 1.76, 0.07], [-0.36, 1.76, -0.09], [0.36, 1.76, 0.07], [0.36, 1.76, -0.09]]; // topo dos tirantes (esq frente/trás, dir frente/trás)
+const SHO = [[-0.31, 1.3, 0.04], [-0.31, 1.3, -0.08], [0.31, 1.3, 0.04], [0.31, 1.3, -0.08]];      // fivela no ombro
+const HAND = [[-0.45, 1.58, 0.1], [0.45, 1.58, 0.1]];                                               // batoques do freio (mãos)
+// junta peças num geometry só com cor por face (cópia do Kit do BRE, que fica fechado lá dentro)
+const _m = new T.Matrix4(), _q = new T.Quaternion(), _e = new T.Euler(), _k = new T.Color();
+class Kit { constructor(){ this.parts = []; }
+  add(geo, col, p, r, s){ this.parts.push({geo, col, p:p || [0, 0, 0], r:r || [0, 0, 0], s:s === undefined || s === 0 ? [1, 1, 1] : typeof s === 'number' ? [s, s, s] : s}); return this; }
+  build(){ const pos = [], nor = [], colr = [];
+    for(const P of this.parts){ const g = P.geo.index ? P.geo.toNonIndexed() : P.geo.clone(), a = g.attributes.position;
+      _k.setHex(P.col); for(let i=0;i<a.count;i++) colr.push(_k.r, _k.g, _k.b);
+      _m.compose(new V3(...P.p), _q.setFromEuler(_e.set(...P.r)), new V3(...P.s)); g.applyMatrix4(_m); pos.push(...a.array); nor.push(...g.attributes.normal.array); }
+    const out = new T.BufferGeometry(); out.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); out.setAttribute('normal', new T.Float32BufferAttribute(nor, 3)); out.setAttribute('color', new T.Float32BufferAttribute(colr, 3));
+    out.computeBoundingSphere(); return out; } }
+const smooth = x => x*x*(3 - 2*x);
+// perfil da asa (v 0 = frente, 1 = trás): em cima bojudo, embaixo quase reto; a frente fica aberta (boca do gomo)
+const yUp = v => 0.06 + 0.27*Math.pow(Math.sin(Math.PI*Math.min(1, (v + 0.12)/1.12)), 0.9)*(1 - 0.35*v);
+const yLo = v => -0.06 + 0.04*Math.sin(Math.PI*v)*(1 - v);
+// ponto da asa: u -1..1 (envergadura), v 0..1 (corda), y local (espessura) -> mundo do grupo, já curvado no arco
+function P(u, v, y, out){ const ph = u*PH, c = 1 - 0.14*u*u, z = (LE*c + (TE*c - LE*c)*v) + 0.06*u*u, r = RR + y;
+  return out.set(Math.sin(ph)*r, CY - RR + Math.cos(ph)*r, z); }
+function lum(c){ const k = new T.Color(c); return 0.3*k.r + 0.59*k.g + 0.11*k.b; }
+function shade(c, f){ const k = new T.Color(c); k.multiplyScalar(f); return k.getHex(); }
+function build(color){
+  const light = lum(color) > 0.82, alt = light ? 0x2f3a8f : 0xfff6e8, dark = shade(light ? 0x2f3a8f : color, 0.42);
+  // gomos: cor, branco, cor... com o do meio e os das pontas na cor (fica com cara de asa de BR)
+  const cellCol = i => (i === 2 || i === 6) ? alt : color;
+  const pos = [], col = [], fl = [], tmp = new V3(), tmp2 = new V3(), _c = new T.Color();
+  function patch(grid, nu, nv, colF, flF, lo){ // grid[i][j] = V3 ; vira triângulos com normais suaves só dentro do pedaço
+    const g = new T.BufferGeometry(), p = [], idx = [], cc = [], ff = [];
+    for(let i=0;i<=nu;i++) for(let j=0;j<=nv;j++){ const q = grid[i][j]; p.push(q.x, q.y, q.z); _c.setHex(colF(i/nu, j/nv)); cc.push(_c.r, _c.g, _c.b); ff.push(flF(i/nu, j/nv)); }
+    for(let i=0;i<nu;i++) for(let j=0;j<nv;j++){ const a = i*(nv + 1) + j, b = a + nv + 1; idx.push(a, b, a + 1, b, b + 1, a + 1); }
+    g.setIndex(idx); g.setAttribute('position', new T.Float32BufferAttribute(p, 3)); g.computeVertexNormals();
+    g.setAttribute('color', new T.Float32BufferAttribute(cc, 3)); g.setAttribute('aFl', new T.Float32BufferAttribute(ff, 1)); g.setAttribute('aLo', new T.Float32BufferAttribute(new Array(ff.length).fill(lo || 0), 1)); pos.push(g.toNonIndexed()); }
+  const flap = (u, v) => smooth(Math.max(0, (v - 0.55)/0.45))*0.9 + Math.abs(u)*0.25;
+  for(let c=0;c<NC;c++){ const u0 = -1 + 2*c/NC, u1 = -1 + 2*(c + 1)/NC, base = cellCol(c);
+    for(const top of [true, false]){ const grid = [];
+      for(let i=0;i<=SEGU;i++){ const a = i/SEGU, u = u0 + (u1 - u0)*a, bil = Math.sin(Math.PI*a); grid.push([]);
+        for(let j=0;j<=SEGV;j++){ const v = j/SEGV, tv = Math.sin(Math.PI*Math.min(1, v*1.05)); // o gomo estufa entre as costelas
+          const y = top ? yUp(v) + 0.05*bil*(0.4 + 0.6*tv) : yLo(v) - 0.035*bil*tv;
+          // borda de trás recortada: entre as costelas a fuga recua um pouco
+          const vv = j === SEGV ? v - 0.035*bil : v; grid[i].push(P(u, vv, y, new V3())); } }
+      patch(grid, SEGU, SEGV, (a, v) => { const seam = Math.min(a, 1 - a) < 0.07 || v > 0.965; let h = top ? base : shade(base, 0.96);
+        if(top && seam) h = shade(base, 0.8); if(top && v > 0.2 && v < 0.26 && (c === 0 || c === NC - 1)) h = dark; return h; }, (a, v) => flap(u0 + (u1 - u0)*a, v), top ? 0.12 : 1); }
+    // boca do gomo (frente aberta): fundo escuro recuado + bordinha
+    const g2 = []; for(let i=0;i<=SEGU;i++){ const a = i/SEGU, u = u0 + (u1 - u0)*a, bil = Math.sin(Math.PI*a); g2.push([]);
+      for(let j=0;j<=3;j++){ const t = j/3, y = yLo(0) - 0.035*bil*0 + (yUp(0) + 0.05*bil*0.4 - yLo(0))*t; g2[i].push(P(u, 0.09, y, new V3())); } }
+    patch(g2, SEGU, 3, () => dark, () => 0, 0.3); }
+  // costelas aparecendo na boca (paredes entre os gomos, na frente)
+  for(let r=0;r<=NC;r++){ const u = -1 + 2*r/NC, g3 = [];
+    for(let i=0;i<=1;i++){ g3.push([]); for(let j=0;j<=3;j++){ const t = j/3, v = i ? 0.09 : 0.0, y = yLo(v) + (yUp(v) - yLo(v))*t; g3[i].push(P(u, v, y, new V3())); } }
+    patch(g3, 1, 3, () => r === 0 || r === NC ? color : alt, () => 0, 0.6); }
+  // estabilizadores: abas triangulares penduradas nas pontas
+  for(const s of [-1, 1]){ const g4 = [], a = P(s, 0.25, yLo(0.25), new V3()), b = P(s, 0.8, yLo(0.8), new V3()), tip = P(s*1.04, 0.62, -0.62, new V3());
+    for(let i=0;i<=2;i++){ g4.push([]); for(let j=0;j<=3;j++){ const t = j/3, top = new V3().lerpVectors(a, b, t), d = new V3().lerpVectors(top, tip, i/2*(1 - Math.abs(t - 0.62)*0.9)); g4[i].push(d); } }
+    patch(g4, 2, 3, () => shade(color, 0.92), (i, j) => i*0.6, 0.8); }
+  // junta tudo num geometry só
+  const out = new T.BufferGeometry(), P3 = [], N3 = [], C3 = [], F1 = [], L1 = [];
+  for(const g of pos){ P3.push(...g.attributes.position.array); N3.push(...g.attributes.normal.array); C3.push(...g.attributes.color.array); F1.push(...g.attributes.aFl.array); L1.push(...g.attributes.aLo.array); }
+  out.setAttribute('position', new T.Float32BufferAttribute(P3, 3)); out.setAttribute('normal', new T.Float32BufferAttribute(N3, 3));
+  out.setAttribute('color', new T.Float32BufferAttribute(C3, 3)); out.setAttribute('aFl', new T.Float32BufferAttribute(F1, 1)); out.setAttribute('aLo', new T.Float32BufferAttribute(L1, 1)); out.computeBoundingSphere();
+  // cordas: linhas A-D de cada costela até um nó de cascata, e do nó até o topo do tirante; freios da fuga até as mãos
+  const L = [], LF = [], add = (a, b, fa, fb) => { L.push(a.x, a.y, a.z, b.x, b.y, b.z); LF.push(fa || 0, fb || 0); };
+  const rows = [0.1, 0.36, 0.62, 0.86];
+  for(let r=0;r<=NC;r++){ const u = -1 + 2*r/NC, side = u < 0 ? 0 : u > 0 ? 2 : -1; if(side < 0) continue;
+    rows.forEach((v, k) => { const top = P(u, v, yLo(v), new V3()), R = RISER[side + (k < 2 ? 0 : 1)], rp = new V3(...R), node = new V3().lerpVectors(top, rp, 0.38);
+      if(k % 2){ const prev = P(u, rows[k - 1], yLo(rows[k - 1]), new V3()).lerp(rp, 0.38); add(top, prev); }      // B e D juntam no nó da A e da C (cascata)
+      else { add(top, node); add(node, rp); } }); }
+  for(const s of [0, 1]){ const hd = new V3(...HAND[s]), sg = s ? 1 : -1; [0.55, 0.78, 1].forEach(u => { const te = P(sg*u, 0.99, 0, new V3()), nd = new V3().lerpVectors(te, hd, 0.45); add(te, nd, 0.8); add(nd, hd); }); }
+  const lg = new T.BufferGeometry(); lg.setAttribute('position', new T.Float32BufferAttribute(L, 3)); lg.setAttribute('aFl', new T.Float32BufferAttribute(LF, 1));
+  // tirantes (fitas chatas) do topo até a fivela do ombro + batoque do freio
+  const k = new Kit(); RISER.forEach((R, i) => { const a = new V3(...R), b = new V3(...SHO[i]), m = a.clone().add(b).multiplyScalar(0.5), d = a.clone().sub(b);
+    k.add(new T.BoxGeometry(0.06, d.length(), 0.012), 0x2a2d36, [m.x, m.y, m.z], [Math.atan2(d.z, d.y), 0, -Math.atan2(d.x, d.y)]);
+    k.add(new T.TorusGeometry(0.025, 0.008, 4, 8), 0xc9ced6, [R[0], R[1], R[2]]); });            // elo de metal
+  HAND.forEach(H => k.add(new T.CylinderGeometry(0.025, 0.025, 0.12, 6), 0xffd23f, [H[0], H[1] - 0.02, H[2]], [0, 0, 0.2]));
+  return {wing:out, lines:lg, risers:k.build()}; }
+// materiais: tecido (Lambert dos dois lados) que tremula com aFl; cordas finas escuras
+function wave(sh){ sh.uniforms.uT = AS.U; sh.vertexShader = 'attribute float aFl;\nuniform float uT;\n' + sh.vertexShader.replace('#include <begin_vertex>',
+  '#include <begin_vertex>\n vec4 wq = modelMatrix*vec4(position, 1.0);\n float ph = uT*11.0 + wq.x*2.3 + wq.z*1.7 + position.x*3.1;\n transformed.y += aFl*(0.035*sin(ph) + 0.02*sin(ph*2.3 + 1.0));\n transformed.z += aFl*0.025*sin(ph*0.7 + 2.0);'); }
+const FAB = new T.MeshLambertMaterial({vertexColors:true, side:T.DoubleSide});
+FAB.onBeforeCompile = sh => { wave(sh); sh.vertexShader = sh.vertexShader.replace('attribute float aFl;', 'attribute float aFl;\nattribute float aLo;\nvarying float vLo;').replace('#include <begin_vertex>', '#include <begin_vertex>\n vLo = aLo;');
+  sh.fragmentShader = 'varying float vLo;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += vColor*0.42*vLo;'); }; FAB.customProgramCacheKey = () => 'asaFab';
+const CORD = new T.LineBasicMaterial({color:0x1f1730, transparent:true, opacity:0.55}); CORD.onBeforeCompile = wave; CORD.customProgramCacheKey = () => 'asaCord';
+const RIS = new T.MeshLambertMaterial({vertexColors:true});
+AS.mats = {FAB, CORD, RIS}; AS.CY = CY;
+AS.chute = function(color){ color = color ?? 0xff4fa3; const G = AS.geo[color] || (AS.geo[color] = build(color)), g = new T.Group(), w = new T.Group();
+  const m = new T.Mesh(G.wing, FAB); m.castShadow = true; w.add(m); w.add(new T.LineSegments(G.lines, CORD)); const r = new T.Mesh(G.risers, RIS); w.add(r);
+  g.add(w); g.userData.kind = 'chute'; g.userData.wing = w; g.userData.asa = true; return g; };
+// arnês no corpo (vai no tilt do feijão, aparece só com o paraquedas aberto): alças nos ombros, peitoral com fivela e perneiras
+AS.harness = function(){ if(!AS.hg){ const k = new Kit(), R = [0.545, 0.71, 0.525], W = 0x2a2d36, M = 0xc9ced6, Y = 0xffd23f;
+    const on = (x, y, side) => { const c = (y - 0.78)/R[1], s = Math.sqrt(Math.max(0, 1 - c*c - (x/R[0])**2)); return side*R[2]*s; };
+    for(const sx of [-1, 1]){ // alça: desce do ombro pela frente e por trás
+      for(const side of [1, -1]){ const pts = []; for(let i=0;i<=8;i++){ const t = i/8, y = 1.28 - t*0.82, x = sx*(0.27 + 0.04*t); pts.push(new V3(x, y, on(x, y, side) + side*0.012)); }
+        const top = new V3(sx*0.31, 1.33, 0); pts.unshift(top); k.add(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 12, 0.022, 4), W, [0, 0, 0], 0, [1, 1, 1]); }
+      k.add(new T.BoxGeometry(0.08, 0.05, 0.04), M, [sx*0.3, 1.3, 0.02]);                                   // fivela do tirante no ombro
+      // perneira: anel em volta da coxa
+      k.add(new T.TorusGeometry(0.15, 0.022, 4, 12), W, [sx*0.22, 0.2, 0.02], [Math.PI/2 + 0.25, 0, sx*0.2]); }
+    // peitoral: faixa na frente de um lado ao outro + fivela amarela; cinto
+    for(const [y, Y0] of [[1.0, 0.27], [0.5, 0.36]]){ const pts = []; for(let i=0;i<=10;i++){ const x = -Y0 - 0.05 + (2*Y0 + 0.1)*i/10; pts.push(new V3(x, y, on(x, y, 1) + 0.012)); }
+      k.add(new T.TubeGeometry(new T.CatmullRomCurve3(pts), 12, 0.02, 4), W); }
+    k.add(new T.BoxGeometry(0.1, 0.07, 0.03), Y, [0, 1.0, on(0, 1.0, 1) + 0.03]); k.add(new T.BoxGeometry(0.11, 0.08, 0.03), M, [0, 0.5, on(0, 0.5, 1) + 0.03]);
+    AS.hg = k.build(); }
+  const m = new T.Mesh(AS.hg, RIS); m.castShadow = false; m.userData.kind = 'harness'; return m; };
+})();
+</script>
+<script>
 // Transparência do que cobre o feijão (estilo Fortnite): tudo que fica entre a câmera e o feijão vira uma "tela" de pontos
 // Vale pra qualquer material padrão (árvore instanciada, prédio do Blender, moita, pedra), sem mexer em cada objeto.
 // Teste no shader, em coordenadas da câmera: o pedaço fica no cilindro câmera -> feijão, antes do feijão e acima do pé dele.
@@ -9342,7 +9454,7 @@ function finishStuds(){ const n = studList.length/4; if(!n) return;
   for(let i=0;i<n;i++){ o.position.set(studList[i*4], studList[i*4 + 1] + 0.1, studList[i*4 + 2]); o.updateMatrix(); im.setMatrixAt(i, o.matrix); im.setColorAt(i, col.setHex(studList[i*4 + 3])); }
   im.instanceMatrix.needsUpdate = true; if(im.instanceColor) im.instanceColor.needsUpdate = true; im.userData.keep = true; im.receiveShadow = true; world.add(im); studList = []; }
 const CHUTE_G = new THREE.SphereGeometry(1, 10, 6, 0, Math.PI*2, 0, Math.PI/2);
-function chute(p){ if(!p.m.chute){ const c = BRE.chute(COLORS[(p.i*7 + 3) % COLORS.length]); p.m.g.add(c); p.m.chute = c; } p.m.chute.visible = true; }
+function chute(p){ if(!p.m.chute){ const c = (window.ASA ? ASA.chute : BRE.chute)(COLORS[(p.i*7 + 3) % COLORS.length]); p.m.g.add(c); p.m.chute = c; } p.m.chute.visible = true; }
 // sombra só das peças grandes dos outros feijões (o seu continua com todas). Revisto a cada ~1 s por feijão, porque skin, chapéu e colete trocam peças
 const FJ_SH_R = 0.3;
 function fjBeanShadow(p){ const m = p.m, mine = !p.isBot && (p.i === 0 || (twoP && p.i === 1)) && !p.netH;
@@ -13737,6 +13849,7 @@ function aqPose(p, dt){ const m = p.m; if(!m || !m.tilt || !m.arms || !m.legs) r
   const hs = Math.hypot(p.vel.x, p.vel.z); A.sp += (hs - A.sp)*Math.min(1, dt*6);
   const chuteOn = p.glide === 'chute' && m.chute && m.chute.visible;
   if(m.chute && !chuteOn && A.cr){ m.chute.rotation.set(0, 0, 0); m.chute.position.set(0, 0, 0); A.cr = false; }
+  if(window.ASA){ ASA.U.value = clock; if(!chuteOn) A.ck = 0; else if(!m.harness && m.chute.userData.asa){ m.harness = ASA.harness(); T.add(m.harness); } if(m.harness) m.harness.visible = !!chuteOn && p.dying <= 0; }
   if(A.gh && m.gun && !wet){ m.gun.visible = true; A.gh = false; }
   if(p.dying > 0) return;
   if(boia){ // caído na água: boia listrada na cintura, balança na onda, braços em cima da boia e remando devagar
@@ -13785,7 +13898,9 @@ function aqPose(p, dt){ const m = p.m; if(!m || !m.tilt || !m.arms || !m.legs) r
     T.position.set(0, 0, 0); T.rotation.set(0.05 + 0.16*fw + 0.04*sw, 0, roll); m.body.position.y = 0.78;
     m.arms.forEach((a, k) => { const s = k ? 1 : -1; aqSet(a, s*0.42, 1.46 + 0.04*Math.sin(t*2.2 + k) + (k ? -roll : roll)*0.12, 0.04, 0.2, 0, s*0.35); });
     m.legs.forEach((l, k) => { const s = k ? 1 : -1, f = t*2.4 + k*Math.PI; aqSet(l, s*0.19, 0.12 + 0.05*Math.sin(f), 0.07*Math.sin(f + p.i), 0.3*Math.sin(f) + 0.15*fw); });
-    if(chuteOn){ const rx = 0.12*fw + 0.03*sw, rz = roll*0.75; _aqE.set(rx, 0, rz); _aqV.set(0, 1.5, 0).applyEuler(_aqE); m.chute.rotation.copy(_aqE); m.chute.position.set(-_aqV.x, 1.5 - _aqV.y, -_aqV.z); A.cr = true; }
+    if(chuteOn){ const rx = 0.12*fw + 0.03*sw, rz = roll*0.75; _aqE.set(rx, 0, rz); _aqV.set(0, 1.5, 0).applyEuler(_aqE); m.chute.rotation.copy(_aqE); m.chute.position.set(-_aqV.x, 1.5 - _aqV.y, -_aqV.z); A.cr = true;
+      const W = m.chute.userData.wing; if(W){ A.ck = Math.min(1, (A.ck || 0) + dt/0.6); const k = A.ck, q = k - 1, ob = 1 + 2.70158*q*q*q + 1.70158*q*q, sy = (0.3 + 0.7*(1 - Math.pow(1 - k, 3)))*(1 + 0.018*Math.sin(t*2.6));
+        W.scale.set(0.15 + 0.85*ob, sy, 0.55 + 0.45*Math.min(1, sy)); W.position.y = 1.3*(1 - sy); } }
     return; }
   // queda comprida sem paraquedas (trampolim, pulo de lugar alto): pedala no ar e mexe os braços em vez de ficar parado na pose do pulo
   A.fl += ((airOk && !p.glide && p.vel.y < -6 ? 1 : 0) - A.fl)*Math.min(1, dt*6);
