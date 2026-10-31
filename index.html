@@ -14202,6 +14202,125 @@ function obrNetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wbd) return; con
 #obrBar span{background:rgba(255,255,255,.1);border-radius:8px;padding:3px 7px;white-space:nowrap}#obrBar span.on{background:#ffd23f;color:#2b1846}#obrBar span.no{opacity:.55}#obrBar em{font-style:normal;opacity:.85;margin-left:4px}
 #obrBar p{flex-basis:100%;text-align:center;margin:1px 0 0;font-size:12px;color:#b9ffb0}#obrBar.bad p{color:#ffb0a4}#obrBar kbd{background:rgba(255,255,255,.2);border-radius:4px;padding:0 4px;font-family:inherit}`; document.head.appendChild(st); }
 
+// ---------- Guerra: objetivos mais claros + plantar/desarmar com animação (pedido do Bruno 31/10 21:15) ----------
+// Plantar ou desarmar (gerador e depósitos): quem pisa no alvo agacha e fica travado mexendo na carga. Se andar ou pular,
+// cancela e o progresso volta pro zero (pra recomeçar tem que sair do alvo e voltar). Só conta quem está trabalhando no alvo.
+// HUD: cartão do objetivo do ato (o que fazer, quanto vale, o que vem depois) e marcadores na tela em cima de cada objetivo.
+
+// quem está trabalhando no alvo, por tropa. Feijão de outro PC (online): conta se estiver parado no alvo
+function bwCount(o, x, z, y, r){ const n = [0, 0, 0, 0]; for(const p of players){ if(p.squad < 0 || p.squad > 3 || !gobNear(p, x, z, y, r, 3)) continue;
+    if(gobMine(p) ? p.bw && p.bw.o === o : Math.hypot(p.vel.x, p.vel.z) < 1.5) n[p.squad]++; } return n; }
+// o que este feijão pode fazer neste alvo agora: 'plant', 'def' ou null
+function bwAct(p, o){ if(o.gen){ if(o.st === 0 && o.t !== p.squad && WD.t >= GEN.ACT) return 'plant'; if(o.st === 1 && o.t === p.squad) return 'def'; return null; }
+  if(o.st === 0) return 'plant'; if(o.st === 1 && o.t !== p.squad) return 'def'; return null; }
+function bwTargets(){ const L = []; if(GOB.ato === 3) for(const D of GOB.dp) if(D.st !== 2) L.push({o:D, x:D.px, z:D.pz, y:D.y, r:2.8});
+  for(const G of GEN.L){ G.gen = true; if(G.st !== 2) L.push({o:G, x:G.px, z:G.pz, y:G.y, r:2.6}); } return L; }
+function bwStart(p, T, k){ p.bw = {o:T.o, k, x:p.pos.x, z:p.pos.z, tx:T.x, tz:T.z, t0:clock}; p.stance = 1; p.ads = false; p.useT = 0; p.relT = 0;
+  if(!p.isBot){ sfx('beep'); if(!BW.tip || clock - BW.tip > 40){ BW.tip = clock; banner(k === 'plant' ? '💣 Plantando a carga' : '✂️ Desarmando', 'Fique parado até a barra encher. Se andar ou pular, cancela e volta pro zero', 1800); } } }
+function bwStop(p, cancel){ const w = p.bw; if(!w) return; p.bw = null; p.stance = 0; if(cancel){ p.bwSkip = w.o; if(!p.isBot){ sfx('lose'); say(`${tag(p)}${w.k === 'plant' ? 'Parou de plantar' : 'Parou de desarmar'}: o progresso voltou pro zero`, true); } } }
+const BW = {tip:0, props:[]};
+// começa sozinho quando pisa no alvo (feijões deste PC); termina quando o alvo muda de estado
+function bwAuto(){ const L = bwTargets();
+  for(const p of players){ if(!gobMine(p)) continue; const w = p.bw;
+    if(w){ const T = L.find(T => T.o === w.o); if(!T || !p.alive || p.down || p.dying > 0 || p.car || p.ride || p.obrG || bwAct(p, w.o) !== w.k || WD.over) bwStop(p, false); continue; }
+    if(p.bwSkip){ const T = L.find(T => T.o === p.bwSkip); if(!T || !gobNear(p, T.x, T.z, T.y, T.r + 0.6, 3)) p.bwSkip = null; }
+    if(!p.alive || p.down || p.dying > 0 || p.car || p.ride || p.obrG || p.glide || p.climb || !p.grounded) continue;
+    for(const T of L){ if(T.o === p.bwSkip || !gobNear(p, T.x, T.z, T.y, T.r, 3)) continue; const k = bwAct(p, T.o); if(k){ bwStart(p, T, k); break; } } } }
+// travado: não anda nem atira; andar/pular cancela (só gente; bot fica até terminar)
+{ const _sp = stepPlayer; stepPlayer = function(p, dt, inp){ const w = p.bw; if(!w) return _sp(p, dt, inp);
+    if(!p.isBot && inp && (Math.hypot(inp.mx || 0, inp.mz || 0) > 0.35 || inp.jump || inp.dive)){ bwStop(p, true); return _sp(p, dt, inp); }
+    if(inp){ inp.jump = inp.dive = inp.push = inp.item = false; } p.pos.x = w.x; p.pos.z = w.z; p.vel.set(0, Math.min(0, p.vel.y), 0); p.stance = 1; p.face = Math.atan2(w.tx - w.x, w.tz - w.z) || p.face; p.stun = 0; p.slideT = 0; p.ads = false;
+    if(Math.random() < dt*6 && !(p.m && p.m.far)){ const fx = Math.sin(p.face), fz = Math.cos(p.face); puff(p.pos.x + fx*0.6, p.pos.y + 0.35, p.pos.z + fz*0.6, 1, Math.random() < 0.5 ? 0xffd23f : 0xfff3c0, 0.05, 1); } }; }
+// pose: agachado, as duas mãos na carga, mexendo
+{ const _up = usePose; usePose = function(p, m){ if(!p.bw || !m.hd || m.far || !p.alive || p.down) return _up(p, m);
+    if(m.useM){ m.useM.parent && m.useM.parent.remove(m.useM); m.useM = null; m.useMK = null; } if(m.gun) m.gun.visible = false;
+    const t = clock*(p.bw.k === 'plant' ? 9 : 12) + p.i, a = Math.sin(t), b = Math.sin(t*0.5 + 1);
+    m.arms[0].position.set(-0.16 + b*0.05, 0.4 + Math.max(0, a)*0.1, 0.64); m.arms[1].position.set(0.18 - b*0.04, 0.38 + Math.max(0, -a)*0.1, 0.62);
+    m.arms[0].rotation.set(-1.3, 0, 0.3); m.arms[1].rotation.set(-1.3, 0, -0.3); m.tilt.rotation.x += 0.42; }; }
+
+// ---------- depósitos e gerador: só quem trabalha no alvo conta; saiu, zera ----------
+function bwProp(o, mk){ const want = o.st === 0 && o.pg > 0.01 && o.pt >= 0; if(want && !o.bwB){ o.bwB = mk(); o.bwB.position.set(o.px, gY(o.px, o.pz), o.pz); world.add(o.bwB); BW.props.push(o.bwB); }
+  if(!want && o.bwB){ world.remove(o.bwB); o.bwB = null; } if(o.bwB){ o.bwB.scale.setScalar(0.35 + 0.65*o.pg); const L = o.bwB.userData.led; if(L) L.visible = Math.sin(clock*14) > 0; } }
+gobDpStep = function(dt){ const lead = gobLead();
+  for(const D of GOB.dp.slice()){
+    if(D.st === 2){ if(D.bwB){ world.remove(D.bwB); D.bwB = null; } if(Math.random() < dt*4) puff(D.x + rand(-2, 2), D.y + 0.6, D.z + rand(-2, 2), 1, 0x55504a, 0.4, 2.5); if(!lead) continue; D.rt -= dt; if(D.rt <= 0){ gobDpRemove(D); GOB.dp = GOB.dp.filter(o => o !== D); const s = gobDpSpot(); if(s){ gobDpMake(++GOB.did, s[0], s[1], Math.floor(rand(0, 4))*Math.PI/2); banner('📦 Novo depósito!', 'Apareceu outro depósito de munição no mapa (feixe branco)', 1600); } } continue; }
+    for(const p of players) if(gobNear(p, D.px, D.pz, D.y, 2.8, 3)) p.gobPl = D.id;
+    const n = bwCount(D, D.px, D.pz, D.y, 2.8);
+    if(D.st === 0){ bwProp(D, gobBombModel); if(!lead) continue; const sq = n.map((v, t) => v ? t : -1).filter(t => t >= 0);
+      if(sq.length === 1){ const s = sq[0]; if(D.pt !== s){ D.pt = s; D.pg = 0; } D.pg += dt*Math.min(2, n[s])/GOB.PLANT*(n[s] > 1 ? 0.75 : 1); if(D.pg >= 1){ if(D.bwB){ world.remove(D.bwB); D.bwB = null; } gobDpArm(D, s); } }
+      else if(!sq.length && D.pg > 0){ D.pg = 0; D.pt = -1; } }
+    else if(D.st === 1){ if(D.bwB){ world.remove(D.bwB); D.bwB = null; } if(D.bomb){ const L = D.bomb.userData.led, fast = D.fuse < 8; L.visible = Math.sin(clock*(fast ? 22 : 9)) > 0; } D.bt = (D.bt || 0) - dt; if(D.bt <= 0){ D.bt = D.fuse < 8 ? 0.35 : 1; sfxAt(new V3(D.px, D.y + 1, D.pz), 'beep', 40); }
+      D.fuse -= dt; if(!lead) continue; const dfn = n.reduce((a, v, t) => t !== D.t ? a + v : a, 0);
+      if(dfn){ D.df += dt/GOB.DEF; if(D.df >= 1){ const by = n.map((v, t) => t !== D.t && v ? t : -1).filter(t => t >= 0).sort((a, b) => n[b] - n[a])[0]; gobDpDefuse(D, by); continue; } } else D.df = 0;
+      if(D.fuse <= 0) gobDpBoom(D); }
+    if(D.beam){ D.beam.visible = D.st !== 2; D.beam.material.color.setHex(D.st === 1 ? WD_T[D.t].c : D.pt >= 0 && D.pg > 0 ? WD_T[D.pt].c : 0xffffff); D.beam.material.opacity = D.st === 1 ? 0.25 + 0.25*(Math.sin(clock*(D.fuse < 8 ? 16 : 6)) > 0) : 0.35; } } };
+genStep = function(dt){ const lead = gobLead(), on = WD.t >= GEN.ACT;
+  for(const G of GEN.L){ G.gen = true; for(const p of players) if(gobNear(p, G.px, G.pz, G.y, 2.6, 3)) p.genPl = G.t;
+    if(G.st === 2){ if(G.bwB){ world.remove(G.bwB); G.bwB = null; } if(Math.random() < dt*5) puff(G.x + rand(-1, 1), G.y + 2, G.z + rand(-1, 1), 1, 0x3a3a3a, 0.35, 2.5); if(Math.random() < dt*3) puff(G.x + rand(-1.4, 1.4), G.y + 1.2, G.z + rand(-1, 1), 2, 0x9fd6ff, 0.05, 5);
+      if(!lead) continue; const fix = gobTeams(G.x, G.z, G.y, 5, 4)[G.t]; G.down -= dt*(fix ? 2 : 1); if(G.down <= 0) genFix(G); continue; }
+    G.leds.forEach((o, i) => o.material.color.setHex(G.st === 1 ? (Math.sin(clock*14 + i) > 0 ? 0xff3b2a : 0x401010) : (Math.sin(clock*3 + i*2) > -0.6 ? 0x7dff6a : 0x1f6b2a)));
+    const n = bwCount(G, G.px, G.pz, G.y, 2.6);
+    if(G.st === 0){ bwProp(G, genBombModel); if(!lead || !on) continue; const foes = n.map((v, t) => t !== G.t && v ? t : -1).filter(t => t >= 0), guard = gobTeams(G.px, G.pz, G.y, 2.6, 3)[G.t];
+      if(foes.length && !guard){ const s = foes.sort((a, b) => n[b] - n[a])[0]; if(G.pt !== s){ G.pt = s; G.pg = 0; } G.pg += dt/GEN.PLANT*(foes.length > 1 ? 0.5 : 1); if(G.pg >= 1){ if(G.bwB){ world.remove(G.bwB); G.bwB = null; } genArm(G, s); } }
+      else if(!foes.length && G.pg > 0){ G.pg = 0; G.pt = -1; } }
+    else if(G.st === 1){ if(G.bwB){ world.remove(G.bwB); G.bwB = null; } if(G.bomb){ G.bomb.userData.led.visible = Math.sin(clock*(G.fuse < 6 ? 22 : 9)) > 0; } G.bt = (G.bt || 0) - dt; if(G.bt <= 0){ G.bt = G.fuse < 6 ? 0.3 : 0.9; sfxAt(new V3(G.px, G.y + 1, G.pz), 'beep', 40); }
+      G.fuse -= dt; if(!lead) continue;
+      if(n[G.t]){ G.df += dt/GEN.DEF; if(G.df >= 1){ genDefuse(G); continue; } } else G.df = 0;
+      if(G.fuse <= 0) genBoom(G); } }
+  if(lead && gobNetOn() && (GEN.nt -= dt) <= 0){ GEN.nt = 0.5; netEv({t:'wgn', g:GEN.L.map(G => [G.t, G.st, G.by, G.pt, Math.round(G.pg*100)/100, Math.round(G.df*100)/100, gobR1(G.fuse), gobR1(G.down)])}); } };
+{ const _gc = genClear; genClear = function(){ GEN.L.forEach(G => { if(G.bwB){ world.remove(G.bwB); G.bwB = null; } }); BW.props.forEach(o => world.remove(o)); BW.props = []; players.forEach(p => { p.bw = null; p.bwSkip = null; }); return _gc(); }; }
+{ const _dr = gobDpRemove; gobDpRemove = function(D){ if(D.bwB){ world.remove(D.bwB); D.bwB = null; } return _dr(D); }; }
+
+// ---------- marcadores na tela em cima de cada objetivo ----------
+const GWP = {els:[], v:new V3(), d:new V3()};
+function gwpList(){ const me = you(), L = [], R = [];
+  if(WD.cz && !wdIn(me, WD.cz, WD.cz.r)) L.push({x:WD.cz.x, z:WD.cz.z, h:8, ic:'🚩', t:WD.cz.n, c:WD.own >= 0 ? WD_T[WD.own].s : '#ffffff'});
+  if(GOB.ato === 2 && GOB.cv){ const c = GOB.cv; L.push({x:c.x, z:c.z, y:c.y, h:5, ic:'🚚', t:c.own === me.squad ? 'Escolte' : c.own >= 0 ? 'Pare o comboio' : 'Comboio', c:c.own >= 0 ? WD_T[c.own].s : '#ffd23f', big:true}); }
+  if(GOB.ato === 3) for(const D of GOB.dp){ if(D.st === 2) continue; if(D.st === 0) L.push({x:D.px, z:D.pz, y:D.y, h:4, ic:'📦', t:'Plantar', c:'#ffffff', big:true});
+    else L.push({x:D.px, z:D.pz, y:D.y, h:4, ic:D.t === me.squad ? '💣' : '✂️', t:(D.t === me.squad ? 'Defenda ' : 'Desarme ') + Math.ceil(D.fuse) + ' s', c:D.t === me.squad ? WD_T[D.t].s : '#ff5a3c', big:true, blink:D.fuse < 8}); }
+  const mg = genOf(me.squad); if(mg && mg.st === 1) L.push({x:mg.px, z:mg.pz, y:mg.y, h:4, ic:'⚡', t:'Desarme ' + Math.ceil(mg.fuse) + ' s', c:'#ff5a3c', big:true, blink:true});
+  for(const G of GEN.L){ if(G.t === me.squad) continue; if(G.st === 1 && G.by === me.squad) L.push({x:G.px, z:G.pz, y:G.y, h:4, ic:'⚡', t:'Defenda ' + Math.ceil(G.fuse) + ' s', c:WD_T[me.squad].s, big:true}); else if(G.st === 0 && WD.t >= GEN.ACT) R.push({x:G.px, z:G.pz, y:G.y, h:4, ic:'⚡', t:'Sabotar', c:WD_T[G.t].s, dim:true}); }
+  if(R.length){ R.sort((a, b) => Math.hypot(a.x - me.pos.x, a.z - me.pos.z) - Math.hypot(b.x - me.pos.x, b.z - me.pos.z)); L.push(R[0]); }
+  return L.filter(o => Math.hypot(o.x - me.pos.x, o.z - me.pos.z) > 7); }
+function gwpStep(){ let box = $('gwp'); if(!box){ box = document.createElement('div'); box.id = 'gwp'; $('brHud').appendChild(box); }
+  const me = you(), on = gobOn() && !twoP && !WD.over && !PAUSED && !WD.shop && !(me.ads) && R1.phase === 'play'; box.hidden = !on; if(!on) return;
+  const L = gwpList(), W = innerWidth, H = innerHeight, M = 46; camera.getWorldDirection(GWP.d);
+  while(GWP.els.length < L.length){ const e = document.createElement('div'); e.className = 'gwpM'; e.innerHTML = '<b></b><span></span><i></i>'; box.appendChild(e); GWP.els.push(e); }
+  GWP.els.forEach((e, i) => { const o = L[i]; if(!o){ e.hidden = true; return; } e.hidden = false;
+    const y = (o.y ?? gY(o.x, o.z)) + o.h, v = GWP.v.set(o.x, y, o.z), dist = Math.round(Math.hypot(o.x - me.pos.x, o.z - me.pos.z)), behind = v.clone().sub(camera.position).dot(GWP.d) < 0;
+    v.project(camera); let sx = (v.x + 1)/2*W, sy = (1 - v.y)/2*H, edge = false;
+    const y0 = Math.max(250, H*0.3), y1 = Math.max(y0 + 40, H - 190); if(behind){ sx = W - sx; sy = y1; edge = true; } if(sx < M || sx > W - M || sy < y0 || sy > y1){ if(!behind && sy > M + 60 && sy < H - M && sx >= M && sx <= W - M){} else { edge = true; sx = clamp(sx, M, W - M); sy = clamp(sy, y0, y1); } }
+    e.style.transform = `translate(${Math.round(sx)}px,${Math.round(sy)}px) translate(-50%,-100%)`; e.style.setProperty('--c', o.c);
+    const k = o.ic + o.t + dist + (edge ? 1 : 0) + (o.dim ? 1 : 0) + (o.big ? 1 : 0); if(e._k !== k){ e._k = k; e.children[0].textContent = o.ic; e.children[1].textContent = o.t; e.children[2].textContent = dist + ' m'; e.className = 'gwpM' + (edge ? ' edge' : '') + (o.dim ? ' dim' : '') + (o.big ? ' big' : ''); }
+    e.style.opacity = o.blink && Math.sin(clock*10) < 0 ? 0.55 : ''; }); }
+{ const _us = updateShoot; updateShoot = function(dt){ _us(dt); if(gobOn() && R1.phase === 'play' && !WD.over){ bwAuto(); gwpStep(); } else { const b = $('gwp'); if(b) b.hidden = true; } }; }
+
+// ---------- cartão do objetivo do ato ----------
+function gwpCard(){ const me = you(), t = s => mmss(Math.max(0, Math.ceil(s))); let T = '', D = '', N = '';
+  if(GOB.ato === 1){ T = 'Ato 1 · Domine a zona'; D = `Fique dentro do círculo de <b>${WD.cz ? WD.cz.n : 'zona'}</b> 🚩. A tropa com mais feijões lá dentro ganha pontos`; N = `🚚 Comboio começa em ${t(GOB.A2 - GOB.tl)}`; }
+  else if(GOB.ato === 2){ const c = GOB.cv; T = 'Ato 2 · Comboio 🚚';
+    D = c ? `Fique a até ${GOB.R} m do caminhão pra ele andar com a sua tropa. <b>+1</b> ponto a cada ${GOB.CVT} s e <b>+15</b> se ele chegar ao 🏁` + (c.own === me.squad ? ' · <em class="ok">sua tropa está escoltando</em>' : c.own >= 0 ? ` · <em class="bad">a ${WD_T[c.own].n} está levando: pare ela</em>` : c.ct ? ' · <em class="bad">disputado: o caminhão parou</em>' : ' · <em>parado, chegue perto</em>') : 'Outro caminhão está saindo…';
+    N = `💣 Depósitos começam em ${t(GOB.A3 - GOB.tl)}`; }
+  else if(GOB.ato === 3){ T = 'Ato 3 · Depósitos 📦'; D = `Agache no alvo de um depósito por ${GOB.PLANT} s pra plantar a bomba e defenda até explodir: <b>+15</b>. Bomba inimiga: desarme em ${GOB.DEF} s (<b>+5</b>). Se andar, zera`; }
+  if(WD.t >= GEN.ACT && !genDown(me.squad)) N += (N ? ' · ' : '') + `⚡ Sabote um gerador inimigo (${GEN.PLANT} s) e a base deles fica sem loja`;
+  return T ? `<b class="t">${T}</b><span>${D}</span>${N ? `<i>${N}</i>` : ''}` : ''; }
+{ const _h = wdHud; wdHud = function(){ _h(); const el = $('wdHud'); if(!el || !gobOn()) return; const o0 = el.querySelector('.wdO'); if(o0) o0.style.display = 'none';
+    let o = el.querySelector('.wdOb'); if(!o){ o = document.createElement('div'); o.className = 'wdOb'; const z = el.querySelector('.wdZ'); z && z.nextSibling ? el.insertBefore(o, z.nextSibling) : el.appendChild(o); }
+    const h = gwpCard(); o.hidden = !h; if(o._h !== h){ o._h = h; o.innerHTML = h; } }; }
+// barra do meio enquanto planta/desarma
+{ const _b = gobBar; gobBar = function(){ const me = you(), b = $('gobBar'), w = me.bw;
+    if(b && w && gobOn()){ const o = w.o, pl = w.k === 'plant', v = pl ? (o.pt === me.squad ? o.pg : 0) : o.df, txt = `${pl ? '💣 Plantando a carga' : '✂️ Desarmando'} · ${Math.round(v*100)}% · andar ou pular zera`;
+      b.hidden = false; if(b._h !== txt){ b._h = txt; b.querySelector('span').textContent = txt; } const s = b.querySelector('s'); s.style.width = Math.round(v*100) + '%'; s.style.background = pl ? gobCol(me.squad) : '#7dffa0'; return; }
+    if(b && me.bwSkip && me.alive && gobOn()){ const txt = 'Saia do alvo e volte pra começar de novo'; b.hidden = false; if(b._h !== txt){ b._h = txt; b.querySelector('span').textContent = txt; } b.querySelector('s').style.width = '0%'; return; }
+    _b(); }; }
+{ const st = document.createElement('style'); st.textContent = `#wdHud .wdOb{background:var(--zpnl2,rgba(43,24,70,.85));color:var(--zink,#fff);border:1px solid var(--zline,transparent);box-shadow:var(--zshadow,none);border-left:4px solid #ffd23f;border-radius:10px;padding:6px 12px;max-width:min(560px,92vw);display:flex;flex-direction:column;gap:2px;font-size:12.5px;line-height:1.3;text-align:left}
+#wdHud .wdOb .t{font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:#ffd23f}#wdHud .wdOb i{font-style:normal;opacity:.8;font-size:12px}#wdHud .wdOb em{font-style:normal;font-weight:800}#wdHud .wdOb .ok{color:#7dffa0}#wdHud .wdOb .bad{color:#ff8a6a}
+#gwp{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.gwpM{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:1px;color:#fff;font-weight:800;text-shadow:0 1px 3px rgba(0,0,0,.8);will-change:transform}
+.gwpM b{font-size:17px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(43,24,70,.82);border:2px solid var(--c)}
+.gwpM span{font-size:11.5px;background:rgba(43,24,70,.7);border-radius:6px;padding:0 6px;border-bottom:2px solid var(--c);white-space:nowrap}.gwpM i{font-style:normal;font-size:11px;opacity:.9}
+.gwpM.big b{width:36px;height:36px;font-size:20px}.gwpM.dim{opacity:.7}.gwpM.dim b{width:24px;height:24px;font-size:13px}.gwpM.dim span{font-size:10px}.gwpM.edge span{display:none}`; document.head.appendChild(st); }
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
