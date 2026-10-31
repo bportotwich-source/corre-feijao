@@ -9376,7 +9376,7 @@ function shootInput(p, inp){
   if(p.stT > 0){ if(inp.push) p.stT = 0; else { inp.mx *= 0.15; inp.mz *= 0.15; inp.nade = inp.use = inp.turbo = false; } }
   if(p.rvT > 0){ if(inp.push){ p.rvT = 0; } else { inp.mx *= 0.15; inp.mz *= 0.15; inp.nade = inp.use = inp.turbo = false; } }
   p.chuteCD = Math.max(0, (p.chuteCD || 0) - 1/60);
-  if(p.glide === 'fall' && inp.jump && R1.phase === 'play' && p.pos.y < p.skyY - 3 && p.chuteCD <= 0) p.wantChute = true;
+  if(p.glide === 'fall' && inp.jump && R1.phase === 'play' && (p.pos.y < p.skyY - 3 || p.mola && p.vel.y < 3) && p.chuteCD <= 0) p.wantChute = true;
   if(BIG && !p.isBot && p.glide === 'chute' && inp.jumpP && R1.phase === 'play' && p.chuteCD <= 0 && p.pos.y - Math.max(gY(p.pos.x, p.pos.z), groundBelow(p)) > 12){ p.glide = 'fall'; p.wantChute = false; p.skyY = p.pos.y + 3; p.chuteCD = 0.45; if(p.m.chute) p.m.chute.visible = false; sfx('whoosh'); inp.jump = inp.jumpP = false; }
   // pulou de lugar alto (prédio, torre): dá pra abrir o paraquedas de novo
   if(BIG && !p.glide && p.alive && !p.grounded && p.vel.y < -3 && R1.phase === 'play' && (inp.jump || (p.isBot && p.vel.y < -8)) && p.pos.y - groundBelow(p) > 4.5){ chute(p); p.glide = 'chute'; p.skyY = p.pos.y; p.vel.y = Math.max(p.vel.y, -6); if(!p.isBot) sfx('chute'); }
@@ -9527,7 +9527,7 @@ function updateShoot(dt){
     if(R1.phase !== 'play'){ p.vel.set(0, 0, 0); p.pos.y = p.skyY; continue; }
     if(!p.isBot && (p.glide === 'chute' || p.glide === 'fall') && !p.vault){ const V = airWin(p); if(V){ p.glide = false; p.landT = R1.t; if(p.m.chute) p.m.chute.visible = false; V.dur = 0.55; p.vault = V; p.sq = 0.4; sfx('jump'); continue; } }
     if(p.glide === 'fall'){ p.vel.y = Math.max(p.vel.y, -22);
-      if((p.pos.y - gY(p.pos.x, p.pos.z) < 14 && p.vel.y < 0) || p.wantChute){ p.wantChute = false; p.chuteCD = 0.45; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
+      if((p.pos.y - aqFloor(p) < 14 && p.vel.y < 0) || p.wantChute){ p.wantChute = false; p.chuteCD = 0.45; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
     else p.vel.y = Math.max(p.vel.y, -5); }
   if(!brZone) return;
   if(R1.phase === 'play'){
@@ -13077,13 +13077,84 @@ addEventListener('keydown', e => { if(!WAR || !BIG || round !== 20 || !inMatch()
 
 // feijão-mola no Modo 100: sobe até a altura do avião (fora a Torre Feijão, que tem teto), pra atravessar o mapa em queda livre e de paraquedas
 function molaLaunch(p){ const top = FJBIG ? 118 : 92, H = Math.max(25, top - p.pos.y); p.vel.y = Math.sqrt(-2*GRAV*H); p.vel.x = Math.sin(p.face)*6; p.vel.z = Math.cos(p.face)*6;
-  p.glide = 'fall'; p.skyY = p.pos.y + H; p.wantChute = false; p.chuteCD = 0; p.land = null; p.climb = null; p.vault = null; p.stance = 0; p.ads = false; if(!p.m.chute) chute(p); p.m.chute.visible = false;
+  p.glide = 'fall'; p.mola = true; p.skyY = p.pos.y + H; p.wantChute = false; p.chuteCD = 0; p.land = null; p.climb = null; p.vault = null; p.stance = 0; p.ads = false; if(!p.m.chute) chute(p); p.m.chute.visible = false;
   ringFx(p.pos.x, p.pos.y, p.pos.z, 0x38d16a, 5); sfx('whoosh'); banner(tag(p) + '🚀 Lá vai você!', 'Sobe até a altura do avião. Na descida, mire pra onde quer ir e aperte <kbd>Espaço</kbd> pra abrir o paraquedas', 1800); }
 // trator funciona igual ao jipe: anda 1,4x, leva 2 de carona no estribo de trás (a tropa sobe quando você para perto), tem 500 de vida
 WDV.info.trator = {nm:'Trator FEIJÃO', seats:3, hp:500, rad:1.4, box:[0.95, 2.3, 1.5], ic:'🚜', d:'3 lugares, forte no barro', seat:[[0, 0, -CAR_SEAT], [0.62, 0.42, -1.55], [-0.62, 0.42, -1.55]]};
 function trJeep(c){ if(c.kind || c.boat) return c; const I = WDV.info.trator; Object.assign(c, {kind:'trator', jeep:true, spdK:1.4, sx:0, sb:CAR_SEAT, team:c.team ?? -1, owner:null, hp:I.hp, hp0:I.hp, pass:new Array(I.seats).fill(null), rad:I.rad, vx:0, vy:0, vz:0, pitch:0, roll:0, rs:0, air:false}); return c; }
 { const _sc = spawnCars; spawnCars = function(...a){ const r = _sc(...a); cars.forEach(trJeep); return r; }; }
 { const _cv = cpVeh; cpVeh = function(P){ const r = _cv(P); if(P.c) trJeep(P.c); return r; }; }
+// ---------- nadar, boia (caído na água) e poses no ar: foguete do feijão-mola, queda livre, paraquedas e queda comprida (pedido do Bruno 2026-10-31) ----------
+const AQ = {ring:null, err:0}, _aqE = new THREE.Euler(), _aqV = new V3();
+function aqRing(){ if(AQ.ring) return AQ.ring; const g = new THREE.TorusGeometry(0.62, 0.17, 10, 32), pos = g.attributes.position, c = [];
+  for(let i=0;i<pos.count;i++){ const a = Math.atan2(pos.getY(i), pos.getX(i)), s = Math.floor((a + Math.PI)/(Math.PI/4) + 0.5) % 2; c.push(...(s ? [1, 0.98, 0.95] : [0.95, 0.22, 0.24])); }
+  g.setAttribute('color', new THREE.Float32BufferAttribute(c, 3)); g.rotateX(Math.PI/2);
+  return AQ.ring = {g, m:new THREE.MeshLambertMaterial({vertexColors:true})}; }
+const aqSet = (o, x, y, z, rx, ry, rz) => { o.position.set(x, y, z); o.rotation.set(rx || 0, ry || 0, rz || 0); };
+const aqMix = (o, k, x, y, z, rx, ry, rz) => { o.position.x += (x - o.position.x)*k; o.position.y += (y - o.position.y)*k; o.position.z += (z - o.position.z)*k; o.rotation.x += ((rx || 0) - o.rotation.x)*k; o.rotation.y += ((ry || 0) - o.rotation.y)*k; o.rotation.z += ((rz || 0) - o.rotation.z)*k; };
+// chão de verdade embaixo (telhado, ponte, terreno), pro paraquedas abrir sozinho a 14 m de onde vai pousar
+const aqFloor = p => p.isBot ? gY(p.pos.x, p.pos.z) : Math.max(gY(p.pos.x, p.pos.z), groundBelow(p));
+function aqPose(p, dt){ const m = p.m; if(!m || !m.tilt || !m.arms || !m.legs) return;
+  const T = m.tilt, A = m.aq || (m.aq = {ph:0, sw:0, up:0, fl:0, yaw:p.face, roll:0, sp:0});
+  const wet = !!p.swim && !p.car && !p.ride && p.dying <= 0 && (p.alive || p.down) && !p.glide, boia = wet && !!p.down;
+  if(m.boia) m.boia.visible = boia;
+  if(p.grounded) p.mola = false;
+  let dy = p.face - A.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); A.yaw = p.face; const yr = dt > 0 ? clamp(dy/dt, -4, 4) : 0; A.roll += (-yr*0.13 - A.roll)*Math.min(1, dt*5);
+  const hs = Math.hypot(p.vel.x, p.vel.z); A.sp += (hs - A.sp)*Math.min(1, dt*6);
+  const chuteOn = p.glide === 'chute' && m.chute && m.chute.visible;
+  if(m.chute && !chuteOn && A.cr){ m.chute.rotation.set(0, 0, 0); m.chute.position.set(0, 0, 0); A.cr = false; }
+  if(A.gh && m.gun && !wet){ m.gun.visible = true; A.gh = false; }
+  if(p.dying > 0) return;
+  if(boia){ // caído na água: boia listrada na cintura, balança na onda, braços em cima da boia e remando devagar
+    if(!m.boia){ const R = aqRing(); m.boia = new THREE.Mesh(R.g, R.m); m.boia.position.y = 0.6; m.boia.castShadow = false; T.add(m.boia); }
+    if(m.gun){ m.gun.visible = false; A.gh = true; }
+    const mv = clamp(A.sp/1.2, 0, 1), t = clock + p.i; A.ph += dt*(2 + A.sp*2.2);
+    T.position.set(0, -0.02 + Math.sin(t*1.7)*0.05, 0); T.rotation.set(-0.16 + Math.sin(t*1.3)*0.05 + mv*0.12, 0, Math.sin(t*1.05)*0.08 + A.roll*0.5); m.body.position.y = 0.78;
+    m.arms.forEach((a, k) => { const s = k ? 1 : -1, f = A.ph + k*Math.PI;
+      aqSet(a, s*0.74, 0.84, 0.06, -0.2, 0, s*-0.5); aqMix(a, mv, s*0.86, 0.66 + 0.14*Math.sin(f), 0.08 + 0.3*Math.cos(f), -0.6, 0, s*-0.3); });
+    m.legs.forEach((l, k) => { const s = k ? 1 : -1, f = t*2.6 + k*Math.PI; aqSet(l, s*0.2, 0.12 + 0.06*Math.sin(f), 0.06 + 0.05*Math.cos(f), 0.35 + 0.25*Math.sin(f)); });
+    return; }
+  if(wet){ // nadando: parado bate perna em pé com a cabeça pra fora; andando vira nado crawl deitado na água
+    const mv = clamp((A.sp - 0.5)/1.4, 0, 1); A.sw += (mv - A.sw)*Math.min(1, dt*5); const k = A.sw, t = clock + p.i;
+    A.ph += dt*(3.2 + A.sp*1.25); const ph = A.ph;
+    if(m.gun){ m.gun.visible = false; A.gh = true; }
+    T.position.set(0, (-0.16 + Math.sin(t*2.2)*0.045)*(1 - k) + (0.42 + Math.sin(ph*2)*0.02)*k, 0);
+    T.rotation.set(0.1*(1 - k) + 1.0*k, Math.sin(ph)*0.32*k + A.roll*k, (Math.sin(t*1.4)*0.05 + A.roll*0.6)*(1 - k)); m.body.position.y = 0.78;
+    m.arms.forEach((a, j) => { const s = j ? 1 : -1, f1 = t*3.4 + j*Math.PI, f = ph + j*Math.PI;
+      aqSet(a, s*(0.62 + 0.09*Math.sin(f1)), 0.66 + 0.04*Math.cos(f1*2), 0.2 + 0.13*Math.cos(f1), -0.25, 0, s*-0.35);
+      aqMix(a, k, s*(0.42 + 0.08*Math.max(0, Math.sin(f))), 0.9 + 0.66*Math.cos(f), 0.06 + 0.42*Math.sin(f), -1.35 + 0.5*Math.sin(f), 0, s*-0.25); });
+    m.legs.forEach((l, j) => { const s = j ? 1 : -1, f1 = t*4.2 + j*Math.PI, f = ph*2.3 + j*Math.PI;
+      aqSet(l, s*0.2, 0.12 + 0.09*Math.sin(f1), 0.07*Math.cos(f1), -0.35*Math.sin(f1));
+      aqMix(l, k, s*0.15, -0.02, -0.04 + 0.14*Math.sin(f), 0.35 + 0.45*Math.sin(f)); });
+    // respingos: cada braçada que entra na água e o bater de pernas
+    const q = Math.floor(ph/Math.PI); if(k > 0.5 && q !== A.q && near(p, 26)){ const s = q % 2 ? 1 : -1, c = Math.cos(p.face), n = Math.sin(p.face);
+      puff(p.pos.x + n*1.05 + c*s*0.35, FJ_WL + 0.06, p.pos.z + c*1.05 - n*s*0.35, 3, 0xffffff, 0.09, 1.6); if(Math.random() < 0.5) puff(p.pos.x - n*0.25, FJ_WL + 0.05, p.pos.z - c*0.25, 2, 0xe8f6ff, 0.07, 1.2); }
+    A.q = q; return; }
+  const airOk = (p.alive || p.down) && !p.car && !p.ride && !p.climb && !p.vault && !p.mantle && !p.grounded && !(p.dive > 0) && !p.down;
+  if(airOk && p.glide === 'fall'){ // queda livre: subindo do feijão-mola é foguete (braços pra cima); descendo, de barriga pra baixo, braços e pernas abertos tremendo no vento
+    A.up += (clamp(p.vel.y/8, 0, 1) - A.up)*Math.min(1, dt*5); const u = A.up, dv = clamp(A.sp/15, 0, 1), fl = Math.sin(clock*23 + p.i*3)*0.025, t = clock + p.i;
+    T.position.set(0, 0, 0); T.rotation.set((1.12 + 0.32*dv)*(1 - u) - 0.06*u, A.roll*1.3*(1 - u) + Math.sin(t*5)*0.08*u, Math.sin(t*1.7)*0.04*(1 - u)); m.body.position.y = 0.78;
+    m.arms.forEach((a, k) => { const s = k ? 1 : -1;
+      aqSet(a, s*(0.8 - 0.22*dv), 1.08 + 0.14*dv + fl, -0.16 + fl*1.5 + A.roll*s*0.12, -0.5 - 0.3*dv, 0, s*-1.0);
+      aqMix(a, u, s*0.2, 1.74 + 0.04*Math.sin(t*9 + k), 0.04, 0, 0, s*-0.15); });
+    m.legs.forEach((l, k) => { const s = k ? 1 : -1;
+      aqSet(l, s*(0.32 - 0.1*dv), 0.04 - fl, -0.3 - 0.06*dv + fl, 1.0 + 0.2*dv, 0, s*0.2);
+      aqMix(l, u, s*0.1, 0.02, 0, 0.15, 0, 0); });
+    return; }
+  if(airOk && p.glide === 'chute'){ // paraquedas: segura as cordas, pernas balançando, inclina pro lado da curva e pra frente com velocidade
+    const t = clock + p.i, sw = Math.sin(t*1.9), fw = clamp(A.sp/11, 0, 1), roll = clamp(A.roll*1.4, -0.45, 0.45);
+    T.position.set(0, 0, 0); T.rotation.set(0.05 + 0.16*fw + 0.04*sw, 0, roll); m.body.position.y = 0.78;
+    m.arms.forEach((a, k) => { const s = k ? 1 : -1; aqSet(a, s*0.42, 1.46 + 0.04*Math.sin(t*2.2 + k) + (k ? -roll : roll)*0.12, 0.04, 0.2, 0, s*0.35); });
+    m.legs.forEach((l, k) => { const s = k ? 1 : -1, f = t*2.4 + k*Math.PI; aqSet(l, s*0.19, 0.12 + 0.05*Math.sin(f), 0.07*Math.sin(f + p.i), 0.3*Math.sin(f) + 0.15*fw); });
+    if(chuteOn){ const rx = 0.12*fw + 0.03*sw, rz = roll*0.75; _aqE.set(rx, 0, rz); _aqV.set(0, 1.5, 0).applyEuler(_aqE); m.chute.rotation.copy(_aqE); m.chute.position.set(-_aqV.x, 1.5 - _aqV.y, -_aqV.z); A.cr = true; }
+    return; }
+  // queda comprida sem paraquedas (trampolim, pulo de lugar alto): pedala no ar e mexe os braços em vez de ficar parado na pose do pulo
+  A.fl += ((airOk && !p.glide && p.vel.y < -6 ? 1 : 0) - A.fl)*Math.min(1, dt*6);
+  if(A.fl > 0.02){ const f = clock*11 + p.i, k = A.fl;
+    if(!m.gun) m.arms.forEach((a, j) => { const s = j ? 1 : -1, g = f + j*Math.PI; aqMix(a, k, s*0.66, 1.1 + 0.3*Math.sin(g), 0.1 + 0.28*Math.cos(g), -0.8 + 0.6*Math.cos(g), 0, s*-0.6); });
+    m.legs.forEach((l, j) => { const g = f*0.8 + j*Math.PI; aqMix(l, k, (j ? 1 : -1)*0.2, 0.2 + 0.12*Math.sin(g), 0.16*Math.cos(g), -0.6*Math.cos(g)); }); }
+}
+{ const aqAnim0 = animateBean; animateBean = function(p, dt){ aqAnim0(p, dt); try { aqPose(p, dt); } catch(e){ if(!AQ.err++) console.warn('aqPose', e); } }; }
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
