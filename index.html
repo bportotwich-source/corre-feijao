@@ -13320,6 +13320,204 @@ function vcRampOk(p, fx, fz, k, b){ const s = Math.sign(k); for(const d of [0.5,
       const top = r.cy + (r.az ? clamp(z, r.min.z, r.max.z) - r.cz : clamp(x, r.min.x, r.max.x) - r.cx)*Math.tan(r.ang); if(b.max.y <= top + 0.45) return true; } }
   return false; }
 
+// ---------- Sons, lote 1 (31/10): tiro em camadas e abafado de longe, recarga em etapas, gatilho vazio, cápsula caindo, bala zunindo,
+// impacto por superfície, marcador de cabeça/escudo, passos por piso (e dos inimigos perto), motor contínuo dos veículos, troca de arma ----------
+const FJS = {gun:null, noAmmo:0, noClick:0, hit:null, dryT:0, uiT:0, hov:null};
+// saída de uma voz: agora com filtro (de longe fica abafado) e atraso (o som chega depois do clarão, 343 m/s)
+vOut = function(o){ const g = ac.createGain(); g.gain.value = o.vol ?? 1; let n = g;
+  if(o.lp){ const f = ac.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = o.lp; f.Q.value = 0.5; n.connect(f); n = f; }
+  if(o.delay > 0.01 && ac.createDelay){ const dl = ac.createDelay(1); dl.delayTime.value = Math.min(0.95, o.delay); n.connect(dl); n = dl; }
+  if(o.pan && ac.createStereoPanner){ const p = ac.createStereoPanner(); p.pan.value = clamp(o.pan, -1, 1); n.connect(p); n = p; }
+  n.connect(o.dest || sfxGain); if(o.verb && verbIn){ const s = ac.createGain(); s.gain.value = o.verb; n.connect(s); s.connect(verbIn); } return g; };
+playSnd = function(k, o={}){ if(!ac || PAUSED && !o.ui) return;
+  if(!Number.isFinite(o.vol ?? 1) || !Number.isFinite(o.pan || 0)) return;
+  if(FJS.noAmmo && k === 'ammo' || FJS.noClick && k === 'click') return;
+  if(k === 'hitm' && FJS.hit) k = FJS.hit;
+  if(FJS.gun && FJS.gun.sil && GUN_S[k.slice(2)]) k = 'w_sil';
+  if(!SND[k]) return;
+  const now = ac.currentTime; voices = voices.filter(t => t > now); if(voices.length >= VOICE_CAP && !o.must) return; voices.push(now + (o.delay || 0) + 0.4);
+  const big = /^w_|boom|kill|hit$/.test(k);
+  SND[k](vOut({vol:(o.vol ?? 1)*(SGAIN[k] || 1), pan:o.pan || 0, verb:o.verb ?? (big ? 0.5 : 0.12), lp:o.lp, delay:o.delay})); };
+// som no mundo: tiro e explosão se ouvem bem mais longe, mas abafados e atrasados; impacto do tiro depende do chão
+const fjLp = u => u < 0.08 ? 0 : 900 + 14000*Math.pow(1 - u, 3);
+sfxAt = function(pos, k, range=30){ if(!ac) return; let d, pan = 0;
+  const gun = /^w_/.test(k) || k === 'boom'; if(gun) range *= k === 'boom' ? 1.6 : 2.2;
+  const L = listener();
+  if(L && players[0]){ d = Math.hypot(pos.x - L.look.x, pos.y - L.look.y, pos.z - L.look.z); pan = Math.sin(screenAng(pos.x, pos.z))*0.8*Math.min(1, d/4); }
+  else { const hs = humans().filter(h => h.alive || h.dying); d = hs.length ? Math.min(...hs.map(h => h.pos.distanceTo(pos))) : 0; }
+  if(!(d <= range)) return; const u = d/range, v = gun ? 0.85*Math.pow(1 - u, 2.2) : Math.pow(1 - u, 1.6); if(v < (gun ? 0.012 : 0.03)) return;
+  if(k === 'splat') k = fjImpK(pos);
+  playSnd(k, {vol:v, pan, verb:0.12 + 0.5*u, lp:gun || /^imp_/.test(k) ? fjLp(u) : 0, delay:gun ? d/343 : 0}); };
+// piso embaixo de um ponto: w água, a areia, g grama/terra, s neve, h chão duro (prédio, casa, ponte, asfalto), p provas
+function fjSurfAt(x, y, z){
+  if(TER){ if(y < FJ_WL + 0.12) return 'w'; const th = TER.h(x, z); if(y - th > 0.3) return 'h'; return BIGMAP === 'serra' ? 's' : th < FJ_WL + 1.1 ? 'a' : 'g'; }
+  if(!BIG) return 'p'; if(y > 0.2) return 'h';
+  return BIGMAP === 'serra' ? 's' : BIGMAP === 'lego' ? 'h' : BIGMAP === 'vale' ? 'g' : 'a'; }
+function fjImpK(pos){ const S = fjSurfAt(pos.x, pos.y - 0.3, pos.z); return S === 'p' ? 'splat' : 'imp_' + S; }
+
+// tiro em camadas: estalo (agudo curtinho), corpo (ruído no meio), soco (grave), mecânica (clique da arma) e cauda (ronco que vai pro eco)
+function gunS(d, o){ const v = rr(0.94, 1.06);
+  noise(o.cd || 0.025, o.cv ?? 0.25, (o.cf || 5200)*v, 0, 'highpass', 0.8, 0, d, 0.001);
+  noise(o.bd, o.bv, o.bf*v, o.bf2 || o.bf*0.25, 'bandpass', o.bq || 0.9, 0, d, 0.002);
+  tone(o.tf*v, o.td, 'sine', o.tv, o.ts || 0.45, 0, d, 0.002);
+  if(o.mf) tone(o.mf*v, 0.035, 'square', o.mv || 0.03, 0.5, o.mw || 0.01, d);
+  if(o.ld) noise(o.ld, o.lv || 0.08, o.lf || 700, 120, 'lowpass', 0.7, 0.02, d, 0.02); }
+const GUN_S = {
+  pistol:{cv:0.22, cf:5000, bd:0.09, bv:0.3, bf:1700, tf:160, td:0.1, tv:0.3, mf:1400, mv:0.025, ld:0.25, lv:0.06},
+  smg:{cd:0.018, cv:0.18, cf:6000, bd:0.06, bv:0.22, bf:2300, tf:190, td:0.07, tv:0.22, mf:1800, ld:0.15, lv:0.04},
+  shotgun:{cv:0.3, cf:4200, bd:0.32, bv:0.5, bf:1200, bf2:180, bq:0.7, tf:85, td:0.3, tv:0.55, ts:0.4, mf:900, mv:0.03, mw:0.02, ld:0.6, lv:0.14, lf:500},
+  rifle:{cv:0.3, cf:6500, bd:0.13, bv:0.34, bf:2600, tf:120, td:0.12, tv:0.32, mf:2200, ld:0.4, lv:0.09},
+  sniper:{cd:0.03, cv:0.4, cf:7000, bd:0.35, bv:0.5, bf:3000, bq:0.6, tf:70, td:0.5, tv:0.55, ts:0.4, mf:1600, ld:1.0, lv:0.16, lf:600},
+  lmg:{cv:0.26, cf:5200, bd:0.09, bv:0.3, bf:1900, tf:100, td:0.1, tv:0.32, mf:1500, ld:0.3, lv:0.07},
+  revolver:{cv:0.32, cf:5000, bd:0.2, bv:0.42, bf:2100, tf:95, td:0.18, tv:0.42, mf:1200, ld:0.55, lv:0.1},
+  deagle:{cv:0.35, cf:4600, bd:0.24, bv:0.46, bf:1900, tf:80, td:0.22, tv:0.48, mf:1000, ld:0.6, lv:0.12},
+  caju:{cv:0.36, cf:7000, bd:0.26, bv:0.44, bf:3200, tf:85, td:0.3, tv:0.45, mf:1700, ld:0.8, lv:0.13},
+  grao:{cv:0.3, cf:4000, bd:0.36, bv:0.52, bf:1100, bq:0.7, tf:80, td:0.3, tv:0.55, ld:0.7, lv:0.15, lf:480},
+  limao:{cd:0.015, cv:0.16, cf:6500, bd:0.05, bv:0.2, bf:2600, tf:210, td:0.06, tv:0.2, mf:2000, mv:0.02, ld:0.12, lv:0.035}};
+for(const k in GUN_S) SND['w_' + k] = d => gunS(d, GUN_S[k]);
+delete SGAIN.w_pistol; delete SGAIN.w_smg; for(const k in GUN_S) SGAIN['w_' + k] = 0.8;
+// volumes medidos com renderSnd (passos perto do 'step' antigo, peças da recarga parecidas entre si)
+Object.assign(SGAIN, {st_g:2.2, st_a:2, st_h:0.45, st_w:1.4, st_s:2.2, casca:2, casca2:1.2, w_swap:1.5, r_out:1.8, r_in:0.5, r_close:0.45, r_heavy:0.4, r_cyl:2.5, r_drop:2.2, r_creak:2.5, r_shell:1.4, r_hiss:1.2, imp_a:1.8, imp_w:1.8, imp_s:1.6, hitHS:1.3, hitSh:1.3, porta:2});
+Object.assign(SND, {
+  // com silenciador: "pff" abafado + o clique da arma
+  w_sil:d => { noise(0.08, 0.25, rr(800, 1000), 300, 'bandpass', 1, 0, d); tone(rr(130, 150), 0.08, 'sine', 0.2, 0.5, 0, d); noise(0.04, 0.05, 3000, 0, 'highpass', 1, 0, d); tone(2400, 0.02, 'square', 0.04, 0.6, 0.01, d); },
+  dry:d => { tone(2600, 0.015, 'square', 0.05, 0.7, 0, d, 0.001); tone(600, 0.03, 'triangle', 0.05, 0.6, 0, d); noise(0.02, 0.1, 4000, 0, 'highpass', 1, 0, d, 0.001); },
+  casca:d => { [0, 0.08 + rr(0, 0.03), 0.15 + rr(0, 0.04)].forEach((w, i) => tone(rr(3400, 4400), 0.05 - i*0.01, 'triangle', 0.03/(i + 1), 0.9, w, d, 0.001)); },
+  casca2:d => { tone(rr(800, 950), 0.05, 'sine', 0.06, 0.8, 0, d, 0.001); tone(rr(650, 760), 0.04, 'sine', 0.035, 0.8, 0.11, d, 0.001); },
+  w_swap:d => { noise(0.1, 0.08, 1200, 2400, 'bandpass', 1.5, 0, d, 0.02); tone(1500, 0.03, 'square', 0.03, 0.6, 0.1, d); noise(0.03, 0.12, 3000, 0, 'bandpass', 2, 0.1, d); },
+  // recarga
+  r_out:d => { tone(1800, 0.02, 'square', 0.04, 0.6, 0, d, 0.001); noise(0.12, 0.08, 1500, 2500, 'bandpass', 2, 0.01, d, 0.02); },
+  r_in:d => { noise(0.05, 0.25, 2000, 800, 'bandpass', 1.5, 0, d, 0.001); tone(420, 0.05, 'square', 0.05, 0.4, 0, d); tone(160, 0.06, 'sine', 0.2, 0.6, 0, d); },
+  r_rack:d => { noise(0.04, 0.2, 3000, 0, 'bandpass', 2, 0, d, 0.001); noise(0.06, 0.25, 2200, 0, 'bandpass', 2, 0.09, d, 0.001); tone(700, 0.04, 'square', 0.04, 0.6, 0.09, d); },
+  r_slide:d => { noise(0.05, 0.2, 2600, 0, 'bandpass', 2, 0, d, 0.001); tone(900, 0.03, 'square', 0.04, 0.6, 0.06, d); noise(0.04, 0.22, 2000, 0, 'bandpass', 2, 0.07, d, 0.001); },
+  r_shell:d => { tone(rr(1000, 1200), 0.04, 'triangle', 0.05, 0.7, 0, d); noise(0.05, 0.16, 1600, 900, 'bandpass', 2.5, 0, d, 0.001); },
+  r_pump:d => { noise(0.07, 0.28, 1400, 700, 'bandpass', 1.5, 0, d, 0.002); noise(0.07, 0.3, 1100, 1800, 'bandpass', 1.5, 0.12, d, 0.002); tone(300, 0.05, 'square', 0.05, 0.6, 0.12, d); },
+  r_break:d => { tone(220, 0.08, 'square', 0.05, 0.5, 0, d); noise(0.08, 0.25, 1200, 0, 'bandpass', 2, 0, d, 0.001); tone(1500, 0.03, 'square', 0.03, 0.6, 0.02, d); },
+  r_close:d => { noise(0.05, 0.3, 1800, 600, 'bandpass', 1.5, 0, d, 0.001); tone(180, 0.08, 'sine', 0.25, 0.5, 0, d); tone(1300, 0.03, 'square', 0.04, 0.6, 0, d); },
+  r_cyl:d => { for(let i=0;i<5;i++) tone(2600, 0.012, 'square', 0.02, 0.8, i*0.03, d, 0.001); noise(0.15, 0.06, 3000, 1500, 'bandpass', 3, 0, d, 0.01); },
+  r_drop:d => { for(let i=0;i<4;i++) tone(rr(3000, 4500), 0.04, 'triangle', 0.025, 0.9, i*0.05 + rr(0, 0.03), d, 0.001); },
+  r_boltO:d => { noise(0.06, 0.25, 1800, 0, 'bandpass', 2, 0, d, 0.001); tone(600, 0.05, 'square', 0.05, 1.5, 0.02, d); noise(0.08, 0.12, 2500, 3500, 'bandpass', 3, 0.05, d, 0.01); },
+  r_boltC:d => { noise(0.08, 0.14, 3500, 2500, 'bandpass', 3, 0, d, 0.01); noise(0.05, 0.3, 1500, 0, 'bandpass', 2, 0.09, d, 0.001); tone(500, 0.05, 'square', 0.05, 0.6, 0.09, d); },
+  r_heavy:d => { tone(110, 0.15, 'sine', 0.35, 0.5, 0, d); noise(0.15, 0.3, 700, 200, 'lowpass', 1, 0, d); },
+  r_creak:d => { noise(0.35, 0.05, 1200, 1800, 'bandpass', 8, 0, d, 0.05); tone(300, 0.35, 'sawtooth', 0.015, 1.4, 0, d, 0.05); },
+  r_click:d => { tone(2000, 0.025, 'square', 0.04, 0.6, 0, d, 0.001); noise(0.03, 0.1, 3500, 0, 'highpass', 1, 0, d, 0.001); },
+  r_hiss:d => { noise(0.4, 0.12, 4000, 2500, 'bandpass', 1.5, 0, d, 0.05); },
+  // bala passando perto (whizC = sniper/fuzil rápido, com estalo)
+  whiz:d => { noise(0.14, 0.3, 4000, 1200, 'bandpass', 3, 0, d, 0.02); tone(2200, 0.14, 'sine', 0.05, 0.45, 0, d, 0.02); },
+  whizC:d => { noise(0.02, 0.35, 6000, 0, 'highpass', 1, 0, d, 0.001); noise(0.1, 0.2, 3500, 1500, 'bandpass', 2, 0.005, d, 0.005); },
+  // impacto do tiro (com a fruta espirrando junto)
+  imp_g:d => { noise(0.1, 0.22, 900, 150, 'lowpass', 1, 0, d); tone(120, 0.07, 'sine', 0.18, 0.5, 0, d); noise(0.12, 0.06, 2000, 600, 'bandpass', 1.5, 0.02, d); noise(0.08, 0.1, 1200, 0, 'bandpass', 3, 0, d); },
+  imp_a:d => { noise(0.14, 0.2, 1600, 400, 'lowpass', 1, 0, d); noise(0.08, 0.1, 1200, 0, 'bandpass', 3, 0, d); },
+  imp_h:d => { tone(rr(500, 700), 0.04, 'square', 0.06, 0.5, 0, d); noise(0.05, 0.3, 2500, 900, 'bandpass', 1.5, 0, d, 0.001); tone(230, 0.06, 'sine', 0.15, 0.6, 0, d); noise(0.1, 0.12, 1300, 250, 'bandpass', 2.5, 0.01, d); },
+  imp_w:d => { noise(0.2, 0.25, 700, 2000, 'bandpass', 1.5, 0, d, 0.01); tone(500, 0.12, 'sine', 0.06, 2.2, 0, d); tone(900, 0.06, 'sine', 0.03, 1.8, 0.06, d); },
+  imp_s:d => { noise(0.1, 0.2, 2500, 700, 'bandpass', 1, 0, d); noise(0.06, 0.06, 1200, 0, 'bandpass', 3, 0, d); },
+  // acerto: na cabeça (tim agudo + estalo) e no escudo (vidro); escudo quebrando
+  hitHS:d => { tone(2900, 0.05, 'triangle', 0.1, 0.8, 0, d); tone(4200, 0.06, 'sine', 0.06, 1, 0.03, d); noise(0.04, 0.1, 7000, 0, 'highpass', 1, 0, d); tone(900, 0.05, 'square', 0.04, 0.5, 0, d); },
+  hitSh:d => { tone(1700, 0.1, 'sine', 0.07, 1.2, 0, d); tone(2600, 0.07, 'triangle', 0.05, 0.9, 0, d); noise(0.05, 0.08, 6000, 0, 'highpass', 1, 0, d); },
+  shBreak:d => { for(let i=0;i<6;i++) tone(rr(2500, 5000), 0.08, 'triangle', 0.035, 0.7, i*0.025, d); noise(0.3, 0.2, 6000, 2500, 'bandpass', 1.5, 0, d); tone(700, 0.25, 'sine', 0.1, 0.3, 0, d); },
+  // passos por piso
+  st_g:d => { noise(0.06, rr(0.05, 0.08), rr(1400, 1900), 600, 'bandpass', 1.2, 0, d); noise(0.05, 0.05, 400, 120, 'lowpass', 1, 0, d); },
+  st_a:d => { noise(0.09, rr(0.05, 0.07), 2400, 900, 'lowpass', 0.8, 0, d, 0.01); },
+  st_h:d => { tone(rr(95, 120), 0.05, 'sine', 0.18, 0.6, 0, d); noise(0.03, rr(0.05, 0.08), rr(2500, 3400), 0, 'bandpass', 2, 0, d, 0.001); },
+  st_w:d => { noise(0.15, 0.1, 800, 1900, 'bandpass', 1.2, 0, d, 0.015); tone(rr(300, 420), 0.08, 'sine', 0.03, 1.6, 0.02, d); },
+  st_s:d => { for(let i=0;i<3;i++) noise(0.025, 0.05, rr(2800, 4200), 0, 'bandpass', 2.5, i*0.018, d, 0.001); noise(0.07, 0.04, 600, 200, 'lowpass', 1, 0, d); },
+  hover:d => { tone(1800, 0.025, 'sine', 0.025, 1, 0, d); },
+  // porta: trinco + rangido
+  porta:d => { tone(1500, 0.025, 'square', 0.03, 0.6, 0, d, 0.001); noise(0.05, 0.12, 2500, 0, 'bandpass', 2, 0, d, 0.001); noise(0.32, 0.05, 600, 1400, 'bandpass', 5, 0.04, d, 0.05); tone(rr(260, 300), 0.3, 'sawtooth', 0.012, 1.35, 0.05, d, 0.06); },
+});
+
+// tiro: silenciador vale também pro jogador; gatilho vazio; cápsula caindo; bomba da escopeta depois do tiro
+{ const _fw = fireW; fireW = function(p, dir){ const it = p.inv && p.inv[p.sel]; if(it) normIt(it); const m0 = it ? it.mag : 0, rel0 = p.relT > 0, w = it ? WI(it) : null;
+  FJS.gun = w; let r; try{ r = _fw(p, dir); } finally { FJS.gun = null; }
+  if(!it || !w || p.isBot || !ac) return r;
+  if(it.mag < m0){ const k = it.k;
+    if(k === 'shotgun'){ playSnd('r_pump', {delay:0.32, vol:0.8}); playSnd('casca2', {delay:0.75}); }
+    else if(k === 'grao') playSnd('casca2', {delay:0.5, vol:0.6});
+    else if(!w.boom && !w.flame && k !== 'besta' && k !== 'bazooka' && k !== 'revolver' && Math.random() < (w.auto ? 0.35 : 0.9)) playSnd('casca', {delay:rr(0.28, 0.42), vol:0.7}); }
+  else if(!rel0 && m0 <= 0 && !w.boom && clock - FJS.dryT > 0.3){ FJS.dryT = clock; playSnd('dry'); }
+  return r; }; }
+// recarga em etapas (tira o pente, coloca, puxa o ferrolho), cada arma do seu jeito; a dos inimigos perto também dá pra ouvir
+const RLD_MAG = [[0.1, 'r_out'], [0.55, 'r_in'], [0.86, 'r_rack']];
+function fjRld(k, n){ switch(k){
+  case 'shotgun': { const c = clamp(n || 1, 1, 5), a = []; for(let i=0;i<c;i++) a.push([0.12 + 0.68*i/c, 'r_shell']); a.push([0.9, 'r_pump']); return a; }
+  case 'grao': return [[0.08, 'r_break'], [0.4, 'r_shell'], [0.58, 'r_shell'], [0.85, 'r_close']];
+  case 'revolver': return [[0.08, 'r_cyl'], [0.22, 'r_drop'], [0.45, 'r_shell'], [0.6, 'r_shell'], [0.88, 'r_close']];
+  case 'sniper': return [[0.1, 'r_boltO'], [0.5, 'r_shell'], [0.82, 'r_boltC']];
+  case 'caju': return [[0.1, 'r_out'], [0.5, 'r_in'], [0.8, 'r_boltO'], [0.9, 'r_boltC']];
+  case 'bazooka': return [[0.15, 'r_heavy'], [0.65, 'r_in'], [0.85, 'r_rack']];
+  case 'besta': return [[0.12, 'r_creak'], [0.6, 'r_shell'], [0.85, 'r_click']];
+  case 'flame': return [[0.1, 'r_out'], [0.45, 'r_hiss'], [0.8, 'r_in']];
+  case 'pistol': case 'deagle': return [[0.1, 'r_out'], [0.55, 'r_in'], [0.85, 'r_slide']];
+  default: return RLD_MAG; } }
+{ const _sr = startReload; startReload = function(p){ const was = p.relT > 0; FJS.noAmmo++; try{ _sr(p); } finally { FJS.noAmmo--; }
+  if(!was && p.relT > 0){ const it = p.inv[p.sel]; p.relTot = p.relT; p.relS = 0; p.relSt = fjRld(it.k, WI(it).mag - it.mag); } }; }
+{ const _st = stepReload; stepReload = function(p, dt){ if(!(p.relT > 0) || !p.relSt) return _st(p, dt);
+  const cancel = p.sel !== p.relK || !p.inv || !p.inv[p.sel]; FJS.noClick++; try{ _st(p, dt); } finally { FJS.noClick--; }
+  if(cancel){ p.relSt = null; return; }
+  const S = p.relSt, prog = p.relT > 0 ? 1 - p.relT/(p.relTot || 1) : 1;
+  while(p.relS < S.length && prog >= S[p.relS][0]){ const k = S[p.relS++][1]; if(p.isBot) sfxAt(p.pos, k, 14); else playSnd(k, {vol:twoP ? 0.7 : 1}); }
+  if(!(p.relT > 0)) p.relSt = null; }; }
+// acerto: cabeça e escudo com som próprio; escudo que zera quebra
+{ const _h = hurt; hurt = function(q, by, dmg, why, noShield, head){ const sh0 = q.sh || 0, mine = by && !by.isBot && q !== by;
+  FJS.hit = mine ? (head ? 'hitHS' : sh0 > 0 && !noShield ? 'hitSh' : null) : null;
+  let r; try{ r = _h(q, by, dmg, why, noShield, head); } finally { FJS.hit = null; }
+  if(sh0 > 0 && !(q.sh > 0) && !noShield){ if(mine) sfx('shBreak'); else if(!q.isBot) playSnd('shBreak', {vol:0.8}); }
+  return r; }; }
+// bala de inimigo passando a menos de 2,5 m da cabeça: zunido do lado certo
+function fjWhiz(dt){ if(!ac || twoP || PAUSED || !shots.length) return; const me = players[0]; if(!me || !me.alive) return; const hx = me.pos.x, hy = me.pos.y + 1.2, hz = me.pos.z;
+  for(const s of shots){ if(s.wz || !s.w || !s.owner || s.owner === me || s.w.boom || s.w.util || s.w.smoke || s.w.flame || s.w.splash || mates(s.owner, me)) continue;
+    const dx = hx - s.pos.x, dy = hy - s.pos.y, dz = hz - s.pos.z; if(dx*dx + dz*dz > 400) continue;
+    const vx = s.vel.x*dt, vy = s.vel.y*dt, vz = s.vel.z*dt, dot = dx*vx + dy*vy + dz*vz; if(dot <= 0) continue;
+    const t = dot/(vx*vx + vy*vy + vz*vz || 1); if(t > 1) continue;
+    const ex = dx - vx*t, ey = dy - vy*t, ez = dz - vz*t, d2 = ex*ex + ey*ey + ez*ez; if(d2 > 6.25) continue;
+    s.wz = true; playSnd(Math.hypot(s.vel.x, s.vel.z) > 80 ? 'whizC' : 'whiz', {vol:1 - Math.sqrt(d2)/3.2, pan:Math.sin(screenAng(s.pos.x + vx*t, s.pos.z + vz*t))*0.9}); } }
+{ const _us = updateShoot; updateShoot = function(dt){ fjWhiz(dt); return _us(dt); }; }
+// passos: som do piso, mais forte correndo e quase nada agachado/deitado; inimigos a até 18 m também fazem barulho; troca de arma
+{ const _cs = carSound; carSound = function(p, dt){ if(!FJE.on) return _cs(p, dt); }; }
+stepSounds = function(p, dt){ if(!p.alive || p.glide) return;
+  if(p.isBot){ if(!BIG || twoP || !ac || p.car || p.ride || !p.grounded || (p.m && p.m.far)) return; const L = cam1.look, dx = p.pos.x - L.x, dz = p.pos.z - L.z; if(dx*dx + dz*dz > 324) return; }
+  else { if(p.inv && p.sel !== p.sndSel){ if(p.sndSel !== undefined && R1.phase === 'play') playSnd('w_swap', {vol:twoP ? 0.6 : 1}); p.sndSel = p.sel; }
+    if(p.car) return carSound(p, dt); if(p.ride || !p.grounded) return; }
+  const v = Math.hypot(p.vel.x, p.vel.z); if(v < 1.5){ p.stepT = 0.15; return; }
+  const st = p.stance || 0; p.stepT = (p.stepT ?? 0) - dt*v*(st === 2 ? 0.2 : 0.32); if(p.stepT > 0) return; p.stepT = 1;
+  const S = fjSurfAt(p.pos.x, p.pos.y, p.pos.z), k = S === 'p' ? 'step' : 'st_' + S, vol = st === 2 ? 0.3 : st === 1 ? 0.5 : p.sprinting ? 1.3 : 1;
+  if(p.isBot) sfxAt(p.pos, k, Math.max(6, 16*vol)); else playSnd(k, {vol:vol*(twoP ? 0.6 : 1)}); };
+// motor contínuo: 4 vozes que seguem os veículos ligados mais perto (trator ronca, jipe troca marcha, lancha com água, helicóptero com pá batendo)
+const FJE = {v:[], on:false, t:0};
+function fjEngInit(){ if(FJE.on || !ac) return; FJE.on = true;
+  for(let i=0;i<4;i++){ const g = ac.createGain(); g.gain.value = 0; const pan = ac.createStereoPanner ? ac.createStereoPanner() : null; if(pan){ g.connect(pan); pan.connect(sfxGain); } else g.connect(sfxGain);
+    const am = ac.createGain(); am.connect(g); const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 3; lp.connect(am);
+    const og = ac.createGain(); og.gain.value = 0.5; og.connect(lp);
+    const o1 = ac.createOscillator(); o1.type = 'sawtooth'; o1.connect(og); const o2 = ac.createOscillator(); o2.type = 'square'; const g2 = ac.createGain(); g2.gain.value = 0.5; o2.connect(g2); g2.connect(og);
+    const ns = ac.createBufferSource(); ns.buffer = noiseBuf; ns.loop = true; const nf = ac.createBiquadFilter(); nf.type = 'bandpass'; nf.Q.value = 0.6; const ng = ac.createGain(); ng.gain.value = 0; ns.connect(nf); nf.connect(ng); ng.connect(am);
+    const lfo = ac.createOscillator(); lfo.frequency.value = 5; const lg = ac.createGain(); lg.gain.value = 0; lfo.connect(lg); lg.connect(am.gain);
+    [o1, o2, ns, lfo].forEach(n => n.start()); FJE.v.push({g, pan, am, lp, o1, o2, nf, ng, lfo, lg, c:null}); } }
+function fjEngSet(V, c, d, inside){ const t = ac.currentTime, T = 0.08, sp = Number.isFinite(c._sp) ? Math.min(c._sp, 60) : 0, R = c.heli ? 170 : 80; let f, lp, nv, nf, lf, ld, vol;
+  if(c.heli){ const big = c.kind === 'heli10'; f = big ? 95 : 140; lp = big ? 420 : 650; nv = 1.1; nf = big ? 260 : 380; lf = big ? 4.2 : 6.2; ld = 0.7; vol = 0.4; }
+  else if(c.boat){ const r = Math.min(1, sp/20); f = 70 + r*90; lp = 700 + r*1200; nv = 0.25 + r*0.6; nf = 700 + r*500; lf = 0.1; ld = 0; vol = 0.26; }
+  else if(c.jeep){ const gr = Math.min(3, Math.floor(sp/8)), r = sp >= 32 ? 1 : (sp - gr*8)/8; f = 52 + r*75 + gr*10; lp = 500 + r*1300; nv = 0.2; nf = 500; lf = f/4; ld = 0.12; vol = 0.26; }
+  else { const r = Math.min(1, sp/14); f = 38 + r*40; lp = 300 + r*500; nv = 0.25; nf = 300; lf = 7 + r*9; ld = 0.45; vol = 0.32; }
+  const u = Number.isFinite(d) ? Math.min(1, d/R) : 1, dv = Math.pow(1 - u, 1.8)*(inside ? 0.75 : 1);
+  V.o1.frequency.setTargetAtTime(f, t, T); V.o2.frequency.setTargetAtTime(f*0.5, t, T); V.lp.frequency.setTargetAtTime(inside ? lp*0.8 : lp*(1 - u*0.6), t, T);
+  V.ng.gain.setTargetAtTime(nv, t, T); V.nf.frequency.setTargetAtTime(nf, t, T); V.lfo.frequency.setTargetAtTime(lf, t, T); V.lg.gain.setTargetAtTime(ld, t, T); V.am.gain.setTargetAtTime(1 - ld*0.3, t, T);
+  V.g.gain.setTargetAtTime(vol*dv, t, 0.12); if(V.pan) V.pan.pan.setTargetAtTime(inside || !(u < 1) ? 0 : Math.sin(screenAng(c.x, c.z))*0.7*Math.min(1, d/5) || 0, t, T); }
+function fjEngTick(){ if(!ac || !sfxGain) return; fjEngInit(); const now = ac.currentTime, dt = now - FJE.t; if(dt < 0.066) return; FJE.t = now;
+  const me = players[0], live = !PAUSED && R1.phase !== 'menu' && R1.phase !== 'podium' && me && cars.length, cand = [];
+  if(live){ const L = twoP ? me.pos : cam1.look;
+    for(const c of cars){ if(c.dead || !c.m) continue;
+      if(c._px === undefined || dt > 0.5) c._sp = c._sp || 0; else c._sp = c._sp*0.5 + 0.5*Math.hypot(c.x - c._px, c.z - c._pz)/dt; c._px = c.x; c._pz = c.z;
+      if(!(c.driver || c.heli && c.y - gY(c.x, c.z) > 1.5)) continue;
+      const d = Math.hypot(c.x - L.x, (c.y || 0) - L.y, c.z - L.z); if(d < (c.heli ? 170 : 80)) cand.push([c, d]); }
+    cand.sort((a, b) => a[1] - b[1]); cand.length = Math.min(cand.length, FJE.v.length); }
+  const top = new Map(cand);
+  for(const V of FJE.v) if(V.c && !top.has(V.c)){ V.c = null; V.g.gain.setTargetAtTime(0, now, 0.1); }
+  for(const [c] of cand) if(!FJE.v.some(V => V.c === c)){ const V = FJE.v.find(V => !V.c); if(V) V.c = c; }
+  for(const V of FJE.v) if(V.c) fjEngSet(V, V.c, top.get(V.c), me.car === V.c || me.ride === V.c); }
+{ const _ua = updateAmb; updateAmb = function(){ fjEngTick(); _ua(); }; }
+// passar o mouse por cima de um botão do menu: tique bem baixinho
+document.addEventListener('mouseover', e => { const b = e.target.closest && e.target.closest('button, .map, [data-sq], .tab'); if(b === FJS.hov) return; FJS.hov = b; if(!b || !ac) return;
+  const t = performance.now(); if(t - FJS.uiT < 45) return; FJS.uiT = t; playSnd('hover', {ui:true}); }, true);
+
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
