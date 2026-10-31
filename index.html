@@ -10912,10 +10912,10 @@ function stepParkour(p, dt, inp){
     p.sprinting = !!inp.sprint && ml0 > 0.3 && !p.ads && !(p.useT > 0) && !(p.relT > 0); if(p.sprinting && p.grounded) p.stance = 0; }
   if(p.glide || p.stun > 0) return false;
   const ml = Math.hypot(inp.mx, inp.mz), into = p.wallN && ml > 0.3 && (inp.mx*p.wallN[0] + inp.mz*p.wallN[1])/ml < -0.5;
-  // pula a janela: Espaço no chão contra o parapeito, ou sozinho se já estiver no ar indo contra ele
-  if(!p.isBot && !p.stance && p.wallT > 0 && into && (inp.jumpP || !p.grounded)){ const V = vaultAt(p); if(V){ p.vault = V; p.slideT = 0; p.useT = 0; p.sq = 0.35; sfxNear(p, 'dive'); return true; } }
+  // pula a janela: só quando aperta Espaço contra o parapeito (no chão ou no ar) - Version 191: nunca sozinho
+  if(!p.isBot && !p.stance && p.wallT > 0 && into && inp.jumpP){ const V = vaultAt(p); if(V){ p.vault = V; p.slideT = 0; p.useT = 0; p.sq = 0.35; sfxNear(p, 'dive'); return true; } }
   // escala a beirada quando está no ar contra a parede (ou pula contra ela)
-  if(!p.grounded && p.wallT > 0 && into && p.vel.y < 6){ const L = ledgeAt(p); if(L){ p.mantle = {t:0, dur:0.32, x0:p.pos.x, y0:p.pos.y, z0:p.pos.z, x1:L[0], y1:L[1], z1:L[2]}; p.slideT = 0; p.sq = 0.4; if(!p.isBot) sfx('jump'); return true; } }
+  if(!p.grounded && p.wallT > 0 && into && p.vel.y < 6 && (p.isBot || !vaultAt(p))){ const L = ledgeAt(p); if(L){ p.mantle = {t:0, dur:0.32, x0:p.pos.x, y0:p.pos.y, z0:p.pos.z, x1:L[0], y1:L[1], z1:L[2]}; p.slideT = 0; p.sq = 0.4; if(!p.isBot) sfx('jump'); return true; } }
   // agarra a parede alta pra escalar (só gente; bots ficam nas rotas normais)
   if(!p.isBot && !p.grounded && p.wallT > 0 && into && inp.jump && !inp.jumpP && (p.stam ?? 100) > 15 && canClimb(p.wallB) && p.wallB.max.y - p.pos.y > 2.4 && p.vel.y < 8){ p.climb = {b:p.wallB, n:p.wallN.slice()}; p.vel.set(0, 0, 0); p.useT = 0; p.slideT = 0; p.sq = 0.3; sfx('jump'); return stepClimb(p, dt, inp); }
   // pulo na parede
@@ -13308,6 +13308,60 @@ SND.portaF = d => { noise(0.12, 0.25, 900, 140, 'lowpass', 1, 0, d); tone(rr(95,
 // cartão de baixo: "Porta · E abrir/fechar" quando não tem item, baú nem veículo
 { const _nh = nhInv; nhInv = function(me){ _nh(me); const P = $('nhPick'); if(!P.hidden || me.car || me.ride) return; const d = fjDoorNear(me); if(!d) return;
   P.hidden = false; P.classList.add('nt'); nhSet(P, `<div><b>Porta</b><div class="k"><kbd>E</kbd> ${d.tgt ? 'fechar' : 'abrir'}</div></div>`); }; }
+// menu de ações (Version 191): com 2+ coisas pra fazer no E por perto, aparece uma lista do lado da mira; rolar o mouse escolhe, E faz.
+// Sem rolar, fica marcado o que está mais perto de onde a mira aponta. Com 1 coisa só, o E funciona como antes.
+const FJA = {L:[], sel:0, ref:null, man:false, vis:false, key:'', el:null, wT:0};
+const fjaTxt = s => String(s || '').replace(/<[^>]+>/g, '');
+function fjaOn(p){ return !!(BIG && p && p === players[0] && !twoP && p.alive && !p.down && !p.car && !p.ride && !p.glide && !p.climb && !p.swim && !(p.rvT > 0) && !(p.stT > 0) && p.inv && R1.phase === 'play'); }
+function fjaScan(p){ const L = []; if(!fjaOn(p)) return L;
+  const D = downMate(p); if(D) L.push({ref:D, ic:'🩹', t:'Levantar ' + fjaTxt(D.name), x:D.pos.x, z:D.pos.z, go:() => { p.rvTgt = D; p.rvT = REV_T; p.useT = 0; sfx('beep'); }});
+  const st = nearSt(p); if(st && cardsOf(p).length) L.push({ref:st, ic:'📡', t:'Trazer o parceiro de volta', x:st.x, z:st.z, go:() => { p.stT = ST_T; p.useT = 0; sfx('beep'); }});
+  const seen = new Set();
+  for(let i = 0; i < 3; i++){ const W = nearLoot(p, 1.8, q => !!WPN[q.k] && !boxLock(q, p) && !seen.has(q)); if(!W) break; seen.add(W); const r = RAR[W.r | 0] || RAR[0];
+    L.push({ref:W, ic:WPN[W.k].ic || '🔫', t:'Pegar ' + WPN[W.k].name, r:r[0], rc:r[1], x:W.pos.x, z:W.pos.z, go:() => pickUp(p, W)}); }
+  const BL = nearLoot(p, 2.0, q => !!q.box), B = BL && BL.box;
+  if(B) L.push({ref:B, ic:B.chest ? '🧰' : '📦', t:B.chest ? (B.open ? 'Ver o baú' : 'Abrir o baú') : 'Abrir a ' + fjaTxt(B.label || 'caixa').replace(/^Caixa/, 'caixa'), x:BL.pos.x, z:BL.pos.z, go:() => { if(B.chest) chestOpen(B); bagToggle(true); }});
+  const d = fjDoorNear(p); if(d) L.push({ref:d, ic:'🚪', t:d.tgt ? 'Fechar a porta' : 'Abrir a porta', x:d.cx, z:d.cz, go:() => { if(!fjDoorSet(d, !d.tgt)) say('Tem alguém na porta', true); }});
+  const c = nearCar(p); if(c){ const I = c.kind && WDV.info[c.kind];
+    L.push({ref:c, ic:I ? I.ic || '🚙' : c.boat ? '🚤' : '🚜', t:'Entrar ' + (I ? 'no ' + I.nm : c.boat ? 'na lancha' : 'no trator'), x:c.x, z:c.z, go:() => enterCar(p, c)}); }
+  return L; }
+// escolhe: o que o jogador rolou (se ainda está na lista) ou o mais perto de onde a mira aponta
+function fjaPick(p, L){ if(L.length < 2) return 0;
+  if(FJA.man){ const i = L.findIndex(a => a.ref === FJA.ref); if(i >= 0) return i; FJA.man = false; }
+  let dir = null; try { dir = crossRay(cam1); } catch(e){}
+  let best = 0, bs = -9;
+  if(dir){ const h = Math.hypot(dir.x, dir.z) || 1; L.forEach((a, i) => { const dx = a.x - p.pos.x, dz = a.z - p.pos.z, q = Math.hypot(dx, dz);
+    const s = q < 0.25 ? 0.5 : (dx*dir.x + dz*dir.z)/(q*h); if(s > bs + 0.02){ bs = s; best = i; } }); }
+  return best; }
+function fjaUpdate(){ const p = players && players[0]; FJA.L = p && !PAUSED ? fjaScan(p) : [];
+  const n = FJA.L.length; if(n < 2){ FJA.man = false; FJA.sel = 0; FJA.ref = null; }
+  else { FJA.sel = fjaPick(p, FJA.L); FJA.ref = FJA.L[FJA.sel].ref; }
+  fjaHud(); }
+function fjaHud(){ let el = FJA.el;
+  if(!el){ el = FJA.el = document.createElement('div'); el.id = 'fjAct'; document.body.appendChild(el);
+    const st = document.createElement('style'); st.textContent = `#fjAct{position:fixed;left:58%;top:44%;z-index:30;min-width:15em;max-width:22em;padding:.45em;border-radius:.7em;background:rgba(18,16,30,.72);backdrop-filter:blur(6px);box-shadow:0 6px 22px rgba(0,0,0,.35);color:#fff;font:600 15px var(--body,system-ui,sans-serif);pointer-events:none}
+#fjAct[hidden]{display:none}#fjAct .r{display:flex;align-items:center;gap:.55em;padding:.38em .55em;border-radius:.45em;opacity:.72}
+#fjAct .r.on{opacity:1;background:rgba(255,176,32,.22);box-shadow:inset 3px 0 0 #ffb020}#fjAct .ic{width:1.4em;text-align:center}#fjAct .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#fjAct .rr{font:900 .62em var(--body,system-ui);letter-spacing:.08em;text-transform:uppercase;margin-left:.4em}
+#fjAct kbd{font:800 .8em var(--body,system-ui);padding:.12em .45em;border-radius:.3em;background:#ffb020;color:#1b1430;visibility:hidden}#fjAct .r.on kbd{visibility:visible}
+#fjAct .h{font-size:.72em;opacity:.7;padding:.35em .55em 0;text-align:right}`; document.head.appendChild(st); }
+  const show = FJA.L.length >= 2; FJA.vis = show;
+  if(!show){ if(!el.hidden) el.hidden = true; FJA.key = ''; return; }
+  const key = FJA.L.map(a => a.t + (a.r || '')).join('|') + '#' + FJA.sel; if(key === FJA.key && !el.hidden) return; FJA.key = key;
+  el.innerHTML = ''; FJA.L.forEach((a, i) => { const r = document.createElement('div'); r.className = 'r' + (i === FJA.sel ? ' on' : '');
+    const ic = document.createElement('span'); ic.className = 'ic'; ic.textContent = a.ic; const t = document.createElement('span'); t.className = 't'; t.textContent = a.t;
+    if(a.r){ const rr = document.createElement('span'); rr.className = 'rr'; rr.style.color = a.rc; rr.textContent = a.r; t.appendChild(rr); }
+    const k = document.createElement('kbd'); k.textContent = 'E'; r.append(ic, t, k); el.appendChild(r); });
+  const h = document.createElement('div'); h.className = 'h'; h.textContent = 'Rolar o mouse escolhe'; el.appendChild(h); el.hidden = false; }
+window.addEventListener('wheel', e => { if(!FJA.vis || FJA.L.length < 2 || PAUSED) return; e.preventDefault(); e.stopImmediatePropagation();
+  const now = performance.now(); if(now - FJA.wT < 110) return; FJA.wT = now; const n = FJA.L.length;
+  FJA.sel = (FJA.sel + (e.deltaY > 0 ? 1 : -1) + n) % n; FJA.ref = FJA.L[FJA.sel].ref; FJA.man = true; fjaHud(); }, {capture:true, passive:false});
+{ const _si = shootInput; shootInput = function(p, inp){
+  if(inp.item && p === players[0] && fjaOn(p)){ const L = fjaScan(p); if(L.length >= 2){ const i = fjaPick(p, L); inp.item = false; L[i].go(); } }
+  return _si(p, inp); }; }
+{ const _v = view; view = function(dt){ const r = _v(dt); try { fjaUpdate(); } catch(e){ FJA.L = []; if(FJA.el) FJA.el.hidden = true; } return r; }; }
+// cartão do item no chão some enquanto a lista está aberta (a lista já diz o que é)
+{ const _nh = nhInv; nhInv = function(me){ _nh(me); if(FJA.vis){ const P = $('nhPick'); if(P) P.hidden = true; } }; }
 // transparência: o corte termina antes do próprio feijão (caixa real do modelo, não o ponto atrasado da câmera)
 const fjOccMe = {s:new THREE.Sphere(), v:new V3()};
 { const _o = window.fjOccSet; window.fjOccSet = function(c, cam, on){ _o(c, cam, on); const O = window.FJ_OCC, R = O.R; if(!(R.x > 0)) return;
@@ -13788,7 +13842,8 @@ function netPack(p){ const f = (p.alive ? 1 : 0) | (p.grounded ? 2 : 0) | (p.div
   const it = p.inv && p.inv[p.sel], wc = it && WPN[it.k] ? WK.indexOf(it.k)*4 + (it.r ?? WPN[it.k].rar) : -1;
   const f2 = ({plane:1, fall:2, chute:3}[p.glide] || 0) | ((p.stance || 0) & 3) << 2 | (p.down ? 16 : 0) | (p.ads ? 32 : 0) | (p.slideT > 0 ? 64 : 0) | (p.climb ? 128 : 0) | (p.vault ? 256 : 0) | (p.holster ? 512 : 0);
   const a = p.arm ? (p.arm.vest | 0) | (p.arm.helm | 0) << 2 | (p.arm.pack | 0) << 4 : 0;
-  s.push(Math.round(p.hp ?? 100), Math.round(p.sh || 0), wc, f2, a, Math.round((p.leanK || 0)*100)); return s; }
+  const nk = typeof nadeHeldK === 'function' ? nadeHeldK(p) : null;   // utilitário na mão (+32 = preparando o arremesso)
+  s.push(Math.round(p.hp ?? 100), Math.round(p.sh || 0), wc, f2, a, Math.round((p.leanK || 0)*100), nk ? (NTYPES.indexOf(nk) + 1) | (p.nadeCook ? 32 : 0) : 0); return s; }
 // chegou o estado de um feijão que não é deste PC
 function netState(p, s){ NET.tg[p.nid] = {s, at:performance.now()}; const f = s[7], a = !!(f & 1);
   if(!netBR()){ if(!NET.host){ p.item = !!(f & 16); if(!a && p.alive && !(f & 64)){ p.alive = false; p.m.g.visible = false; } } return; }
@@ -13802,7 +13857,8 @@ function netState(p, s){ NET.tg[p.nid] = {s, at:performance.now()}; const f = s[
   p.stance = f2 >> 2 & 3; p.ads = !!(f2 & 32); p.slideT = f2 & 64 ? 0.2 : 0; p.climb = f2 & 128 ? p.climb || {net:1} : null; p.vault = f2 & 256 ? p.vault || {net:1} : null;
   const dn = !!(f2 & 16); if(p._nd !== dn){ p._nd = dn; p._upS = false; p.down = dn; if(dn){ p.dhp = 100; if(p.car) leaveCar(p, true); } }
   const A = s[12]; p.arm = {vest:A & 3, helm:A >> 2 & 3, pack:A >> 4 & 3};
-  p.holster = !!(f2 & 512); p.leanK = clamp((+s[13] || 0)/100, -1, 1); }   // arma guardada nas costas e inclinação (Q/E)
+  p.holster = !!(f2 & 512); p.leanK = clamp((+s[13] || 0)/100, -1, 1);
+  const nc = +s[14] || 0; p.nadeNetK = nc & 31 ? NTYPES[(nc & 31) - 1] || null : null; p.nadeCook = !!(nc & 32); }   // arma guardada nas costas e inclinação (Q/E)
 // avião e paraquedas dos outros seguem a rede (o jogo tenta pular sozinho junto com o seu time)
 function netGlide(p){ if(p._ng === undefined) return; p.glide = p._ng; if(p.m.chute) p.m.chute.visible = p._ng === 'chute';
   if(p._ng === 'plane'){ p.m.g.visible = false; p.wantJump = false; } else if(p.alive) p.m.g.visible = true; }
