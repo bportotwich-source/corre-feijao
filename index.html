@@ -6210,9 +6210,9 @@ function updateSky(dt){ if(!pc) return; pc.rings.forEach(g => g.m.rotation.z += 
     if(p.grounded){ if(p.glide || p.pcLand === null) pcLanded(p); continue; }
     if(!p.glide) continue;
     if(R1.phase !== 'play'){ p.vel.set(0, 0, 0); p.pos.y = p.skyY; continue; }
-    if(p.glide === 'fall'){ p.vel.y = Math.max(p.vel.y, -17);
+    if(p.glide === 'fall'){ if(p.vDive) p.vel.y = Math.max(p.vel.y - 30*dt, -34); p.vel.y = Math.max(p.vel.y, p.vDive ? -34 : -17);
       if((p.pos.y < 16 && p.vel.y < 0) || p.wantChute){ p.wantChute = false; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
-    else p.vel.y = Math.max(p.vel.y, -5);
+    else { if(p.vDive) p.vel.y = Math.max(p.vel.y - 12*dt, -11); p.vel.y = Math.max(p.vel.y, p.vDive ? -11 : -5); }
     const y0 = p.pcY ?? p.pos.y, y1 = p.pos.y; p.pcY = y1;
     for(const g of pc.rings){ if(g.y > y0 || g.y < y1 || g.got.has(p)) continue; if(Math.hypot(p.pos.x - g.x, p.pos.z - g.z) > g.r) continue; g.got.add(p); p.pcS += g.v;
       if(!p.isBot){ sfx('ding'); say(`${g.v > 1 ? '⭐ Anel dourado' : 'Anel'} +${g.v} · total <b>${p.pcS}</b>`, true); g.m.material = g.m.material.clone(); g.m.material.color.setHex(0x7ee05a); } } }
@@ -9474,6 +9474,7 @@ function shootInput(p, inp){
   if(p.stT > 0){ if(inp.push) p.stT = 0; else { inp.mx *= 0.15; inp.mz *= 0.15; inp.nade = inp.use = inp.turbo = false; } }
   if(p.rvT > 0){ if(inp.push){ p.rvT = 0; } else { inp.mx *= 0.15; inp.mz *= 0.15; inp.nade = inp.use = inp.turbo = false; } }
   p.chuteCD = Math.max(0, (p.chuteCD || 0) - 1/60);
+  p.vDive = !p.isBot && !!inp.sprint && R1.phase === 'play' && (p.glide === 'fall' || p.glide === 'chute') && p.vel.y < 1;
   if(p.glide === 'fall' && inp.jump && R1.phase === 'play' && (p.pos.y < p.skyY - 3 || p.mola && p.vel.y < 3) && p.chuteCD <= 0) p.wantChute = true;
   if(BIG && !p.isBot && p.glide === 'chute' && inp.jumpP && R1.phase === 'play' && p.chuteCD <= 0 && p.pos.y - Math.max(gY(p.pos.x, p.pos.z), groundBelow(p)) > 12){ p.glide = 'fall'; p.wantChute = false; p.skyY = p.pos.y + 3; p.chuteCD = 0.45; if(p.m.chute) p.m.chute.visible = false; sfx('whoosh'); inp.jump = inp.jumpP = false; }
   // pulou de lugar alto (prédio, torre): dá pra abrir o paraquedas de novo
@@ -9630,9 +9631,9 @@ function updateShoot(dt){
     if(p.grounded || !p.alive){ p.glide = false; p.landT = R1.t; if(p.m.chute) p.m.chute.visible = false; continue; }
     if(R1.phase !== 'play'){ p.vel.set(0, 0, 0); p.pos.y = p.skyY; continue; }
     if(!p.isBot && (p.glide === 'chute' || p.glide === 'fall') && !p.vault){ const V = airWin(p); if(V){ p.glide = false; p.landT = R1.t; if(p.m.chute) p.m.chute.visible = false; V.dur = 0.55; p.vault = V; p.sq = 0.4; sfx('jump'); continue; } }
-    if(p.glide === 'fall'){ p.vel.y = Math.max(p.vel.y, -22);
+    if(p.glide === 'fall'){ if(p.vDive && p.vel.y < 1) p.vel.y = Math.max(p.vel.y - 30*dt, -42); p.vel.y = Math.max(p.vel.y, p.vDive ? -42 : -22);
       if((p.pos.y - aqFloor(p) < 14 && p.vel.y < 0) || p.wantChute){ p.wantChute = false; p.chuteCD = 0.45; p.glide = 'chute'; p.vel.y = Math.max(p.vel.y, -8); p.m.chute.visible = true; if(!p.isBot) sfx('chute'); } }
-    else p.vel.y = Math.max(p.vel.y, -5); }
+    else { if(p.vDive) p.vel.y = Math.max(p.vel.y - 12*dt, -11); p.vel.y = Math.max(p.vel.y, p.vDive ? -11 : -5); } }
   if(!brZone) return;
   if(R1.phase === 'play'){
     if(zoneP){ R1.nAlive = players.filter(q => q.alive).length; updateZone(dt); updateDrops(dt); updateLoot(dt); if(R1.supT.length && R1.t > R1.supT[0]){ R1.supT.shift(); supplyDrop(); }
@@ -10487,7 +10488,7 @@ function brHUD(){
   // dica do momento: avião, queda, paraquedas ou assistindo alguém
   const fallHigh = !me.glide && !me.grounded && me.vel.y < -3 && me.pos.y - groundBelow(me) > 4.5;
   const follow = me.alive ? null : players.find(p => p.alive && mates(p, me)) || players.find(p => p.alive);
-  const tip = !me.alive ? (me.rev ? '🏁 <b>Revanche</b>: passe primeiro pelo portal amarelo e volte pra partida!' : me.revWait ? '🏁 A revanche já vai começar...' : follow ? `👀 Assistindo <b>${follow.name}</b>` + (sq && mates(follow, me) ? ' · seu time ainda está vivo' : '') : '') : me.glide === 'plane' ? '✈️ Aperte <kbd>Espaço</kbd> para pular do avião' : me.glide === 'fall' || fallHigh ? '🪂 <kbd>Espaço</kbd> abre o paraquedas · <kbd>Shift</kbd> mergulha' : me.glide ? '🪂 Guie com <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>' : me.car ? (me.car.heli ? '🚁 Pilotando · mouse vira · <kbd>Espaço</kbd> sobe · <kbd>Shift</kbd> desce · <kbd>E</kbd> salta de paraquedas' : me.car.jeep ? (me.car.kind === 'trator' ? '🚜 Dirigindo o trator' : me.car.kind === 'caminhao' ? '🚚 Dirigindo o caminhão' : '🚙 Dirigindo o jipe') + ' · pare perto da sua tropa pra ela subir · <kbd>E</kbd> desce' : me.car.boat ? '🚤 Pilotando a lancha · <kbd>E</kbd> desce · na praia ela encalha' : '🚜 Dirigindo o trator · <kbd>E</kbd> desce · passe por cima dos outros pra atropelar') : '';
+  const tip = !me.alive ? (me.rev ? '🏁 <b>Revanche</b>: passe primeiro pelo portal amarelo e volte pra partida!' : me.revWait ? '🏁 A revanche já vai começar...' : follow ? `👀 Assistindo <b>${follow.name}</b>` + (sq && mates(follow, me) ? ' · seu time ainda está vivo' : '') : '') : me.glide === 'plane' ? '✈️ Aperte <kbd>Espaço</kbd> para pular do avião' : me.glide === 'fall' || fallHigh ? '🪂 <kbd>Espaço</kbd> abre o paraquedas · segure <kbd>Shift</kbd> pra descer reto' : me.glide ? '🪂 Guie com <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> · segure <kbd>Shift</kbd> pra descer reto' : me.car ? (me.car.heli ? '🚁 Pilotando · mouse vira · <kbd>Espaço</kbd> sobe · <kbd>Shift</kbd> desce · <kbd>E</kbd> salta de paraquedas' : me.car.jeep ? (me.car.kind === 'trator' ? '🚜 Dirigindo o trator' : me.car.kind === 'caminhao' ? '🚚 Dirigindo o caminhão' : '🚙 Dirigindo o jipe') + ' · pare perto da sua tropa pra ela subir · <kbd>E</kbd> desce' : me.car.boat ? '🚤 Pilotando a lancha · <kbd>E</kbd> desce · na praia ela encalha' : '🚜 Dirigindo o trator · <kbd>E</kbd> desce · passe por cima dos outros pra atropelar') : '';
   const tp = $('brTip'); if(tp.dataset.h !== tip){ tp.dataset.h = tip; tp.innerHTML = tip; } tp.hidden = !tip || !$('pick').hidden || !$('nhPick').hidden;
   $('brKeys').hidden = !me.alive || !!me.glide || !BIG;
   // barra de recarga / cura embaixo da mira
@@ -11387,9 +11388,9 @@ function stepPlayer(p, dt, inp){
   p.stun = Math.max(0, p.stun - dt); p.hitCD = Math.max(0, p.hitCD - dt); p.pushCD = Math.max(0, p.pushCD - dt); p.pushAnim = Math.max(0, p.pushAnim - dt); p.slow = Math.max(0, p.slow - dt); p.grabCD = Math.max(0, p.grabCD - dt);
   if(p.ground && p.ground.delta && p.grounded) p.pos.add(p.ground.delta);
   const control = p.stun <= 0 && p.dive <= 0;
-  let mx = control ? inp.mx : 0, mz = control ? inp.mz : 0;
+  let mx = control && !(p.glide && p.vDive) ? inp.mx : 0, mz = control && !(p.glide && p.vDive) ? inp.mz : 0;
   const ml = Math.hypot(mx, mz); if(ml > 1){ mx /= ml; mz /= ml; }
-  const ice = p.grounded && p.ground && p.ground.ice, acc = p.grounded ? (ice ? 6.5 : 42) : p.glide ? 26 : 16;
+  const ice = p.grounded && p.ground && p.ground.ice, acc = p.grounded ? (ice ? 6.5 : 42) : p.glide ? (p.vDive ? 60 : 26) : 16;
   if(p.car && p.dive <= 0) driveCar(p, dt, mx, mz, ml, control ? inp : null);
   else if(p.dive <= 0 && !(p.slideT > 0)){
     const boost = p.glide ? (p.glide === 'fall' ? 2.1 : 1.5) : round === 4 && p.item ? 1.22 : round === 5 && !p.item ? 1.12 : round === 7 && p.egg ? 0.85 : 1;
@@ -12260,7 +12261,7 @@ function updateHUD(){
   else if(round === 18){ $('hInfo').textContent = 'Pinte o chão com a sua cor'; }
   else if(round === 19){ $('hInfo').textContent = 'Segure as zonas'; }
   else if(round === 22){ $('hInfo').textContent = R1.extra ? 'GOL DE OURO: quem marcar vence!' : 'F chuta · Shift mergulha · Espaço cabeceia'; }
-  else if(round === 20){ $('hInfo').textContent = humans().filter(h => h.alive).map(h => `${twoP ? h.name + ' ' : ''}${h.glide === 'plane' ? '✈️ Espaço pula do avião' : h.glide === 'fall' || (!h.glide && !h.grounded && h.vel.y < -3 && h.pos.y - groundBelow(h) > 4.5) ? '🪂 Espaço abre o paraquedas' : h.glide ? '🪂 Guie com WASD' : '❤ ' + (h.hp ?? 100) + (h.sh > 0 ? ' 🛡 ' + Math.round(h.sh) : '') + (zoneP ? ' · 💥 ' + (h.kills || 0) : '')}`).concat(SQ() ? [`Time ${players.filter(q => q.isBot && humans().some(h => h.squad === q.squad)).map(q => q.alive ? '◆' + (q.hp ?? 100) : '✖').join(' ')}`, `Times ${squadsAlive()}`, `Vivos ${alive}`] : [`Vivos ${alive}`, `sobram ${R1.brKeep || 1}`]).join(' · '); }
+  else if(round === 20){ $('hInfo').textContent = humans().filter(h => h.alive).map(h => `${twoP ? h.name + ' ' : ''}${h.glide === 'plane' ? '✈️ Espaço pula do avião' : h.glide === 'fall' || (!h.glide && !h.grounded && h.vel.y < -3 && h.pos.y - groundBelow(h) > 4.5) ? '🪂 Espaço abre o paraquedas' : h.glide ? '🪂 Guie com WASD · Shift desce reto' : '❤ ' + (h.hp ?? 100) + (h.sh > 0 ? ' 🛡 ' + Math.round(h.sh) : '') + (zoneP ? ' · 💥 ' + (h.kills || 0) : '')}`).concat(SQ() ? [`Time ${players.filter(q => q.isBot && humans().some(h => h.squad === q.squad)).map(q => q.alive ? '◆' + (q.hp ?? 100) : '✖').join(' ')}`, `Times ${squadsAlive()}`, `Vivos ${alive}`] : [`Vivos ${alive}`, `sobram ${R1.brKeep || 1}`]).join(' · '); }
   else if(round === 8 || round === 15 || round === 16){ $('hInfo').textContent = `Vivos ${alive}`; }
   else if(round === 23){ $('hInfo').textContent = mfInfo(); }
   else if(round === 24){ $('hInfo').textContent = cbInfo(); }
@@ -13608,6 +13609,7 @@ function aqPose(p, dt){ const m = p.m; if(!m || !m.tilt || !m.arms || !m.legs) r
     A.q = q; return; }
   const airOk = (p.alive || p.down) && !p.car && !p.ride && !p.climb && !p.vault && !p.mantle && !p.grounded && !(p.dive > 0) && !p.down;
   if(airOk && p.glide === 'fall'){ // queda livre: subindo do feijão-mola é foguete (braços pra cima); descendo, de barriga pra baixo, braços e pernas abertos tremendo no vento
+    A.vd = (A.vd || 0) + ((p.vDive ? 1 : 0) - (A.vd || 0))*Math.min(1, dt*6);
     A.up += (clamp(p.vel.y/8, 0, 1) - A.up)*Math.min(1, dt*5); const u = A.up, dv = clamp(A.sp/15, 0, 1), fl = Math.sin(clock*23 + p.i*3)*0.025, t = clock + p.i;
     T.position.set(0, 0, 0); T.rotation.set((1.12 + 0.32*dv)*(1 - u) - 0.06*u, A.roll*1.3*(1 - u) + Math.sin(t*5)*0.08*u, Math.sin(t*1.7)*0.04*(1 - u)); m.body.position.y = 0.78;
     m.arms.forEach((a, k) => { const s = k ? 1 : -1;
@@ -13616,6 +13618,10 @@ function aqPose(p, dt){ const m = p.m; if(!m || !m.tilt || !m.arms || !m.legs) r
     m.legs.forEach((l, k) => { const s = k ? 1 : -1;
       aqSet(l, s*(0.32 - 0.1*dv), 0.04 - fl, -0.3 - 0.06*dv + fl, 1.0 + 0.2*dv, 0, s*0.2);
       aqMix(l, u, s*0.1, 0.02, 0, 0.15, 0, 0); });
+    if(A.vd > 0.01){ const v = A.vd, w = Math.sin(clock*31 + p.i)*0.02; // descida reta: mergulho de cabeça, corpo esticado
+      T.rotation.x += (2.75 - T.rotation.x)*v; T.rotation.y *= 1 - v; T.position.y = 1.0*v; T.position.z = 0.25*v;
+      m.arms.forEach((a, k) => { const s = k ? 1 : -1; aqMix(a, v, s*0.6, 1.0 + w, 0, 0, 0, s*0.12); });
+      m.legs.forEach((l, k) => { const s = k ? 1 : -1; aqMix(l, v, s*0.17, 0.02 - w, 0, 0, 0, 0); }); }
     return; }
   if(airOk && p.glide === 'chute'){ // paraquedas: segura as cordas, pernas balançando, inclina pro lado da curva e pra frente com velocidade
     const t = clock + p.i, sw = Math.sin(t*1.9), fw = clamp(A.sp/11, 0, 1), roll = clamp(A.roll*1.4, -0.45, 0.45);
