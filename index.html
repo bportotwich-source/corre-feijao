@@ -7463,6 +7463,7 @@ function blRun(name, O, T, M, fn){ if(blDepth || BOX_GHOST) return fn();
   if(BL_CAP) BL_CAP.push({name, sig, O, T, M, prims:kids.map(o => blPrim(o, O, T, true, M))});
   const v = BL.ok && BL.v[sig]; if(!v) return r; BL.n++;
   const g = blInst(v, O, T, M), by = {}; g.children.forEach(m => by[m.userData.col] = by[m.userData.col] || m);
+  if(name === 'fjHall' && FJ_T.length && FJ_T[FJ_T.length - 1].k === 'hall') blCutGate(g, FJ_T[FJ_T.length - 1]);
   const pick = col => by[col] || g.children[0];
   const ks = new Set(kids); for(let i = s0; i < solids.length; i++){ const b = solids[i]; if(b.mesh && ks.has(b.mesh)) b.mesh = pick(blColKey(b.mesh.material.color.getHex(), T)); }
   kids.forEach(k => world.remove(k)); return r; }
@@ -7497,6 +7498,14 @@ function blMat(p, T, v){ const [k, key] = p.name.split('|'), col = blCol(key, T)
   m.onBeforeCompile = sh => { sh.uniforms.uDeq = u; sh.vertexShader = 'uniform vec4 uDeq;\n' + sh.vertexShader.replace('#include <uv_vertex>', 'vec3 bp = position*uDeq.x + uDeq.yzw; vec3 an = abs(normal); vec2 pu = an.y > max(an.x, an.z) ? bp.xz : (an.x > an.z ? bp.zy : bp.xy); vUv = (uvTransform*vec3(pu, 1.0)).xy;');
     sh.fragmentShader = sh.fragmentShader.replace('#include <aomap_fragment>', '#include <aomap_fragment>\n#ifdef USE_AOMAP\n reflectedLight.directDiffuse *= mix(1.0, ambientOcclusion, 0.75);\n#endif'); };
   m.customProgramCacheKey = () => 'blMat'; return BL.mats[id] = m; }
+function blCutGate(g, t){ const cx = t.x0 + t.w/2, zw = t.door === 'z1' ? t.z0 + t.d : t.z0, sg = t.door === 'z1' ? -1 : 1, zA = Math.min(zw - sg*0.3, zw + sg*0.6), zB = Math.max(zw - sg*0.3, zw + sg*0.6);
+  g.updateMatrixWorld(true); const v = new THREE.Vector3(), c = new THREE.Vector3();
+  g.children.forEach(m => { const G = m.geometry, A = G.attributes.position, I = G.index; if(!A || !I || G.userData.gateCut) return;
+    const ar = A.isInterleavedBufferAttribute ? A.data.array : A.array, sc = !A.normalized ? 1 : ar instanceof Int16Array ? 1/32767 : ar instanceof Uint16Array ? 1/65535 : ar instanceof Int8Array ? 1/127 : ar instanceof Uint8Array ? 1/255 : 1;
+    const P = k => v.set(A.getX(k)*sc, A.getY(k)*sc, A.getZ(k)*sc).applyMatrix4(m.matrixWorld), ix = I.array, keep = []; let cut = 0;
+    for(let i=0; i<ix.length; i+=3){ c.set(0, 0, 0); for(let j=0; j<3; j++) c.add(P(ix[i + j])); c.multiplyScalar(1/3);
+      if(Math.abs(c.x - cx) < 2.15 && c.y > t.y + 0.05 && c.y < t.y + 4.15 && c.z > zA && c.z < zB){ cut++; continue; } keep.push(ix[i], ix[i + 1], ix[i + 2]); }
+    if(cut){ G.setIndex(keep); G.userData.gateCut = cut; } }); }
 function blInst(v, O, T, M){ const g = new THREE.Group(); g.position.set(O[0], O[1], O[2] + (M || 0)); if(M) g.scale.z = -1; world.add(g);
   v.parts.forEach(p => { const m = new THREE.Mesh(p.geo, blMat(p, T, v)); m.matrixAutoUpdate = false; m.matrix.copy(p.m); m.castShadow = m.receiveShadow = true; m.userData.keep = true; m.userData.col = p.name.split('|')[1]; g.add(m); });
   return g; }
