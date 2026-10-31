@@ -829,83 +829,38 @@ body[data-hud="roxo"]{--zpnl:rgba(40,22,70,.82);--zpnl2:rgba(58,34,96,.9);--zink
 #nh #nhWheel .mid{position:absolute}
 #nh #nhBag{position:absolute;inset:0;display:block;pointer-events:auto;padding:calc(3.6em + env(safe-area-inset-top,0px)) 1.6em 1.4em;z-index:3}
 #nh #nhBag .bgp{max-width:150em;margin:0 auto}
-/* ---------- menu rápido de acessórios (J) ---------- */
+/* ---------- troca rápida de acessórios (J): sem tela por cima, só os cartões em volta da arma levantada ---------- */
 body.aqOn #cross1,body.aqOn #cross2{visibility:hidden}
-#nh #aq{position:absolute;inset:0;z-index:4;pointer-events:auto;background:radial-gradient(ellipse at 38% 45%,rgba(5,8,20,.45),rgba(5,8,20,.82));backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);font-size:calc(var(--nhf)*1.05)}
-body[data-hud="creme"] #nh #aq{background:radial-gradient(ellipse at 38% 45%,rgba(255,244,226,.45),rgba(255,236,210,.85))}
+#nh #aq{position:absolute;inset:0;z-index:4;pointer-events:auto;background:none;--aqu:0}
 #nh #aq button{font:inherit;color:inherit;cursor:pointer}
-#nh #aq img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
-#nh #aq .hd{position:absolute;left:2.2%;right:1.6em;top:calc(1.4em + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:1.4em}
-#nh #aq .hd .tt{display:flex;flex-direction:column}
-#nh #aq .hd .tt b{font:900 1.9em var(--title,var(--body));letter-spacing:.02em;text-transform:uppercase}
-#nh #aq .hd .tt b::before{content:'';display:inline-block;width:.32em;height:.9em;background:var(--zacc);border-radius:.1em;margin-right:.35em;vertical-align:-.05em}
-#nh #aq .hd .tt span{color:var(--zmut);font-size:.8em}
-#nh #aq .hd small{margin-left:auto;color:var(--zmut)}
-#nh #aq kbd{display:inline-grid;place-items:center;min-width:1.7em;height:1.7em;padding:0 .35em;border-radius:.35em;background:var(--zhi);border:1px solid var(--zline);font:900 .8em var(--body);color:var(--zink)}
-#nh #aq .tbs{display:flex;gap:.5em;margin-left:2em}
-#nh #aq .tb{display:flex;align-items:center;gap:.5em;padding:.35em .8em .35em .45em;border-radius:.6em;background:var(--zpnl);border:1px solid var(--zline);opacity:.75}
-#nh #aq .tb span{width:4.2em;height:2.2em}
-#nh #aq .tb b{font-size:.85em;white-space:nowrap}
-#nh #aq .tb.on{opacity:1;border-color:var(--zsel);box-shadow:0 0 0 1px var(--zsel) inset,var(--zshadow)}
-#nh #aq .tb:hover{opacity:1}
-#nh #aq .cv{position:absolute;left:2.2%;top:calc(5.6em + env(safe-area-inset-top,0px));width:62%;height:calc(62vh - 3em);border-radius:1.1em;border:1px solid var(--zline);box-shadow:var(--zshadow);cursor:grab}
-#nh #aq .cv:active{cursor:grabbing}
-#nh #aq .ln{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-#nh #aq .ln line{stroke:var(--zsel);stroke-width:1.6;stroke-dasharray:5 4;opacity:.85}
-#nh #aq .ln circle{fill:var(--zsel);stroke:rgba(0,0,0,.45);stroke-width:1.5}
-#nh #aq .sl{position:absolute;left:0;top:0;width:8.6em;height:7.4em;display:flex;flex-direction:column;border-radius:.7em;background:var(--zpnl2);border:1px solid var(--zline);box-shadow:var(--zshadow);z-index:1}
-#nh #aq .sl.op{z-index:3;border-color:var(--zsel)}
-#nh #aq .sl.over{border-color:var(--zacc);box-shadow:0 0 0 2px var(--zacc),var(--zshadow)}
-#nh #aq .sl .sh{display:flex;justify-content:space-between;align-items:center;padding:.3em .55em;font:900 .68em var(--body);letter-spacing:.09em;text-transform:uppercase;color:var(--zmut);border-bottom:1px solid var(--zline)}
-#nh #aq .sl .sh em{font-style:normal;min-width:1.5em;text-align:center;border-radius:1em;background:var(--zacc);color:#1a0f00;padding:0 .3em}
-#nh #aq .sl .sb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15em;background:none;border:0;padding:.3em .4em;min-height:0}
-#nh #aq .sl .sb img{height:3.4em}
-#nh #aq .sl .sb b{font-size:.72em;line-height:1.1;text-align:center}
-#nh #aq .sl .sb i{font:900 2em var(--body);font-style:normal;color:var(--zmut);line-height:1}
-#nh #aq .sl:not(.on) .sb{border:1.5px dashed var(--zline);margin:.35em;border-radius:.45em}
-#nh #aq .sl:not(.on) .sb b{color:var(--zmut)}
-#nh #aq .sl.has:not(.on) .sb{border-color:var(--zacc)}
-#nh #aq .sl:hover{border-color:var(--zsel)}
-#nh #aq .pk{position:absolute;top:calc(100% + .4em);left:0;width:21em;max-height:24em;overflow:auto;padding:.4em;border-radius:.7em;background:var(--zpnl2);border:1px solid var(--zsel);box-shadow:var(--zshadow);display:flex;flex-direction:column;gap:.3em}
-#nh #aq .sl[data-s="pente"] .pk,#nh #aq .sl[data-s="emp"] .pk{top:auto;bottom:calc(100% + .4em)}
-#nh #aq .sl[data-s="boca"] .pk{left:auto;right:0}
-#nh #aq .pk button{display:flex;align-items:center;gap:.6em;text-align:left;padding:.35em .5em;border-radius:.5em;background:var(--zhi);border:1px solid var(--zline)}
-#nh #aq .pk button:hover{border-color:var(--zsel)}
-#nh #aq .pk button img{width:3.4em;height:2.6em;flex:none}
-#nh #aq .pk button i{width:2.4em;text-align:center;font-style:normal;font-size:1.4em;flex:none}
-#nh #aq .pk span{display:flex;flex-direction:column;min-width:0;flex:1}
-#nh #aq .pk span b{font-size:.85em}
-#nh #aq .pk span s,#nh #aq .tl span s{text-decoration:none;color:var(--zmut);font-size:.7em;font-weight:700}
-#nh #aq .pk u,#nh #aq .tl u{text-decoration:none;font-weight:900;color:var(--zsel)}
-#nh #aq .pk p{margin:.4em;color:var(--zmut);font-size:.8em}
-#nh #aq .nm{position:absolute;left:calc(2.2% + 1em);top:calc(5.6em + 62vh - 3em + .8em);display:flex;align-items:baseline;gap:.6em}
-#nh #aq .nm b{font:900 1.4em var(--body)}
-#nh #aq .nm small{color:var(--zmut)}
-#nh #aq .nm .rr{font:900 .7em var(--body);letter-spacing:.08em;text-transform:uppercase;padding:.15em .5em;border-radius:.3em;background:var(--rc);color:#120a1e}
-#nh #aq .sts{position:absolute;left:2.2%;top:calc(5.6em + 62vh - 3em + 3.4em);width:62%;display:grid;grid-template-columns:1fr 1fr;gap:.35em 2em;padding:.8em 1em;border-radius:.9em;background:var(--zpnl);border:1px solid var(--zline)}
-#nh #aq .sts h4{grid-column:1/-1;margin:0 0 .2em;font:900 .72em var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--zmut)}
-#nh #aq .st{display:grid;grid-template-columns:9.5em 1fr 4.6em;align-items:center;gap:.6em;font-size:.82em}
-#nh #aq .st span{color:var(--zmut)}
-#nh #aq .st i{position:relative;height:.5em;border-radius:1em;background:var(--zhi);overflow:hidden}
-#nh #aq .st i b{position:absolute;left:0;top:0;bottom:0;background:var(--zink);opacity:.85;border-radius:1em}
-#nh #aq .st i em{position:absolute;top:0;bottom:0}
-#nh #aq .st u{text-decoration:none;text-align:right;font-weight:900}
-#nh #aq .st.up i em{background:#43e07a}#nh #aq .st.up u{color:#43e07a}
-#nh #aq .st.dn i em{background:#ff3d55}#nh #aq .st.dn u{color:#ff3d55}
-#nh #aq .po{position:absolute;right:1.6em;top:calc(5.6em + env(safe-area-inset-top,0px));bottom:1.6em;width:calc(96% - 64% - 1.6em);padding:.9em;border-radius:1em;background:var(--zpnl);border:1px solid var(--zline);box-shadow:var(--zshadow);overflow:auto}
-#nh #aq .po h4{display:flex;justify-content:space-between;align-items:baseline;margin:.1em 0 .6em;font:900 1em var(--body);text-transform:uppercase;letter-spacing:.05em}
-#nh #aq .po h4:not(:first-child){margin-top:1em}
-#nh #aq .po h4 span{font-size:.7em;color:var(--zmut);text-transform:none;letter-spacing:0}
-#nh #aq .pg{display:grid;grid-template-columns:repeat(2,1fr);gap:.45em}
-#nh #aq .tl{display:flex;align-items:center;gap:.5em;padding:.4em .5em;border-radius:.6em;background:var(--zhi);border:1px solid var(--zline);text-align:left;min-height:3.6em}
-#nh #aq .tl .rt{width:3.6em;height:2.8em;flex:none;border-radius:.4em}
-#nh #aq .tl span{display:flex;flex-direction:column;min-width:0;flex:1}
-#nh #aq .tl span b{font-size:.78em;line-height:1.15}
-#nh #aq .tl.fit{border-color:color-mix(in srgb,var(--zsel) 60%,transparent)}
-#nh #aq .tl.fit:hover{border-color:var(--zsel);box-shadow:0 0 0 1px var(--zsel) inset}
-#nh #aq .tl.no{opacity:.5}
-#nh #aq .tl.em{border-style:dashed;background:none}
-#nh #aq .hl{margin:1em 0 0;color:var(--zmut);font-size:.72em;line-height:1.4}
+#nh #aq img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;position:static;max-width:100%;max-height:100%}
+#nh #aq .ln{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;opacity:var(--aqu)}
+#nh #aq .ln line{stroke:var(--zsel);stroke-width:1.8;stroke-dasharray:5 4;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
+#nh #aq .ln circle{fill:var(--zsel);stroke:rgba(0,0,0,.55);stroke-width:1.5}
+#nh #aq .sl{position:absolute;left:0;top:0;min-width:10em;max-width:19em;border-radius:.7em;background:var(--zpnl);border:1px solid var(--zline);box-shadow:var(--zshadow);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:var(--aqu);padding:.35em .45em .45em}
+#nh #aq .sl .sh{font:900 .66em var(--body);letter-spacing:.1em;text-transform:uppercase;color:var(--zmut);padding:0 .15em .25em}
+#nh #aq .sl .cur{display:flex;align-items:center;gap:.5em;padding:.25em .35em;border-radius:.5em;background:var(--zhi);border:1px solid var(--zline)}
+#nh #aq .sl .cur[data-q]{cursor:pointer}
+#nh #aq .sl .cur[data-q]:hover{border-color:var(--zbad)}
+#nh #aq .sl .cur b{font-size:.8em;white-space:nowrap;flex:1}
+#nh #aq .sl .cur b.vz{color:var(--zmut)}
+#nh #aq .sl .cur i{font-style:normal;color:var(--zmut);font-size:.9em}
+#nh #aq .sl .cur[data-q]:hover i{color:var(--zbad)}
+#nh #aq .ic{width:3.4em;height:2.4em;flex:none;display:grid;place-items:center;overflow:hidden}
+#nh #aq .ic.no{font:900 1.4em var(--body);color:var(--zmut);width:2.4em;height:1.7em;border:1.5px dashed var(--zline);border-radius:.35em}
+#nh #aq .sl .op{display:flex;flex-wrap:wrap;gap:.3em;margin-top:.35em}
+#nh #aq .sl .op button{position:relative;overflow:hidden;width:3.9em;height:2.9em;padding:.2em;border-radius:.45em;background:var(--zpnl2);border:1px solid color-mix(in srgb,var(--zsel) 55%,transparent)}
+#nh #aq .sl .op button .ic{width:100%;height:100%}
+#nh #aq .sl .op button:hover{border-color:var(--zsel);box-shadow:0 0 0 1px var(--zsel) inset;transform:translateY(-1px)}
+#nh #aq .sl .op u{position:absolute;right:.2em;bottom:.05em;text-decoration:none;font:900 .7em var(--body);color:var(--zsel)}
+#nh #aq .tip{position:absolute;left:50%;top:calc(9.6em + env(safe-area-inset-top,0px));transform:translateX(-50%);max-width:34em;padding:.5em .8em;border-radius:.6em;background:var(--zpnl2);border:1px solid var(--zline);box-shadow:var(--zshadow);text-align:center;pointer-events:none}
+#nh #aq .tip b{display:block;font-size:.9em}
+#nh #aq .tip s{display:block;text-decoration:none;color:var(--zmut);font-size:.72em;margin:.1em 0 .3em}
+#nh #aq .tip div{display:flex;flex-wrap:wrap;justify-content:center;gap:.3em .8em;font-size:.75em}
+#nh #aq .tip .up{color:#43e07a}#nh #aq .tip .dn{color:#ff3d55}
+#nh #aq .ft{position:absolute;left:50%;top:calc(6.4em + env(safe-area-inset-top,0px));transform:translateX(-50%);display:flex;gap:1.1em;align-items:center;white-space:nowrap;font-size:.74em;color:var(--zmut);padding:.4em .9em;border-radius:2em;background:var(--zpnl);border:1px solid var(--zline);opacity:var(--aqu)}
+#nh #aq .ft b{color:var(--zink);margin-left:.3em}#nh #aq .ft .pc{white-space:nowrap}
+#nh #aq kbd{display:inline-grid;place-items:center;min-width:1.6em;height:1.6em;padding:0 .3em;border-radius:.3em;background:var(--zhi);border:1px solid var(--zline);font:900 .9em var(--body);color:var(--zink);margin-right:.2em}
 #nh #nhBag .aqTb{display:flex;flex-wrap:wrap;gap:.35em}
 #nh #nhBag .aqTb button{position:relative;width:4.4em;height:3.4em;padding:.2em;border-radius:.45em;background:var(--zhi);border:1px solid var(--zline);cursor:pointer}
 #nh #nhBag .aqTb .rt{width:100%;height:100%}
@@ -9864,8 +9819,8 @@ document.addEventListener('dragover', e => { const w = e.target.closest && e.tar
 document.addEventListener('drop', e => { const w = e.target.closest && e.target.closest('#nhBag .wc'); if(!w || NHD.drag < 0) return; e.preventDefault(); const a = NHD.drag, b = +w.dataset.i; NHD.drag = -1; if(a !== b) bagAct('sw', a + ':' + b); else renderBag(); });
 document.addEventListener('dragend', () => { if(NHD.drag >= 0){ NHD.drag = -1; $('nhBagIn')._h = ''; renderBag(); } });
 
-// ---------- menu rápido de acessórios (J): a arma da mão em 3D na bancada, cada encaixe ligado por uma linha ao quadro do acessório; a pochete guarda os acessórios de reserva ----------
-const AQM = {on:false, open:null, rot:0, drag:null, hov:null, auto:false, key:'', sig:'', ssig:'', g:null, el:{}, t:0};
+// ---------- troca rápida de acessórios (J): o feijão levanta a arma da mão na frente da câmera e as opções aparecem em volta dos encaixes; a pochete guarda os acessórios de reserva ----------
+const AQM = {on:false, up:0, rot:0, drag:null, hov:null, auto:false, key:'', sig:'', tsig:'', g:null, el:{}, t:0};
 const AQ_SOCK = {mira:'s_mira', boca:'s_boca', pente:'pente', emp:'s_baixo'}, AQ_ORD = ['mira', 'boca', 'pente', 'emp'];
 const attCap = p => 4 + 2*(p.arm ? p.arm.pack || 0 : 0), attN = p => { let n = 0; for(const k in p.attBag || {}) n += p.attBag[k]; return n; };
 const attHas = (p, k) => !!(p.attBag && p.attBag[k] > 0) || (p.inv || []).some(x => x && x.att && x.att[k]);
@@ -9877,107 +9832,87 @@ function attOff(p, x, k){ x.att = Object.assign({}, x.att); delete x.att[k]; att
 function attOn(p, x, k){ if(!x || !ATT[k] || !ATT[k].ok.includes(x.k) || (x.att && x.att[k]) || !attTake(p, k)) return false; const h = attSlot(x, ATT[k].s); x.att = Object.assign({}, x.att || {}); if(h) delete x.att[h]; x.att[k] = true;
   if(h && !attStore(p, h)) bagDrop(p, h, 0, 0); attFixMag(x); return true; }
 function aqOk(){ const me = players[0]; return !!(me && me.alive && me.inv && me.inv[me.sel] && !me.glide && !me.down && BIG && round === 20 && !twoP && R1.phase === 'play' && !PAUSED); }
-function aqToggle(on){ if(on && !aqOk()) return; if(on && bagOn) bagToggle(false); AQM.on = on; AQM.open = null; AQM.hov = null; AQM.sig = AQM.ssig = ''; const el = $('aq'); el.hidden = !on; document.body.classList.toggle('aqOn', on);
-  if(on){ if(WH.on) whClose(false); mouseHeld = false; mouseR = false; if(document.pointerLockElement) document.exitPointerLock(); sfx('click'); }
-  else { el.innerHTML = ''; AQM.el = {}; try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} } }
-// bancada: cena só da arma, com fundo em degradê e luz de estúdio
-const aqSc = new THREE.Scene(), aqCam = new THREE.PerspectiveCamera(22, 2, 0.01, 50), aqPiv = new THREE.Group(); aqSc.add(aqPiv);
-aqSc.add(new THREE.HemisphereLight(0xffffff, 0x7a6aa0, 1.25)); { const d = new THREE.DirectionalLight(0xfff1dd, 1.2); d.position.set(-2, 3, -1.5); aqSc.add(d); const r = new THREE.DirectionalLight(0x9fc4ff, 0.55); r.position.set(1, 1.2, 2.5); aqSc.add(r); const b = new THREE.DirectionalLight(0xffb070, 0.35); b.position.set(-1, -1, 2); aqSc.add(b); }
-function aqBg(th){ const c = document.createElement('canvas'); c.width = 16; c.height = 256; const g = c.getContext('2d'), G = g.createLinearGradient(0, 0, 0, 256);
-  const P = th === 'creme' ? ['#fff6e8', '#f1dcc0'] : th === 'roxo' ? ['#4a2a7a', '#1c0f33'] : ['#24344f', '#0b1222']; G.addColorStop(0, P[0]); G.addColorStop(1, P[1]); g.fillStyle = G; g.fillRect(0, 0, 16, 256);
-  const t = new THREE.CanvasTexture(c); t.userData = {th}; return t; }
-function aqBuild(it){ const k = it.k, att = it.att || {}, key = k + attKey(att) + !!ARMA.lib; if(AQM.key === key && AQM.g) return; AQM.key = key; if(AQM.g) aqPiv.remove(AQM.g);
-  const bl = ARMA.lib && ARMA.lib[k], g = bl ? armaBuild(k, att, sightOf(it)) : BRE.weapon(k); g.rotation.set(0, 0, 0); g.position.set(0, 0, 0); g.updateMatrixWorld(true);
-  ['cartucho'].forEach(n => { const o = vmKid(g, n); if(o) o.visible = false; });
-  const box = new THREE.Box3().setFromObject(g), c = box.getCenter(new V3()), sz = box.getSize(new V3()); const w = new THREE.Group(); g.position.sub(c); w.add(g); w.userData = {g, sz, bl}; aqPiv.add(w); AQM.g = w; }
-// onde fica cada encaixe na arma (no modelo do Blender são os vazios s_mira, s_boca, s_baixo e o pente); sem modelo, chuta pela caixa
+function aqToggle(on){ if(on && !aqOk()) return; if(on && bagOn) bagToggle(false); if(on === AQM.on) return; AQM.on = on; AQM.hov = null; AQM.sig = AQM.tsig = ''; const el = $('aq'); document.body.classList.toggle('aqOn', on);
+  if(on){ el.hidden = false; AQM.rot = 0; if(WH.on) whClose(false); mouseHeld = false; mouseR = false; if(document.pointerLockElement) document.exitPointerLock(); sfx('click'); }
+  else { el.innerHTML = ''; el.hidden = true; AQM.el = {}; try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} } }
+// a arma levantada: cena própria desenhada por cima do jogo (igual à arma da 1ª pessoa), com as luvas do feijão segurando
+const aqSc = new THREE.Scene(), aqCam = new THREE.PerspectiveCamera(40, 2, 0.01, 20), aqPiv = new THREE.Group(); aqSc.add(aqPiv);
+aqSc.add(new THREE.HemisphereLight(0xffffff, 0x8a6fc1, 1.05)); { const d = new THREE.DirectionalLight(0xfff1dd, 1.0); d.position.set(-1, 2, 1.5); aqSc.add(d); const r = new THREE.DirectionalLight(0xbcd4ff, 0.45); r.position.set(1.5, 0.5, -2); aqSc.add(r); }
+function aqBuild(me, it){ const k = it.k, att = it.att || {}, look = myLook(), key = k + attKey(att) + !!ARMA.lib + JSON.stringify(look); if(AQM.key === key && AQM.g) return; AQM.key = key; if(AQM.g) aqPiv.remove(AQM.g);
+  const bl = ARMA.lib && ARMA.lib[k], g = bl ? armaBuild(k, att, sightOf(it)) : BRE.weapon(k); g.rotation.set(0, 0, 0); g.position.set(0, 0, 0);
+  const cart = bl && vmKid(g, 'cartucho'); if(cart) cart.visible = false;
+  // luvas do feijão (cópia das mãos do boneco) no cabo e no guarda-mão
+  const src = me.m && me.m.arms; if(bl) ['s_mao_d', 's_mao_e'].forEach((sk, i) => { const s = vmKid(g, sk); if(!s) return;
+    const h = src && src[i] ? src[i].clone() : new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 14), new THREE.MeshPhongMaterial({color:look.color}));
+    h.traverse(o => { o.visible = true; o.castShadow = false; }); h.scale.setScalar(i ? 0.5 : 0.6); h.position.copy(s.position).add(new V3(i ? 0.05 : -0.04, i ? 0.012 : 0.004, i ? 0.05 : -0.012)); h.rotation.set(i ? -0.1 : -0.3, i ? -0.9 : 0.5, i ? -1.0 : 1.2); g.add(h); });
+  g.updateMatrixWorld(true); const box = new THREE.Box3().setFromObject(g), c = box.getCenter(new V3()), sz = box.getSize(new V3()), w = new THREE.Group(); g.position.sub(c); w.add(g); w.userData = {g, sz, bl}; aqPiv.add(w); AQM.g = w; }
+// onde fica cada encaixe na arma (no modelo do Blender: s_mira, s_boca, s_baixo e o pente); sem modelo, chuta pela caixa
 function aqSockPos(s, out){ const w = AQM.g, g = w.userData.g, sz = w.userData.sz, n = AQ_SOCK[s]; let o = w.userData.bl && vmKid(g, n);
   if(s === 'pente' && w.userData.bl){ o = ['pente', 'pente_ext', 'pente_rap', 'pente_tam'].map(q => vmKid(g, q)).find(q => q && q.visible) || o; }
   if(o){ o.getWorldPosition(out); if(s === 'pente'){ const b = new THREE.Box3().setFromObject(o); if(!b.isEmpty()) b.getCenter(out); } return out; }
   const f = {mira:[0, 0.45, -0.1], boca:[0, 0.1, 0.5], pente:[0, -0.3, 0.05], emp:[0, -0.25, 0.3]}[s]; out.set(f[0]*sz.x, f[1]*sz.y, f[2]*sz.z); return w.localToWorld(out); }
-const _aqv = new V3();
-function aqDraw(W, H){ if(!AQM.on) return; if(!aqOk()){ aqToggle(false); return; } const me = players[0], it = normIt(me.inv[me.sel]); aqDom(me, it);
-  const cv = AQM.el.c; if(!cv) return; const r = cv.getBoundingClientRect(), cw = Math.round(r.width), ch = Math.round(r.height); if(cw < 20 || ch < 20) return;
-  const pr = renderer.getPixelRatio(), th = CFG.hudTheme || 'tatico'; if(!aqSc.background || aqSc.background.userData.th !== th){ if(aqSc.background) aqSc.background.dispose(); aqSc.background = aqBg(th); }
-  aqBuild(it); AQM.t += 1/60; const sz = AQM.g.userData.sz, L = Math.max(sz.z, 0.3);
-  aqPiv.rotation.set(0.04*Math.sin(AQM.t*0.7), -0.3 + AQM.rot + 0.06*Math.sin(AQM.t*0.45), 0); aqCam.aspect = cw/ch; aqCam.fov = 20;
-  const t = Math.tan(aqCam.fov*Math.PI/360), dist = Math.max(L*0.5/(t*aqCam.aspect)*1.22, sz.y*0.5/t*2.2); aqCam.position.set(-dist, dist*0.14, 0); aqCam.lookAt(0, 0, 0); aqCam.updateProjectionMatrix();
-  if(cv.width !== Math.round(cw*pr) || cv.height !== Math.round(ch*pr)){ cv.width = Math.round(cw*pr); cv.height = Math.round(ch*pr); }
+const _aqv = new V3(), aqE = x => x*x*(3 - 2*x);
+function aqDraw(W, H, dt){ if(AQM.on && !aqOk()) aqToggle(false); AQM.up = clamp(AQM.up + (AQM.on ? 1 : -1)*(dt || 1/60)/0.22, 0, 1); if(AQM.up <= 0) return;
+  const me = players[0], it = me && me.inv && me.inv[me.sel]; if(!it) return; normIt(it); aqBuild(me, it); AQM.t += dt || 1/60;
+  const u = aqE(AQM.up), sz = AQM.g.userData.sz, L = Math.max(sz.z, 0.3), D = 1, vh = 2*D*Math.tan(20*Math.PI/180), vw = vh*W/H;
+  // sobe de baixo da tela apontando pra frente e gira de lado, mostrando os encaixes
+  const sc = Math.min(0.36*vw/L, 0.34*vh/Math.max(sz.y, 0.05)); AQM.g.scale.setScalar(sc);
+  aqPiv.position.set(0.2*vw - 0.04*vw*u, -0.2*vh + 0.06*vh*u - (1 - u)*0.35*vh, -D); aqPiv.rotation.set(0.22*u + 0.03*Math.sin(AQM.t*0.8), Math.PI - (Math.PI/2 - 0.38 - AQM.rot)*u + 0.05*Math.sin(AQM.t*0.5)*u, 0.06*u);
+  aqCam.aspect = W/H; aqCam.updateProjectionMatrix(); aqSc.updateMatrixWorld(true);
+  const ac = renderer.autoClear, OR = window.FJ_OCC && FJ_OCC.R, ox0 = OR ? OR.x : 0; if(OR) OR.x = 0; // sem o pontilhado da transparência na arma
   const su = renderer.shadowMap.autoUpdate, nu = renderer.shadowMap.needsUpdate; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = false;
-  const OR = window.FJ_OCC && FJ_OCC.R, ox0 = OR ? OR.x : 0; if(OR) OR.x = 0; // sem o pontilhado da transparência na bancada
-  renderer.setRenderTarget(null); renderer.setViewport(0, H - ch, cw, ch); renderer.render(aqSc, aqCam); renderer.shadowMap.autoUpdate = su; renderer.shadowMap.needsUpdate = nu; if(OR) OR.x = ox0;
-  const g2 = cv.getContext('2d'); g2.clearRect(0, 0, cv.width, cv.height); g2.drawImage(renderer.domElement, 0, 0, Math.round(cw*pr), Math.round(ch*pr), 0, 0, cv.width, cv.height);
-  // quadros dos encaixes em volta da arma e as linhas até eles
-  aqPiv.updateMatrixWorld(true); const R0 = AQM.el.root.getBoundingClientRect(), ox = r.left - R0.left, oy = r.top - R0.top, P = {};
-  for(const s of AQ_ORD){ const b = AQM.el.s[s]; if(!b) continue; aqSockPos(s, _aqv).project(aqCam); P[s] = [ox + (_aqv.x*0.5 + 0.5)*cw, oy + (0.5 - _aqv.y*0.5)*ch]; }
-  const fs = parseFloat(getComputedStyle(AQM.el.root).fontSize) || 12, bw = 8.6*fs, bh = 7.4*fs, pad = 0.9*fs, pos = {};
-  for(const s in P){ const [x, y] = P[s]; let bx, by;
-    if(s === 'mira'){ bx = x - bw*0.5 - 3*fs; by = oy + pad; }
-    else if(s === 'boca'){ bx = Math.min(ox + cw - bw - pad, x + 4*fs); by = Math.max(oy + pad, y - bh - 4*fs); }
-    else if(s === 'pente'){ bx = x - bw - 2*fs; by = oy + ch - bh - pad; }
-    else { bx = x + 2*fs; by = oy + ch - bh - pad; }
-    pos[s] = [clamp(bx, ox + pad, ox + cw - bw - pad), clamp(by, oy + pad, oy + ch - bh - pad)]; }
-  if(pos.pente && pos.emp && Math.abs(pos.pente[0] - pos.emp[0]) < bw + pad){ const m = (pos.pente[0] + pos.emp[0] + bw)/2; pos.pente[0] = Math.max(ox + pad, m - bw - pad/2); pos.emp[0] = Math.min(ox + cw - bw - pad, pos.pente[0] + bw + pad); }
-  if(pos.mira && pos.boca && pos.boca[1] < pos.mira[1] + bh && Math.abs(pos.boca[0] - pos.mira[0]) < bw + pad) pos.boca[0] = Math.min(ox + cw - bw - pad, pos.mira[0] + bw + pad);
-  for(const s in pos){ const b = AQM.el.s[s], [bx, by] = pos[s], [x, y] = P[s]; b.style.transform = `translate(${bx.toFixed(1)}px,${by.toFixed(1)}px)`;
-    const ax = clamp(x, bx, bx + bw), ay = clamp(y, by, by + bh), l = AQM.el.l[s], d = AQM.el.d[s]; // ponta da linha: o ponto do quadro mais perto do encaixe
+  renderer.autoClear = false; renderer.setViewport(0, 0, W, H); renderer.clearDepth(); renderer.render(aqSc, aqCam); renderer.autoClear = ac; renderer.shadowMap.autoUpdate = su; renderer.shadowMap.needsUpdate = nu; if(OR) OR.x = ox0;
+  if(!AQM.on) return; aqDom(me, it); const root = AQM.el.root; if(!root) return; root.style.setProperty('--aqu', u.toFixed(3));
+  // cartões dos encaixes em volta da arma, cada um ligado por uma linha ao seu lugar
+  const P = {}; for(const s of AQ_ORD){ if(!AQM.el.s[s]) continue; aqSockPos(s, _aqv).project(aqCam); P[s] = [(_aqv.x*0.5 + 0.5)*W, (0.5 - _aqv.y*0.5)*H]; }
+  const fs = parseFloat(getComputedStyle(root).fontSize) || 12, pad = 1.2*fs, pos = {};
+  for(const s in P){ const b = AQM.el.s[s], bw = b.offsetWidth, bh = b.offsetHeight, [x, y] = P[s]; let bx, by;
+    if(s === 'mira'){ bx = x - bw*0.6; by = y - bh - 7*fs; }
+    else if(s === 'boca'){ bx = x + 5*fs; by = y - bh*0.5 - 4*fs; }
+    else if(s === 'pente'){ bx = x - bw - 3*fs; by = y + 7*fs; }
+    else { bx = x + 3*fs; by = y + 7*fs; }
+    pos[s] = [clamp(bx, pad, W - bw - pad), clamp(by, 4.5*fs, H - bh - 11*fs), bw, bh]; }
+  if(pos.pente && pos.emp && pos.emp[0] < pos.pente[0] + pos.pente[2] + pad){ pos.emp[0] = Math.min(W - pos.emp[2] - pad, pos.pente[0] + pos.pente[2] + pad); }
+  for(const s in pos){ const b = AQM.el.s[s], [bx, by, bw, bh] = pos[s], [x, y] = P[s]; b.style.transform = `translate(${bx.toFixed(1)}px,${by.toFixed(1)}px)`;
+    const ax = clamp(x, bx, bx + bw), ay = clamp(y, by, by + bh), l = AQM.el.l[s], d = AQM.el.d[s];
     l.setAttribute('x1', ax.toFixed(1)); l.setAttribute('y1', ay.toFixed(1)); l.setAttribute('x2', x.toFixed(1)); l.setAttribute('y2', y.toFixed(1)); d.setAttribute('cx', x.toFixed(1)); d.setAttribute('cy', y.toFixed(1)); } }
-// números da arma (com prévia do acessório debaixo do mouse)
+// o que muda na arma com o acessório debaixo do mouse
 let AQ_MAX = null;
-function aqMax(){ if(AQ_MAX) return AQ_MAX; const M = {dmg:1, spr:0.001, rng:1, kick:0.001, rel:0.1}; for(const k in WPN){ const w = WR(k, 3); M.dmg = Math.max(M.dmg, w.dmg*(w.n || 1)); M.spr = Math.max(M.spr, w.spr || 0); M.rng = Math.max(M.rng, w.rng || 0); M.kick = Math.max(M.kick, w.kick || 0); M.rel = Math.max(M.rel, w.rel || 0); } return AQ_MAX = M; }
-const AQ_ST = [['Dano', w => w.dmg*(w.n || 1), (w, M) => w.dmg*(w.n || 1)/M.dmg, w => w.dmg + ((w.n || 1) > 1 ? '×' + w.n : ''), 1],
-  ['Precisão', w => -w.spr, (w, M) => 1 - w.spr/M.spr*0.9, (w, M) => Math.round((1 - w.spr/M.spr*0.9)*100) + '%', 1],
-  ['Alcance', w => w.rng, (w, M) => w.rng/(M.rng*1.4), w => w.rng + ' m', 1],
-  ['Controle do coice', w => -w.kick, (w, M) => 1 - w.kick/M.kick*0.9, (w, M) => Math.round((1 - w.kick/M.kick*0.9)*100) + '%', 1],
-  ['Recarga', w => -w.rel, (w, M) => 1 - w.rel/(M.rel*1.4), w => String(w.rel).replace('.', ',') + ' s', 1],
-  ['Pente', w => w.mag, w => Math.min(1, w.mag/100), w => w.mag, 1],
-  ['Subir a mira', w => w.ads || 1, w => Math.min(1, (w.ads || 1)/1.8), w => Math.round((w.ads || 1)*100) + '%', 1]];
+function aqMax(){ if(AQ_MAX) return AQ_MAX; const M = {spr:0.001, kick:0.001}; for(const k in WPN){ const w = WR(k, 3); M.spr = Math.max(M.spr, w.spr || 0); M.kick = Math.max(M.kick, w.kick || 0); } return AQ_MAX = M; }
+const AQ_ST = [['precisão', (w, M) => Math.round((1 - w.spr/M.spr*0.9)*100), '%'], ['alcance', w => w.rng, ' m'], ['controle do coice', (w, M) => Math.round((1 - w.kick/M.kick*0.9)*100), '%'],
+  ['recarga', w => -w.rel, ' s'], ['pente', w => w.mag, ''], ['subir a mira', w => Math.round((w.ads || 1)*100), '%']];
 function aqPrev(it){ const h = AQM.hov; if(!h) return null; const a = Object.assign({}, it.att || {}); if(h.off){ if(!a[h.off]) return null; delete a[h.off]; } else { if(!ATT[h.k] || !ATT[h.k].ok.includes(it.k)) return null; const o = attSlot({att:a}, ATT[h.k].s); if(o) delete a[o]; a[h.k] = true; } return WI({k:it.k, r:it.r, att:a}); }
-function aqStats(it){ const w = WI(it), n = aqPrev(it), M = aqMax();
-  return AQ_ST.map(([nm, v, b, f]) => { const bv = clamp(b(w, M), 0.03, 1), nv = n ? clamp(b(n, M), 0.03, 1) : bv, dv = n ? v(n) - v(w) : 0, cl = Math.abs(dv) < 1e-6 ? '' : dv > 0 ? ' up' : ' dn';
-    return `<div class="st${cl}"><span>${nm}</span><i><b style="width:${(Math.min(bv, nv)*100).toFixed(1)}%"></b>${n && Math.abs(nv - bv) > 0.002 ? `<em style="left:${(Math.min(bv, nv)*100).toFixed(1)}%;width:${(Math.abs(nv - bv)*100).toFixed(1)}%"></em>` : ''}</i><u>${n ? f(n, M) : f(w, M)}</u></div>`; }).join(''); }
-function aqNear(me){ return loot.filter(L => ATT[L.k] && !L.box && Math.abs(L.pos.y - me.pos.y) < 1.6 && Math.hypot(L.pos.x - me.pos.x, L.pos.z - me.pos.z) < 3.5).slice(0, 8)
-  .concat(loot.filter(L => ATT[L.k] && L.box && Math.abs(L.pos.y - me.pos.y) < 1.6 && Math.hypot(L.pos.x - me.pos.x, L.pos.z - me.pos.z) < 3.5).slice(0, 8)); }
-function aqDom(me, it){ const root = $('aq'), bag = me.attBag || {}, near = aqNear(me), w = WI(it), ok = ATT_OK(it.k), slots = AQ_ORD.filter(s => ok.some(k => ATT[k].s === s) || attSlot(it, s));
-  const sig = [me.sel, me.inv.map(x => x ? x.k + attKey(x.att) : '-').join(','), JSON.stringify(bag), attCap(me), AQM.open, near.map(L => L.k).join(','), CFG.hudTheme].join('|');
-  if(sig !== AQM.sig){ AQM.sig = sig; AQM.ssig = '';
-    const tabs = me.inv.map((x, i) => x ? `<button class="tb${i === me.sel ? ' on' : ''}" data-q="eq" data-v="${i}"><kbd>${i + 1}</kbd><span>${nhImg(x.k, 0)}</span><b>${WI(normIt(x)).name}</b></button>` : '').join('');
-    const fits = k => ATT[k].ok.includes(it.k), box = s => { const h = attSlot(it, s), opt = Object.keys(bag).filter(k => ATT[k].s === s && fits(k));
-      return `<div class="sl${h ? ' on' : ''}${AQM.open === s ? ' op' : ''}${opt.length ? ' has' : ''}" data-s="${s}"><div class="sh"><span>${ATT_SLOT[s]}</span>${opt.length ? `<em>${opt.length}</em>` : ''}</div>
-        <button class="sb" data-q="open" data-v="${s}" ${h ? `data-off="${h}"` : ''} title="${h ? ATT[h].name + ': ' + ATT[h].d + ' · clique pra trocar, botão direito guarda' : 'Clique pra colocar'}">${h ? `${nhImg(h, 0)}<b>${ATT[h].name}</b>` : `<i>+</i><b>vazio</b>`}</button>
-        ${AQM.open === s ? `<div class="pk">${opt.map(k => `<button data-q="on" data-v="${k}" data-k="${k}">${nhImg(k, 0)}<span><b>${ATT[k].name}</b><s>${ATT[k].d}</s></span><u>×${bag[k]}</u></button>`).join('')}${h ? `<button class="off" data-q="off" data-v="${h}" data-off="${h}"><i>↩</i><span><b>Tirar e guardar</b><s>${attN(me) < attCap(me) ? 'vai pra pochete' : 'pochete cheia: cai no chão'}</s></span></button>` : ''}${!opt.length && !h ? '<p>Nada na pochete que sirva aqui.</p>' : ''}</div>` : ''}</div>`; };
-    const tile = k => `<button class="tl${fits(k) ? ' fit' : ' no'}" draggable="true" data-q="on" data-v="${k}" data-k="${k}" title="${ATT[k].name}: ${ATT[k].d}${fits(k) ? ' · clique pra colocar' : ' · não serve nesta arma'} · botão direito larga 1"><div class="rt r1">${nhImg(k, 0)}</div><span><b>${ATT[k].name}</b><s>${ATT_SLOT[ATT[k].s]}${fits(k) ? '' : ' · não serve aqui'}</s></span><u>×${bag[k]}</u></button>`;
-    const cells = []; for(const k of Object.keys(ATT)) if(bag[k]) cells.push(tile(k)); const free = attCap(me) - attN(me);
-    AQM.el.root = root; root.innerHTML = `<div class="hd"><div class="tt"><b>Montagem rápida</b><span>arma na mão do seu feijão · o jogo não pausa</span></div><div class="tbs">${tabs}</div><small><kbd>J</kbd> fecha</small></div>
-      <canvas class="cv"></canvas><svg class="ln">${slots.map(s => `<line data-s="${s}"/><circle data-s="${s}" r="4"/>`).join('')}</svg>${slots.map(box).join('')}
-      <div class="nm"><span class="rr" style="--rc:${NH_RC[w.rar]}">${RAR[w.rar][0]}</span><b>${w.name}</b><small>Pente ${it.mag}/${w.mag} · reserva ${it.ammo === Infinity ? '∞' : it.ammo}</small></div>
-      <div class="sts"></div>
-      <div class="po pn"><h4>Pochete <span>${attN(me)}/${attCap(me)}${(me.arm && me.arm.pack) ? '' : ' · mochila dá mais espaço'}</span></h4><div class="pg">${cells.join('')}${free > 0 ? Array.from({length:Math.min(free, 8)}, () => '<div class="tl em"></div>').join('') : ''}</div>
-        ${near.length ? `<h4>No chão perto <span>clique guarda</span></h4><div class="pg">${near.map((L, i) => `<button class="tl fl${fits(L.k) ? ' fit' : ''}" data-q="grab" data-v="${i}" data-k="${L.k}" title="${ATT[L.k].name}: ${ATT[L.k].d}"><div class="rt r1">${nhImg(L.k, 0)}</div><span><b>${ATT[L.k].name}</b><s>${ATT_SLOT[ATT[L.k].s]}${L.box ? ' · caixa' : ''}</s></span></button>`).join('')}</div>` : ''}
-        <p class="hl">Clique num encaixe pra trocar · clique na pochete coloca na arma · botão direito tira ou larga · arraste a arma pra girar</p></div>`;
-    AQM.near = near; AQM.el.c = root.querySelector('.cv'); AQM.el.st = root.querySelector('.sts'); AQM.el.s = {}; AQM.el.l = {}; AQM.el.d = {};
+function aqTip(it){ const h = AQM.hov; if(!h) return ''; const k = h.k || h.off, w = WI(it), n = aqPrev(it), M = aqMax(); if(!n) return '';
+  const ds = AQ_ST.map(([nm, f, u]) => { const d = f(n, M) - f(w, M); if(Math.abs(d) < 0.005) return ''; const v = nm === 'recarga' ? String(Math.abs(d).toFixed(2)).replace('.', ',') : Math.abs(Math.round(d)); return `<span class="${d > 0 ? 'up' : 'dn'}">${nm === 'recarga' ? (d > 0 ? '−' : '+') : d > 0 ? '+' : '−'}${v}${u} ${nm}</span>`; }).filter(Boolean).join('');
+  return `<b>${h.off ? 'Tirar ' + ATT[k].name : ATT[k].name}</b><s>${h.off ? 'vai pra pochete' : ATT[k].d}</s><div>${ds || '<span>sem mudança nos números</span>'}</div>`; }
+function aqDom(me, it){ const root = $('aq'), bag = me.attBag || {}, ok = ATT_OK(it.k), slots = AQ_ORD.filter(s => ok.some(k => ATT[k].s === s) || attSlot(it, s));
+  const sig = [me.sel, attKey(it.att), it.k, JSON.stringify(bag), attCap(me)].join('|');
+  if(sig !== AQM.sig){ AQM.sig = sig; AQM.tsig = '';
+    const card = s => { const h = attSlot(it, s), opt = Object.keys(ATT).filter(k => bag[k] > 0 && ATT[k].s === s && ATT[k].ok.includes(it.k));
+      return `<div class="sl${h ? ' on' : ''}" data-s="${s}"><div class="sh">${ATT_SLOT[s]}</div>
+        <div class="cur"${h ? ` data-q="off" data-v="${h}" data-off="${h}" title="Clique pra tirar e guardar na pochete"` : ''}>${h ? `<span class="ic">${nhImg(h, 0)}</span><b>${ATT[h].name}</b><i>↩</i>` : '<span class="ic no">+</span><b class="vz">vazio</b>'}</div>
+        ${opt.length ? `<div class="op">${opt.map(k => `<button data-q="on" data-v="${k}" data-k="${k}" title="${ATT[k].name}"><span class="ic">${nhImg(k, 0)}</span>${bag[k] > 1 ? `<u>${bag[k]}</u>` : ''}</button>`).join('')}</div>` : ''}</div>`; };
+    const other = Object.keys(bag).filter(k => !ATT[k].ok.includes(it.k));
+    AQM.el.root = root; root.innerHTML = `<svg class="ln">${slots.map(s => `<line data-s="${s}"/><circle data-s="${s}" r="4.5"/>`).join('')}</svg>${slots.map(card).join('')}
+      <div class="tip"></div>
+      <div class="ft"><span class="pc">Pochete: <b>${attN(me)}/${attCap(me)}</b>${other.length ? ` · ${other.length} não ${other.length > 1 ? 'servem' : 'serve'} nesta arma` : ''}</span><span><kbd>J</kbd> abaixa a arma</span><span>clique troca</span><span>botão direito larga da pochete</span></div>`;
+    AQM.el.s = {}; AQM.el.l = {}; AQM.el.d = {}; AQM.el.tip = root.querySelector('.tip');
     for(const s of slots){ AQM.el.s[s] = root.querySelector(`.sl[data-s="${s}"]`); AQM.el.l[s] = root.querySelector(`line[data-s="${s}"]`); AQM.el.d[s] = root.querySelector(`circle[data-s="${s}"]`); } }
-  const ss = AQM.sig + JSON.stringify(AQM.hov) + it.mag + '/' + it.ammo; if(ss !== AQM.ssig){ AQM.ssig = ss; AQM.el.st.innerHTML = `<h4>Como a arma fica</h4>` + aqStats(it); } }
+  const ts = AQM.sig + JSON.stringify(AQM.hov); if(ts !== AQM.tsig){ AQM.tsig = ts; const t = aqTip(it); AQM.el.tip.innerHTML = t; AQM.el.tip.hidden = !t; } }
 function aqAct(q, v){ const me = players[0]; if(!aqOk()) return; const it = me.inv[me.sel];
-  if(q === 'eq'){ if(me.inv[+v]){ me.sel = +v; me.relT = 0; AQM.open = null; AQM.rot = 0; } }
-  else if(q === 'open'){ AQM.open = AQM.open === v ? null : v; }
-  else if(q === 'on'){ if(attOn(me, it, v)){ sfx('pickup'); AQM.open = null; } else { sfx('beep'); return; } }
-  else if(q === 'off'){ if(it.att && it.att[v]){ attOff(me, it, v); sfx('click'); AQM.open = null; } }
-  else if(q === 'grab'){ const L = AQM.near && AQM.near[+v]; if(L && loot.includes(L)){ if(attStore(me, L.k)){ removeLoot(L); sfx('pickup'); } else { sfx('beep'); banner('Pochete cheia', 'Largue um acessório ou pegue uma mochila maior', 900); } } }
-  else if(q === 'drop'){ if(attTake(me, v)){ bagDrop(me, v, 0, 0); } }
+  if(q === 'on'){ if(attOn(me, it, v)) sfx('pickup'); else { sfx('beep'); return; } }
+  else if(q === 'off'){ if(it.att && it.att[v]){ attOff(me, it, v); sfx('click'); } }
+  else if(q === 'drop'){ if(attTake(me, v)) bagDrop(me, v, 0, 0); }
   AQM.hov = null; AQM.sig = ''; }
-document.addEventListener('click', e => { if(!AQM.on) return; const b = e.target.closest && e.target.closest('#aq [data-q]'); if(b){ aqAct(b.dataset.q, b.dataset.v); return; } if(!(e.target.closest && e.target.closest('#aq .sl')) && AQM.open){ AQM.open = null; AQM.sig = ''; } });
+document.addEventListener('click', e => { if(!AQM.on) return; const b = e.target.closest && e.target.closest('#aq [data-q]'); if(b) aqAct(b.dataset.q, b.dataset.v); });
 document.addEventListener('contextmenu', e => { if(!AQM.on || !(e.target.closest && e.target.closest('#aq'))) return; e.preventDefault(); const b = e.target.closest('#aq [data-q]'); if(!b) return;
-  if(b.dataset.off) aqAct('off', b.dataset.off); else if(b.classList.contains('tl') && b.dataset.q === 'on') aqAct('drop', b.dataset.v); });
+  if(b.dataset.q === 'on') aqAct('drop', b.dataset.v); else aqAct('off', b.dataset.v); });
 document.addEventListener('mouseover', e => { if(!AQM.on) return; const b = e.target.closest && e.target.closest('#aq [data-k], #aq [data-off]'), h = b ? (b.dataset.k ? {k:b.dataset.k} : {off:b.dataset.off}) : null; if(JSON.stringify(h) !== JSON.stringify(AQM.hov)) AQM.hov = h; });
-// arrastar da pochete até o quadro do encaixe; arrastar na bancada gira a arma
-document.addEventListener('dragstart', e => { if(!AQM.on) return; const t = e.target.closest && e.target.closest('#aq .tl[draggable]'); if(!t) return; AQM.dk = t.dataset.v; e.dataTransfer.effectAllowed = 'move'; try{ e.dataTransfer.setData('text/plain', t.dataset.v); }catch(err){} });
-document.addEventListener('dragover', e => { if(!AQM.on || !AQM.dk) return; const s = e.target.closest && e.target.closest('#aq .sl'); document.querySelectorAll('#aq .sl.over').forEach(o => o !== s && o.classList.remove('over')); if(s && ATT[AQM.dk].s === s.dataset.s && ATT[AQM.dk].ok.includes(players[0].inv[players[0].sel].k)){ e.preventDefault(); s.classList.add('over'); } });
-document.addEventListener('drop', e => { if(!AQM.on || !AQM.dk) return; e.preventDefault(); const k = AQM.dk; AQM.dk = null; if(e.target.closest && e.target.closest('#aq .sl')) aqAct('on', k); else AQM.sig = ''; });
-document.addEventListener('dragend', () => { if(AQM.dk){ AQM.dk = null; AQM.sig = ''; } });
-document.addEventListener('mousedown', e => { if(AQM.on && e.button === 0 && e.target.classList && e.target.classList.contains('cv') && e.target.closest('#aq')) AQM.drag = e.clientX; });
-addEventListener('mousemove', e => { if(AQM.on && AQM.drag != null){ AQM.rot = clamp(AQM.rot + (e.clientX - AQM.drag)*0.008, -1.4, 1.4); AQM.drag = e.clientX; } });
+// arrastar no vazio gira a arma um pouco
+document.addEventListener('mousedown', e => { if(AQM.on && e.button === 0 && e.target === $('aq')) AQM.drag = e.clientX; });
+addEventListener('mousemove', e => { if(AQM.on && AQM.drag != null){ AQM.rot = clamp(AQM.rot + (e.clientX - AQM.drag)*0.006, -0.9, 0.9); AQM.drag = e.clientX; } });
 addEventListener('mouseup', () => { AQM.drag = null; });
+
 // ícones do inventário: uma foto de cada modelo 3D, tirada uma vez só (fundo transparente)
 const ICONS = {};
 function itemIcon(k, lv){ const bl = blIcon(k, lv); if(bl) return bl; const key = ARM[k] ? k + lv : k; if(key in ICONS) return ICONS[key];
@@ -12365,7 +12300,7 @@ function view(dt){
     renderer.setScissorTest(false);
   } else {
     aim(cam1, you(), dt); camera.aspect = W/H; camera.updateProjectionMatrix(); fjOccSet(cam1, camera, CFG.occ !== false && R1.phase !== 'podium' && !(R1.phase === 'intro' && round === 1));
-    aqDraw(W, H); renderer.setViewport(0, 0, W, H); renderer.render(scene, camera); FJ_OCC.R.x = 0; vmRender(W, H);
+    renderer.setViewport(0, 0, W, H); renderer.render(scene, camera); FJ_OCC.R.x = 0; if(AQM.up < 0.5) vmRender(W, H); aqDraw(W, H, dt);
   }
   if(shake > 0) shake -= dt;
 }
