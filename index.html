@@ -14614,6 +14614,27 @@ function gwpCard(){ const me = you(), t = s => mmss(Math.max(0, Math.ceil(s))); 
 .gwpM span{font-size:11.5px;background:rgba(43,24,70,.7);border-radius:6px;padding:0 6px;border-bottom:2px solid var(--c);white-space:nowrap}.gwpM i{font-style:normal;font-size:11px;opacity:.9}
 .gwpM.big b{width:36px;height:36px;font-size:20px}.gwpM.dim{opacity:.7}.gwpM.dim b{width:24px;height:24px;font-size:13px}.gwpM.dim span{font-size:10px}.gwpM.edge span{display:none}`; document.head.appendChild(st); }
 
+// ---------- Guerra: grãos guardados entre partidas + armas e acessórios liberados pelo nível do jogador (pedido do Bruno 31/10 22:24) ----------
+// Os grãos que sobram ficam guardados (SAVE.wdBank) e voltam na próxima Guerra (nunca menos que os 600 do começo).
+// Cada item da loja tem um nível mínimo (nível do perfil, levelOf(SAVE.xp)). Só vale pra gente; bots compram tudo.
+const WD_WLV = {smg:1, limao:1, shotgun:1, revolver:2, grao:2, banana:2, rifle:3, lmg:3, deagle:4, caju:4, sniper:5, besta:5, flame:6, bazooka:8}, WD_RLV = [0, 2, 5, 9];
+const WD_ALV = {reddot:2, holo:2, comp:3, empV:3, empA:3, mira2x:4, silenc:5, pente:5, penteR:5, rd3x:6, luneta:7, lpvo:9, tambor:10, mira8x:12};
+const WD_PLV = [0, 1, 4, 8];
+WD_SHOP.forEach(e => { e.lv = e.cat === 'arma' ? (WD_WLV[e.k] || 1) + WD_RLV[e.r || 0] : e.cat === 'aces' ? WD_ALV[e.k] || 1 : e.cat === 'prot' ? WD_PLV[e.r] || 1 : e.k === 'med' ? 3 : e.k === 'radar' ? 4 : 1; });
+const wdLv = () => levelOf(SAVE.xp).L;
+const wdLvOk = (p, e) => p.isBot || p.i !== 0 || !e.lv || wdLv() >= e.lv;
+function wdBank(){ const me = you(); if(!me || me.isBot || typeof me.wdM !== 'number') return; SAVE.wdBank = Math.max(0, Math.round(me.wdM)); persist(); }
+{ const _s = wdStart; wdStart = function(...a){ const r = _s(...a); const me = you(); if(me && !me.isBot){ const b = SAVE.wdBank; if(typeof b === 'number' && b > WD.M0){ me.wdM = b; say(`🫘 ${b} grãos guardados da última Guerra`, true); } } WD.bankT = 0; return r; }; }
+{ const _st = wdStep; wdStep = function(dt){ _st(dt); WD.bankT = (WD.bankT || 0) - dt; if(WD.bankT <= 0){ WD.bankT = 3; wdBank(); } }; }
+{ const _f = wdFinish; wdFinish = function(...a){ const r = _f(...a); wdBank(); return r; }; }
+{ const _tm = toMenu; toMenu = function(...a){ if(WAR && WD.hq && WD.hq.length && !WD.over) wdBank(); return _tm(...a); }; }
+{ const _b = wdBuy; wdBuy = function(p, id){ const e = WD_BY[id]; if(e && !wdLvOk(p, e)){ sfx('lose'); say(`${tag(p)}🔒 <b>${wdName(e)}</b> libera no nível ${e.lv} (você está no ${wdLv()})`, true); return; } return _b(p, id); }; }
+{ const _r = wdShopRender; wdShopRender = function(){ _r(); const el = $('wdShop'); if(!el || el.hidden) return; const me = you(), L = wdLv();
+    el.querySelectorAll('[data-wb]').forEach(b => { const e = WD_BY[b.dataset.wb]; if(!e || wdLvOk(me, e)) return; b.classList.add('off', 'lock'); const i = b.querySelector('i'); if(i) i.textContent = `🔒 Nível ${e.lv}`; });
+    const h = el.querySelector('.wdH h2'); if(h && !h.querySelector('.wdLv')) h.insertAdjacentHTML('beforeend', ` <span class="wdLv">Nv ${L}</span>`);
+    const g = el.querySelector('.wdG'); if(g && !el.querySelector('.wdLvN')) g.insertAdjacentHTML('beforebegin', `<p class="wdNote wdLvN">🔓 Armas e acessórios melhores liberam conforme o seu nível (ganhe XP jogando). Os grãos que sobrarem ficam guardados pra próxima Guerra.</p>`); }; }
+{ const st = document.createElement('style'); st.textContent = `#wdShop .wdI.lock{opacity:.5;filter:grayscale(.7)}#wdShop .wdI.lock i{color:#6a5a86}#wdShop .wdLv{font-size:14px;background:#2b1846;color:#ffd23f;border-radius:8px;padding:2px 8px;vertical-align:middle}`; document.head.appendChild(st); }
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
