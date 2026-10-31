@@ -6429,7 +6429,7 @@ var TER = null;
 const FJ_WL = 1.6, FJ_SWIM = 1.0, TERB = {kind:'terr', active:true, delta:new V3(), min:new V3(), max:new V3()};
 // nome, x, z, raio da área plana, altura do chão (0 = sem área plana), cor do chão, quente
 const FJ_K = 1.2, fjKs = L => L.map(([x, z]) => [x*FJ_K, z*FJ_K]); // Ilha Feijoada 20% maior: espalha regiões, rio e estradas
-let FJ_REG, FJ_REG0 = [['Grão Capital', 0, 0, 74, 5, 0xb9a98c, 1], ['Porto Fradinho', 150, 112, 36, 2.6, 0xa9a8a2, 1], ['Usina Feijão Preto', 150, -60, 32, 15, 0x8f8a7d, 1], ['Base Azuki', -190, -142, 16, 10, 0x8b8f6a, 1],
+let FJ_REG, FJ_REG0 = [['Grão Capital', 0, 0, 74*1.35, 5, 0xb9a98c, 1], ['Porto Fradinho', 150, 112, 36, 2.6, 0xa9a8a2, 1], ['Usina Feijão Preto', 150, -60, 32, 15, 0x8f8a7d, 1], ['Base Azuki', -190, -142, 16, 10, 0x8b8f6a, 1],
   ['Morro Rajado', 0, -128, 0, 0, 0x9a8466, 0], ['Vila Carioca', -128, 98, 32, 5, 0xc9b48e, 0], ['Fazenda Jalo', -160, -6, 38, 4.2, 0xc8c36a, 0], ['Resort Manteiga', 22, 124, 26, 20, 0xe0d2a8, 0], ['Floresta Vagem', 128, 26, 0, 0, 0x4f7a3a, 0]].map(g => { g = g.slice(); g[1] *= FJ_K; g[2] *= FJ_K; return g; });
 let FJ_RIV, FJ_RIV0 = fjKs([[-40, -86], [-70, -40], [-72, 10], [-82, 60], [-72, 110], [-84, 190]]);
 function fjNoise(){ const P = new Uint8Array(512); let s = 1234567; for(let i=0;i<256;i++) P[i] = i; for(let i=255;i>0;i--){ s = s*16807 % 2147483647; const j = s % (i + 1); [P[i], P[j]] = [P[j], P[i]]; } for(let i=0;i<256;i++) P[i + 256] = P[i];
@@ -6466,14 +6466,14 @@ function fjHeight(x, z, fb){ const X0 = x, Z0 = z; x /= FJ_K; z /= FJ_K;
   if(isl > 0) h = Math.max(h, -6 + isl*(8 + 8 + fb(x*0.09, z*0.09, 2)*3));
   // áreas planas das regiões (reservadas pros prédios)
   x = X0; z = Z0;
-  for(const [nm, rx, rz, R, H] of FJ_REG){ if(!R) continue; const w = sstep(R + 16, R, nm === 'Grão Capital' && R > 60 ? Math.pow((x - rx)**6 + (z - rz)**6, 1/6) : Math.hypot(x - rx, z - rz)); if(w > 0) h = h*(1 - w) + H*w; }
+  for(const [nm, rx, rz, R, H] of FJ_REG){ if(!R) continue; const w = sstep(R + 16, R, nm === 'Grão Capital' && R > 60 ? Math.pow(((x - rx)*(x < rx ? 1.35 : 1))**6 + (z - rz)**6, 1/6) : Math.hypot(x - rx, z - rz)); if(w > 0) h = h*(1 - w) + H*w; }
   // rio: leito 0,6 m abaixo da água, barrancos dos lados
   if(e < 1.08){ const d = segDist(x, z, FJ_RIV) + fb(x*0.05, z*0.05, 2)*3; if(d < 18){ const k = sstep(18, 7, d); h = h*(1 - k) + Math.min(h, 1.0)*k; } }
   return h; }
 
 // estradas de terra (parte 2): ligam as regiões em curvas suaves, passam pelos desfiladeiros da serra; pontes de madeira onde cruzam o rio
 // cidade densa: a estrada que sai do centro (0, 0) começa no anel em volta da Capital (|x| ou |z| = 72)
-function cdClip(W){ if(W[0][0] || W[0][1]) return W; const E = 72, out = (p) => Math.max(Math.abs(p[0]), Math.abs(p[1])) > E;
+function cdClip(W){ if(W[0][0] || W[0][1]) return W; const E = 72*1.35, out = (p) => p[0] < -72 || p[0] > E || Math.abs(p[1]) > E;
   for(let i=1; i<W.length; i++) if(out(W[i])){ const [ax, az] = W[i - 1], [bx, bz] = W[i]; let lo = 0, hi = 1; for(let k=0; k<30; k++){ const m = (lo + hi)/2; if(out([ax + (bx - ax)*m, az + (bz - az)*m])) hi = m; else lo = m; }
     return [[ax + (bx - ax)*lo, az + (bz - az)*lo]].concat(W.slice(i)); } return W; }
 let FJ_ROADS, FJ_ROADS0 = [[[0, 0], [55, 38], [108, 80], [150, 112]], [[0, 0], [58, -22], [108, -46], [150, -60]], [[0, 0], [-38, 28], [-76, 58], [-104, 84], [-128, 98]],
@@ -7015,15 +7015,15 @@ function pnRest(){ const [, cx, cz, R] = FJ_REG[0], used = CDV.box ? [CDV.box] :
   const ring = (k, x0, z0, rr, tx, tz, maxR, slope, minH) => { for(let i=0; i<12; i++){ const a = i/12*6.283; if(pnLot(k, x0 + Math.cos(a)*rr, z0 + Math.sin(a)*rr, tx, tz, used, maxR, slope, minH)) return true; } return false; };
   const miss = k => { if(!(PNV.placed || []).includes(k)) FJ_MISS.push('prédio novo ' + k); };
   ring('supermercado', cx, cz, R + 18, cx, cz, 12, 2.0) || ring('supermercado', cx, cz, R + 32, cx, cz, 14, 2.6) || ring('supermercado', cx, cz, R + 48, cx, cz, 14, 3.0);
-  if(!(PNV.placed || []).includes('bloco')) ring('bloco', cx, cz, R + 14, cx, cz, 12, 1.6) || ring('bloco', cx, cz, R + 30, cx, cz, 14, 2.4);
-  const V = FJ_REG[5]; ['casa_enxaimel', 'casa_azul', 'casa_garagem', 'bangalo'].forEach((k, i) => { for(let j=0; j<16; j++){ const a = (i*0.25 + j*0.13)*6.283, rr = V[3] + (j < 8 ? 12 : 24); if(pnLot(k, V[1] + Math.cos(a)*rr, V[2] + Math.sin(a)*rr, V[1], V[2], used, 10, j < 8 ? 1.6 : 2.4)) break; } });
+  if(!(PNV.placed || []).includes('bloco')) ring('bloco', cx, cz, R + 14, cx, cz, 12, 1.6) || ring('bloco', cx, cz, R + 30, cx, cz, 14, 2.4) || ring('bloco', cx, cz, R + 48, cx, cz, 16, 3.4);
+  const V = FJ_REG[5]; ['casa_enxaimel', 'casa_azul', 'casa_garagem', 'bangalo'].forEach((k, i) => { for(let j=0; j<48; j++){ const a = (i*0.25 + j*0.13)*6.283, rr = V[3] + [14, 26, 38, 50, 62, 74][j >> 3]; if(pnLot(k, V[1] + Math.cos(a)*rr, V[2] + Math.sin(a)*rr, V[1], V[2], used, 12, [1.8, 2.6, 3.2, 3.8, 4.4, 5.0][j >> 3])) break; } });
   const P = fjR('Porto'); ring('galpao', P[1], P[2], 20, P[1], P[2], 12, 0.8, P[4] - 0.3) || ring('galpao', P[1], P[2], 34, P[1], P[2], 12, 1.4, P[4] - 0.3);
   ['supermercado', 'bloco', 'casa_enxaimel', 'casa_azul', 'casa_garagem', 'bangalo', 'galpao'].forEach(miss); }
 // cidade densa (corre-feijao/cidade-densa): 16 quarteirões de prédios do Blender colados, cada um com a calçada no próprio modelo
 const CD_K = ['padaria', 'livraria', 'cafe', 'flores', 'frontao', 'frontao_alto', 'moderno_ripas', 'vidro_sacadas', 'bege_fabrica', 'amarelo_torreoes', 'torre_escalonada',
   'paris_mansao', 'paris_haussmann', 'paris_esquina', 'torre_relogio', 'ac_deco', 'ac_escalonado', 'ac_residencial', 'ac_hotel', 'ac_tijolo', 'ac_vidro',
   'predio_tijolo', 'escritorio', 'predio_loft', 'predio_frances', 'predio_grande', 'bloco'];
-const CDV = {box:null, G:null, tm:{}, n:0};
+const CDV = {box:null, G:null, tm:{}, n:0}, CD_S = 1.35;   // prédios com interior novo são 1,35x maiores (Version 180)
 // troca perto/longe a cada 10 quadros (60 m de qualquer câmera); só os prédios do mapa atual
 // perto (< 45 m de alguma câmera): malha cheia + vidro transparente; até 160 m: só a fachada + vidro opaco;
 // mais longe: impostor = caixa com as 4 fachadas e o telhado fotografados uma vez (1 desenho por modelo pra todos os prédios iguais)
@@ -7115,7 +7115,7 @@ function cdGrid(o){ let s = o.seed || 9191; const sr = () => (s = s*16807 % 2147
     if(!flatAt(x0, x1, z0, z1)) return; side.push(W([x0, x1, z0, z1]));
     const alongX = (bi + bj) % 2 === 0, len = alongX ? x1 - x0 : z1 - z0, D = alongX ? z1 - z0 : x1 - x0, tall = kd === 'tall';
     // fileira 1 de frente pra rua de baixo (z0 ou x0), fileira 2 pra de cima, cada uma no máximo até o corredor do meio
-    const r1 = fill(len, () => tall ? 17 : 13.0, WT[kd]), r2 = fill(len, (u0, u1) => D - 2.5 - Math.max(0, ...r1.seq.filter(([m, u]) => u < u1 - 0.01 && u + m.w > u0 + 0.01).map(([m]) => m.d)), WT[kd]);
+    const r1 = fill(len, () => (tall ? 17 : 13.0)*CD_S, WT[kd]), r2 = fill(len, (u0, u1) => D - 2.5 - Math.max(0, ...r1.seq.filter(([m, u]) => u < u1 - 0.01 && u + m.w > u0 + 0.01).map(([m]) => m.d)), WT[kd]);
     [[r1, 0], [r2, 1]].forEach(([r, row]) => r.seq.forEach(([m, a]) => { const rot = alongX ? (row ? 0 : 2) : (row ? 1 : 3);
       const q = alongX ? [x0 + a, x0 + a + m.w, row ? z1 - m.d : z0, row ? z1 : z0 + m.d] : [row ? x1 - m.d : x0, row ? x1 : x0 + m.d, z0 + a, z0 + a + m.w];
       if(!flatAt(...q)) return; const R0 = pnRot(0, 0, rot), [l0, , l2] = R0(...PNV.M[m.k].lot);
@@ -7123,12 +7123,12 @@ function cdGrid(o){ let s = o.seed || 9191; const sr = () => (s = s*16807 % 2147
       const ti = Math.floor(sr()*TINT.length); if(ti){ const kk = m.k + ti; mesh.material = CDV.tm[kk] || (CDV.tm[kk] = (() => { const mt = mesh.material.clone(); mt.color.setRGB(...TINT[ti]); return mt; })()); if(mesh.userData.far) mesh.userData.far.material = mesh.material; } })); }));
   side.forEach(r => cdMark(...r)); cdQuads(side, Y + 0.035, 0xcfc4b0); }
 // Grão Capital: 4 x 4 quarteirões, os 4 do meio com os mais altos; chafariz na rotatória das avenidas
-function cdCidade(cx, cz, Y){ const E = 68, L = [[-71.5, 7], [-38, 7], [0, 14], [38, 7], [71.5, 7]];
-  CDV.box = [cx - E - 8, cx + E + 8, cz - E - 8, cz + E + 8];
-  cdGrid({cx, cz, Y, LX:L, kind:(x0, x1, z0, z1, i, j) => (i === 1 || i === 2) && (j === 1 || j === 2) ? 'tall' : 'mid'});
+function cdCidade(cx, cz, Y){ const E = 68*CD_S, EW = 68, L = [[-71.5, 7], [-38, 7], [0, 14], [38, 7], [71.5, 7]], LZ = L.map(([c, w]) => [c*CD_S, w]), LX = L.map(([c, w]) => [c > 0 ? c*CD_S : c, w]);
+  CDV.box = [cx - EW - 8, cx + E + 8, cz - E - 8, cz + E + 8];
+  cdGrid({cx, cz, Y, LX, LZ, kind:(x0, x1, z0, z1, i, j) => (i === 1 || i === 2) && (j === 1 || j === 2) ? 'tall' : 'mid'});
   disc(cx, cz, 3.2, Y, Y + 0.7, 0xd8dde6, 24); flat(new THREE.CircleGeometry(2.8, 24), 0xbfe9ff, cx, cz, Y + 0.72).material = new THREE.MeshLambertMaterial({map:waterTex, color:0xbfe9ff}); disc(cx, cz, 0.45, Y + 0.7, Y + 2.4, 0xd8dde6, 12);
   // árvores e pedras ficam fora da cidade inteira (o círculo da região não cobre os cantos do quadrado)
-  for(let x = -78; x <= 78; x += 12) for(let z = -78; z <= 78; z += 12) FJ_CLR.push([cx + x, cz + z, 9]); }
+  for(let x = -EW - 10; x <= E + 10; x += 12) for(let z = -E - 10; z <= E + 10; z += 12) FJ_CLR.push([cx + x, cz + z, 9]); }
 // Fazenda Jalo: casarão de 2 andares, celeiro vermelho com mezanino de feno, silo alto, casinha, curral e fardos
 function fjFazenda(){ const g = fjR('Fazenda'), [, cx, cz, R0, Y] = g, used = [], q = Math.min(1, R0/38); let s = 5151; const sr = () => (s = s*16807 % 2147483647)/2147483647; let p;
   if(p = fjLot(g, cx - 14*q, cz - 14*q, 13, 10, used)){ const ty = fjBuilding(p[0] - 6.5, p[1] - 5, 13, 10, 2, {y:Y, c:0xf4ead8, c2:0xd8cfc0, door:'z1', roof:'pitch', rc:0xb5532d, porch:true}); bonusLoot.push(['rifle', p[0] + 3, Y + 3.35, p[1]]); }
