@@ -9382,19 +9382,25 @@ function shootInput(p, inp){
   if(BIG && !p.glide && p.alive && !p.grounded && p.vel.y < -3 && R1.phase === 'play' && (inp.jump || (p.isBot && p.vel.y < -8)) && p.pos.y - groundBelow(p) > 4.5){ chute(p); p.glide = 'chute'; p.skyY = p.pos.y; p.vel.y = Math.max(p.vel.y, -6); if(!p.isBot) sfx('chute'); }
   if(BIG && p.glide === 'plane' && inp.jump && plane && plane.t > 0.6) p.wantJump = true;
   if(BIG && p.inv){ stepReload(p, 1/60); stepKit(p, 1/60); kitFx(p, 1/60); p.bloom = Math.max(0, (p.bloom || 0) - (1/60)*(p.ads ? 0.25 : 0.14)); if(p.useT > 0 && !p.isBot && p.useK !== 'pdq'){ inp.mx *= 0.35; inp.mz *= 0.35; } }
-  if(BIG && p.inv && !p.isBot){ const q = Q[p.i]; if(q.slot !== undefined){ if(p.inv[q.slot]){ p.sel = q.slot; p.holster = false; } q.slot = undefined; }
+  if(BIG && p.inv && !p.isBot){ const q = Q[p.i]; if(q.slot !== undefined){ if(p.inv[q.slot]){ p.sel = q.slot; p.holster = false; p.nadeAim = false; p.nadeCook = false; } q.slot = undefined; }
       if(q.holster){ q.holster = undefined; p.holster = !p.holster; p.relT = 0; if(p.holster) p.ads = false; sfx('pickup'); }
-    p.ads = p.i === 0 && mouseR && !p.glide && !twoP && !p.car && p.alive && !p.climb && !p.holster; if(p.i === 0 && !twoP) recoverCam(p); leanStep(p, 1/60);
+    p.ads = p.i === 0 && mouseR && !p.glide && !twoP && !p.car && p.alive && !p.climb && !p.holster && !p.nadeAim; if(p.i === 0 && !twoP) recoverCam(p); leanStep(p, 1/60);
     if(inp.reload) startReload(p); if(inp.use) useKit(p); if(inp.turbo) useTurbo(p);
-    if(Q[p.i].nadeNext){ Q[p.i].nadeNext = false; const i = NTYPES.indexOf(p.nadeSel || 'nade'), N = NTYPES.length; for(let k=1;k<=N;k++){ const n = NTYPES[(i + k) % N]; if(p[KIT[n].f] > 0 || k === N){ p.nadeSel = n; break; } } }
+    if(Q[p.i].nadeNext){ Q[p.i].nadeNext = false; const i = NTYPES.indexOf(p.nadeSel || 'nade'), N = NTYPES.length; for(let k=1;k<=N;k++){ const n = NTYPES[(i + k) % N]; if(p[KIT[n].f] > 0 || k === N){ p.nadeSel = n; break; } } if(p.i === 0 && !twoP && p[KIT[p.nadeSel].f] > 0 && !p.nadeAim){ p.nadeAim = true; p.nadeCook = false; p.nadeLock = mouseHeld; sfx('pickup'); } }
     const nOk = !p.car && !p.climb && !p.glide && !p.swim && NTYPES.some(k => p[KIT[k].f] > 0);
-    if(p.i === 0 && !twoP && !p.isBot){ if(!nOk || mouseR || p.useT > 0) p.nadeAim = false; if(inp.nade && nOk){ if(p.nadeAim) nadeGo(p); else { p.nadeAim = true; p.nadeLock = mouseHeld; sfx('pickup'); } } }
+    if(p.i === 0 && !twoP && !p.isBot){ const rP = mouseR && !p._mR; p._mR = mouseR;
+      if(!nOk || p.useT > 0) p.nadeAim = false;
+      if(rP && p.nadeAim){ if(p.nadeCook){ p.nadeCook = false; p.nadeLock = true; sfx('click'); } else { p.nadeAim = false; sfx('click'); } }
+      if(inp.nade && nOk){ if(p.nadeAim){ p.nadeAim = false; sfx('click'); } else { p.nadeAim = true; p.nadeLock = mouseHeld || !!keys.KeyF; sfx('pickup'); } }
+      if(!p.nadeAim) p.nadeCook = false; }
     else if(inp.nade && nOk){ const c = p.i === 0 ? cam1 : cam2, dir = crossRay(c), o = c.pos.clone(); throwNade(p, rayHit(o, dir, 26, p, o.distanceTo(p.pos) + 0.6)); }
     if(inp.push && p.useT > 0) p.useT = 0;
     if(inp.item && !p.glide && !p.climb){ if(p.ride) wdUnride(p, p.ride.heli && p.ride.y - gY(p.ride.x, p.ride.z) > 5); else if(p.car) leaveCar(p); else { const L = nearLoot(p, 1.8, L => !!WPN[L.k] && !boxLock(L, p)); if(L) pickUp(p, L); else if(p === players[0] && !twoP && nearBox(p)){ const B = nearBox(p); if(B.chest) chestOpen(B); bagToggle(true); } else { const c = nearCar(p); if(c) enterCar(p, c); } } } inp.item = false;
     if(p.car){ inp.nade = false; inp.push = false; }
     if(p.i === 0 && curW(p).auto && (keys.KeyF || mouseHeld)) inp.push = true;
-    if(p.i === 0 && !twoP){ if(p.nadeLock && !mouseHeld && !keys.KeyF) p.nadeLock = false; if(p.nadeAim && inp.push && !p.nadeLock){ nadeGo(p); p.nadeLock = true; } if(p.nadeAim || p.nadeLock) inp.push = false; } }
+    if(p.i === 0 && !twoP){ const hd = mouseHeld || !!keys.KeyF; if(p.nadeLock && !hd) p.nadeLock = false;
+      if(p.nadeAim && !p.nadeLock){ if(hd){ if(!p.nadeCook) sfx('click'); p.nadeCook = true; } else if(p.nadeCook){ p.nadeCook = false; nadeGo(p); } }
+      if(p.nadeAim || p.nadeLock) inp.push = false; } }
   if(p.car) inp.push = false;
   if(p.holster && inp.push && !p.isBot){ p.holster = false; inp.push = false; } // clicou com a arma guardada: saca
   if(BIG && p.inv && inp.push && p.shotCD <= 0 && R1.phase === 'play' && !p.glide && !p.climb){
@@ -9679,7 +9685,7 @@ function whDraw(){ const me = players[0], n = WH.list.length, R = 100, r = 47, P
 function whMove(e){ WH.vx += e.movementX || 0; WH.vy += e.movementY || 0; const m = Math.hypot(WH.vx, WH.vy); if(m > 90){ WH.vx *= 90/m; WH.vy *= 90/m; } if(m < 18) return;
   const n = WH.list.length; let a = Math.atan2(WH.vy, WH.vx) + Math.PI/2; a = (a + Math.PI/n + 4*Math.PI) % (2*Math.PI); const i = Math.floor(a/(2*Math.PI)*n) % n; if(i !== WH.hi){ WH.hi = i; whDraw(); } }
 function whClose(ok){ if(!WH.on) return; WH.on = false; $('nhWheel').classList.remove('on'); const me = players[0], k = WH.list[WH.hi]; if(!ok || !k || !me) return;
-  if(WH.kind === 'q') me.qSel = k; else me.nadeSel = k; sfx('click'); say(`<b>${WH.kind === 'q' ? '5' : 'T'}</b> = ${knm(k)}${me[KIT[k].f] > 0 ? '' : ' (acabou, pegue mais)'}`, true); }
+  if(WH.kind === 'q') me.qSel = k; else { me.nadeSel = k; if(me[KIT[k].f] > 0 && !me.glide && !me.car && !me.swim){ me.nadeAim = true; me.nadeCook = false; me.nadeLock = mouseHeld; } } sfx('click'); say(`<b>${WH.kind === 'q' ? '5' : 'T'}</b> = ${knm(k)}${me[KIT[k].f] > 0 ? '' : ' (acabou, pegue mais)'}`, true); }
 // ---- barra de baixo: armas (a da mão cresce), Q / T / V e o cartão de pegar
 function nhInv(me){ const G = $('nhGuns'), QK = $('nhQuick'); G.hidden = QK.hidden = false;
   nhSet(G, me.inv.map((x, i) => { if(!x) return `<div class="gs pn empty"><kbd>${i + 1}</kbd><div class="rt"></div><div class="ft"><b>vazio</b></div></div>`; normIt(x); const w = WI(x), on = i === me.sel, rl = me.relT > 0 && me.relK === i;
@@ -10060,7 +10066,32 @@ function nadeKind(p){ const k = p.nadeSel || 'nade'; return p[KIT[k].f] > 0 ? k 
 // pão-muro é proteção: vai pro chão 2 m na sua frente, virado pra onde você olha (jogado bem curto, então o online e a colisão continuam iguais)
 function nadeTarget(p){ const c = cam1; if(nadeKind(p) === 'pao'){ const fx = -Math.sin(c.yaw), fz = -Math.cos(c.yaw), x = p.pos.x + fx*2, z = p.pos.z + fz*2; return new V3(x, Math.max(0, groundBelow({pos:new V3(x, p.pos.y + 1.2, z)})), z); }
   const dir = crossRay(c), o = c.pos.clone(); return rayHit(o, dir, 26, p, o.distanceTo(p.pos) + 0.6); }
-function nadeGo(p){ p.nadeAim = false; throwNade(p, nadeTarget(p)); }
+function nadeGo(p){ const k = nadeKind(p); throwNade(p, nadeTarget(p), k); p.nadeT = 0.32; p.nadeCook = false; p.nadeAim = p[KIT[k].f] > 0; }
+// item que o feijão está segurando (o seu: nadeAim; dos outros no online: nadeNetK)
+function nadeHeldK(p){ return p.nadeNetK || (p.nadeAim && p.inv ? nadeKind(p) : null); }
+const NADE_HS = {nade:1.15, pimenta:1.1, impacto:1.1, pao:0.8, mola:1.0, radar:0.85};
+function nadeMdl(k, s){ const o = nadeProto[k].clone(true); o.scale.setScalar(s); o.traverse(q => { q.castShadow = false; q.frustumCulled = false; }); return o; }
+// pose (mesmo espaço do usePose: frente = +z, mão direita = arms[0] em -x). ck = 0 segurando .. 1 braço lá atrás pronto pra jogar; th = 1 logo depois de soltar
+function nadePoseAt(ck, th){ const L = (a, b, k) => a.map((v, i) => v + (b[i] - v)*k);
+  let r = L([-0.3, 0.7, 0.48], [-0.4, 1.04, -0.14], ck), l = L([0.3, 0.62, 0.36], [0.24, 0.86, 0.62], ck);
+  if(th > 0){ r = L(r, [-0.08, 0.66, 0.78], th); l = L(l, [0.3, 0.6, 0.3], th); } return {r, l}; }
+function nadePose(p, m, dt){ const k = nadeHeldK(p), on = !!k && !(p.useT > 0) && m.hd && !m.far && p.alive && !p.down && !p.glide && !p.car && !p.climb && !p.swim;
+  p.nadeT = Math.max(0, (p.nadeT || 0) - dt);
+  if(!on && !(p.nadeT > 0 && m.hd && !m.far)){ if(m.nadeM){ m.nadeM.parent && m.nadeM.parent.remove(m.nadeM); m.nadeM = null; m.nadeMK = null; } m.nadeCk = 0; return; }
+  if(m.gun) m.gun.visible = false; m.nadeCk = (m.nadeCk || 0) + ((p.nadeCook ? 1 : 0) - (m.nadeCk || 0))*Math.min(1, dt*14);
+  if(k && m.nadeMK !== k){ if(m.nadeM) m.tilt.remove(m.nadeM); m.nadeM = nadeMdl(k, 1.3*(NADE_HS[k] || 1)); m.tilt.add(m.nadeM); m.nadeMK = k; }
+  const th = p.nadeT > 0 ? Math.sin(Math.min(1, p.nadeT/0.32)*Math.PI*0.5) : 0, P = nadePoseAt(m.nadeCk*(1 - th), th);
+  m.arms[0].position.set(...P.r); m.arms[1].position.set(...P.l); m.arms[0].rotation.set(-0.9 - 0.8*m.nadeCk, 0, 0.3); m.arms[1].rotation.set(-1.1, 0, -0.3);
+  if(m.nadeM){ m.nadeM.visible = !(th > 0.2) && on; m.nadeM.position.set(P.r[0], P.r[1] + 0.05, P.r[2] + 0.06); m.nadeM.rotation.set(0.2, 0, 0.3); } }
+// 1ª pessoa: mãos + item no vmScene
+function vmNade(me, dt, k){ if(!VM.ng){ VM.ng = new THREE.Group(); vmScene.add(VM.ng); } const U = VM.ng; U.visible = true; const key = k + JSON.stringify(myLook());
+  if(U.userData.key !== key){ U.clear(); U.userData.key = key; const src = me.m && me.m.arms; U.userData.h = [0, 1].map(i => { const h = src && src[i] ? src[i].clone() : new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 14), new THREE.MeshPhongMaterial({color:myLook().color})); h.traverse(o => { o.visible = true; o.castShadow = false; }); h.scale.setScalar(0.34); U.add(h); return h; });
+    U.userData.it = nadeMdl(k, 0.3*(NADE_HS[k] || 1)); U.add(U.userData.it); }
+  U.userData.ck = (U.userData.ck || 0) + ((me.nadeCook ? 1 : 0) - (U.userData.ck || 0))*Math.min(1, dt*14); const ck = U.userData.ck, th = me.nadeT > 0 ? Math.sin(Math.min(1, me.nadeT/0.32)*Math.PI*0.5) : 0;
+  const L = (a, b, t) => a.map((v, i) => v + (b[i] - v)*t); let r = L([0.2, -0.2, -0.44], [0.33, -0.04, -0.42], ck*(1 - th)), l = L([-0.24, -0.3, -0.42], [-0.17, -0.13, -0.56], ck*(1 - th));
+  if(th > 0){ r = L(r, [0.04, -0.26, -0.62], th); l = L(l, [-0.26, -0.34, -0.4], th); }
+  const [hr, hl] = U.userData.h, it = U.userData.it; hr.position.set(...r); hl.position.set(...l); hr.rotation.set(0.3, 0, 0.5); hl.rotation.set(0.3, 0, -0.5);
+  it.visible = !(th > 0.2) && !!me.nadeAim; it.position.set(r[0] - 0.01, r[1] + 0.06, r[2] - 0.03); it.rotation.set(0.3, 0.4, 0.2); U.position.set(0, Math.sin(VM.bob)*0.004, 0); }
 function nadeVel(p, target){ const from = nadeFrom(p), d = target.clone().sub(from), h = Math.hypot(d.x, d.z), dir = new V3(d.x/(h || 1), 0, d.z/(h || 1));
   const H = Math.min(h, 24), T = clamp(H/13, 0.45, 1.3), vel = dir.multiplyScalar(H/T); vel.y = (d.y + 0.3 - 0.5*NADE.g*T*T)/T; return {from, vel}; }
 function nadePath(p, target){ const {from, vel} = nadeVel(p, target), pos = from.clone(), v = vel.clone(), pts = [pos.clone()], dt = 1/60;
@@ -10069,21 +10100,23 @@ function nadePath(p, target){ const {from, vel} = nadeVel(p, target), pos = from
     if(Math.round(t/dt) % 3 === 0 || hit) pts.push(pos.clone()); if(hit) break; }
   return {pts, end:pos, vel:v}; }
 const NAIM = {g:null};
-function nadeAimFx(me){ const on = !!(me && me.nadeAim && me.alive && BIG && round === 20 && !twoP);
+function nadeAimFx(me){ const hold = !!(me && me.nadeAim && me.alive && BIG && round === 20 && !twoP), on = hold && !!me.nadeCook;
   if(!NAIM.g){ const g = NAIM.g = new THREE.Group(), N = 90; g.renderOrder = 5;
     NAIM.dots = new THREE.InstancedMesh(new THREE.SphereGeometry(0.085, 8, 6), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.95, depthWrite:false, depthTest:false}), N); NAIM.dots.frustumCulled = false; NAIM.dots.renderOrder = 6; g.add(NAIM.dots);
     NAIM.ring = new THREE.Mesh(new THREE.RingGeometry(0.5, 0.72, 40), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:0.95, side:THREE.DoubleSide, depthWrite:false, depthTest:false})); NAIM.ring.rotation.x = -Math.PI/2; NAIM.ring.renderOrder = 6; g.add(NAIM.ring);
     NAIM.area = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({color:0xff3b4e, transparent:true, opacity:0.16, side:THREE.DoubleSide, depthWrite:false})); NAIM.area.rotation.x = -Math.PI/2; g.add(NAIM.area);
     NAIM.wall = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({color:0xf3c46a, transparent:true, opacity:0.42, depthWrite:false})); NAIM.wall.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)), new THREE.LineBasicMaterial({color:0xffe9b0, transparent:true, opacity:0.9})));
     g.add(NAIM.wall); g.userData.keep = true; NAIM.hint = document.createElement('div'); NAIM.hint.id = 'nadeHint'; document.body.appendChild(NAIM.hint); }
-  if(NAIM.g.parent !== world && on) world.add(NAIM.g); NAIM.g.visible = on; NAIM.hint.style.display = on ? 'block' : 'none'; if(!on) return;
+  if(NAIM.g.parent !== world && on) world.add(NAIM.g); NAIM.g.visible = on; NAIM.hint.style.display = hold ? 'block' : 'none';
+  if(hold && !on){ const W0 = NW[nadeKind(me)], h0 = `${KIT[nadeKind(me)] && KIT[nadeKind(me)].ic ? KIT[nadeKind(me)].ic + ' ' : ''}<b>${W0.name}</b> na mão · <b>segure</b> o botão esquerdo pra mirar · T guarda`; if(NAIM.hint._h !== h0){ NAIM.hint._h = h0; NAIM.hint.innerHTML = h0; } }
+  if(!on) return;
   const kind = nadeKind(me), W = NW[kind], P = nadePath(me, nadeTarget(me)), M = new THREE.Matrix4(), n = Math.min(P.pts.length, 90);
   for(let i=0;i<n;i++){ const q = P.pts[i]; M.makeTranslation(q.x, q.y, q.z); NAIM.dots.setMatrixAt(i, M); } NAIM.dots.count = kind === 'pao' ? 0 : n; NAIM.dots.instanceMatrix.needsUpdate = true;
   const e = P.end, gy = W.util ? Math.max(0, groundBelow({pos:new V3(e.x, e.y + 0.3, e.z)})) : e.y, col = kind === 'nade' || kind === 'impacto' ? 0xff3b4e : kind === 'pimenta' ? 0xff7a2a : kind === 'pao' ? 0xf3c46a : kind === 'mola' ? 0x38d16a : 0x5ab4ff;
   NAIM.ring.position.set(e.x, (W.util ? gy : e.y) + 0.06, e.z); NAIM.ring.material.color.setHex(col); NAIM.area.material.color.setHex(col);
   const rA = W.splash || (kind === 'pimenta' ? 2.8 : kind === 'mola' ? 1.2 : kind === 'radar' ? 2 : 0); NAIM.area.visible = rA > 0; NAIM.area.position.copy(NAIM.ring.position); NAIM.area.scale.setScalar(rA || 1);
   NAIM.wall.visible = kind === 'pao'; if(kind === 'pao'){ const along = Math.abs(P.vel.x) > Math.abs(P.vel.z) ? 'z' : 'x'; NAIM.wall.scale.set(along === 'x' ? 3.2 : 0.6, 2.2, along === 'x' ? 0.6 : 3.2); NAIM.wall.position.set(e.x, gy + 1.1, e.z); }
-  const ht = `${KIT[kind] && KIT[kind].ic ? KIT[kind].ic + ' ' : ''}<b>${W.name}</b> · ${kind === 'pao' ? 'clique ou T pra colocar na sua frente' : 'clique ou T pra jogar'} · botão direito cancela`; if(NAIM.hint._h !== ht){ NAIM.hint._h = ht; NAIM.hint.innerHTML = ht; } }
+  const ht = `${KIT[kind] && KIT[kind].ic ? KIT[kind].ic + ' ' : ''}<b>${W.name}</b> · ${kind === 'pao' ? '<b>solte</b> pra colocar na sua frente' : '<b>solte</b> pra jogar'} · botão direito cancela`; if(NAIM.hint._h !== ht){ NAIM.hint._h = ht; NAIM.hint.innerHTML = ht; } }
 function throwNade(p, target, kind){ if(p.glide || p.useT > 0) return; kind = kind || p.nadeSel || 'nade'; if(!(p[KIT[kind].f] > 0)) kind = NTYPES.find(k => p[KIT[k].f] > 0); if(!kind) return;
   const W = NW[kind]; p[KIT[kind].f]--; p.nadeCD = 1;
   const from = nadeFrom(p), d = target.clone().sub(from), h = Math.hypot(d.x, d.z), dir = new V3(d.x/(h || 1), 0, d.z/(h || 1));
@@ -11135,7 +11168,7 @@ addEventListener('keydown', e => {
     else if(brK && e.code === 'KeyX') Q[0].prone = true; else if(brK && e.code === 'KeyZ') Q[0].dive = true; else if(brK && e.code.startsWith('Shift')){}
     else if((twoP ? ['ShiftLeft','KeyC','KeyQ'] : ['ShiftLeft','ShiftRight','KeyC','KeyQ']).includes(e.code)) Q[0].dive = true;
     if(e.code === 'KeyR') Q[0].reload = true;
-    if(['Digit1', 'Digit2', 'Digit3'].includes(e.code)) Q[0].slot = +e.code[5] - 1; if(['Digit1', 'Digit2', 'Digit3', 'KeyH'].includes(e.code) && players[0]) players[0].nadeAim = false;
+    if(['Digit1', 'Digit2', 'Digit3'].includes(e.code)) Q[0].slot = +e.code[5] - 1; if(['Digit1', 'Digit2', 'Digit3', 'KeyH'].includes(e.code) && players[0]) { players[0].nadeAim = false; players[0].nadeCook = false; }
     if(e.code === 'KeyF') Q[0].push = true; if(e.code === 'KeyE') Q[0].item = true; if(e.code === 'KeyG') Q[0].grab = true; if(brK && e.code === 'KeyT') whHold('t'); if(brK && e.code === 'Digit4') Q[0].nadeNext = true; if(brK && e.code === 'KeyH') Q[0].holster = true; if(brK && e.code === 'KeyP'){ CFG.fpp = !CFG.fpp; Platform.save('feijao-cfg', CFG); banner(CFG.fpp ? 'Primeira pessoa' : 'Terceira pessoa', 'Aperte P pra trocar', 800); }
     if(twoP){ if(['Enter','NumpadEnter','Numpad0'].includes(e.code)) Q[1].jump = true; if(['ShiftRight','Numpad1'].includes(e.code)) Q[1].dive = true; if(['ControlRight','Numpad2','Slash'].includes(e.code)) Q[1].push = true; if(['End','Numpad3'].includes(e.code)) Q[1].item = true; if(['PageDown','Numpad5'].includes(e.code)) Q[1].grab = true; }
     if(e.code === 'KeyM'){ if(BIG && round === 20 && TER && R1.phase !== 'podium') bigMapOn = !bigMapOn; else toggleMusic(); } }
@@ -11754,7 +11787,7 @@ function animateBean(p, dt){
   const ty = p.dive > 0 || p.stance === 2 || p.down ? (p.dive > 0 ? 0.5 : 0.3) : 0; if(p.stance === 1 && !m.hd) m.g.scale.y *= 0.72;
   const tz = p.stun > 0 ? Math.sin(clock*25)*0.25 : p.down ? Math.sin(clock*3 + p.i)*0.12 : 0;
   const special = p.dive > 0 || p.stance === 2 || p.down || p.climb || p.vault || p.mantle || p.slideT > 0 || !!p.glide;
-  FEIJAO_HD.anim(m, {speed:special ? 0 : sp, grounded:p.grounded || !!p.car || !!p.climb, gun:!!m.gun, aim:p.ads || clock - (p.lastShot ?? -9) < 1.2 ? 1 : 0, t:clock + p.i, shoot:p.shotFx, tx:p.tx, ty, tz:tz + (p.leanK || 0)*LEAN_A, lean:!special, face:false}, dt); p.shotFx = false; poseFx(p, m, dt); highReady(p, m, dt); relPose(p, m); usePose(p, m);
+  FEIJAO_HD.anim(m, {speed:special ? 0 : sp, grounded:p.grounded || !!p.car || !!p.climb, gun:!!m.gun, aim:p.ads || clock - (p.lastShot ?? -9) < 1.2 ? 1 : 0, t:clock + p.i, shoot:p.shotFx, tx:p.tx, ty, tz:tz + (p.leanK || 0)*LEAN_A, lean:!special, face:false}, dt); p.shotFx = false; poseFx(p, m, dt); highReady(p, m, dt); relPose(p, m); usePose(p, m); nadePose(p, m, dt);
   if(p.pushAnim > 0) m.arms.forEach(a => a.position.z += 0.45);
   if(R1.phase === 'podium' && p.rank === 0) m.arms.forEach((a, k) => a.position.y += 0.35 + Math.sin(clock*8 + k*3)*0.12);
   if(p.climb){ const s = Math.sin(p.climbPh || 0); m.arms.forEach((a, k) => { a.position.y = 1.2 + (k ? -s : s)*0.16; a.position.z = 0.3; }); m.legs[0].position.y = 0.2 + Math.max(0, -s)*0.16; m.legs[1].position.y = 0.2 + Math.max(0, s)*0.16; m.legs[0].position.z = m.legs[1].position.z = 0.12; }
@@ -12019,6 +12052,8 @@ function vmBuild(p, it){ const k = it.k, att = it.att || {}, sg = sightOf(it), l
   else { const f = vmKid(g, 's_ferro'), sm = vmKid(g, 's_mira'), bb = new THREE.Box3().setFromObject(g); if(sm && k === 'sniper'){ eye = snIron(g, sm); } else eye = f ? f.position.clone().add(new V3(0, 0, -0.34)) : new V3(0, bb.max.y + 0.03, bb.min.z - 0.25); }
   g.rotation.y = Math.PI; g.position.set(eye.x, -eye.y, eye.z); root.add(g); root.userData.sn = false; VM.bl = true; VM.zm = Z; vmScene.add(root); return VM.g = root; }
 function vmStep(c, me, dt){ const sK = c.scK || 0, it = me.inv && me.inv[me.sel]; const fp = fpOn(me);
+  const nk = fp && c === cam1 && BIG && round === 20 && !twoP && !(me.useT > 0) && me.alive && !me.glide && !me.car && !me.climb && (nadeHeldK(me) || me.nadeT > 0) ? nadeHeldK(me) || VM.ng && VM.ng.userData.key && VM.ng.userData.key.split('{')[0] : null;
+  if(nk){ VM.on = true; VM.fp = true; VM.e = 0; VM.lens = null; VM.up = 0; if(VM.g) VM.g.visible = false; if(VM.ug) VM.ug.visible = false; VM.bob += dt*(6 + Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6)*5); vmNade(me, dt, nk); return; } if(VM.ng) VM.ng.visible = false;
   if(fp && me.useT > 0 && USE_A[me.useK] && c === cam1 && BIG && round === 20 && !twoP){ VM.on = true; VM.fp = true; VM.e = 0; VM.lens = null; VM.up = 0; if(VM.g) VM.g.visible = false; VM.bob += dt*(6 + Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6)*5); vmUse(me, dt); return; } if(VM.ug) VM.ug.visible = false; VM.on = !!(it && sK > 0.02 && me.alive && BIG && round === 20 && c === cam1 && !twoP && !(fp && (me.holster || me.climb || me.mantle || me.vault))); if(!VM.on){ VM.up = 0; if(VM.g) VM.g.visible = false; if(VM.ug) VM.ug.visible = false; return; }
   const g = vmBuild(me, it); VM.kick = Math.max(0, VM.kick - dt*9); VM.rel += ((me.relT > 0 ? 1 : 0) - VM.rel)*Math.min(1, dt*10);
   const mv = Math.min(1, Math.hypot(me.vel.x, me.vel.z)/6); VM.bob += dt*(6 + mv*5); VM.up = fp && !me.ads ? 0 : Math.min(1, (VM.up || 0) + dt*(WI(it).ads || 1)/0.16); const u = Math.min(VM.up, fp ? c.adsK || 0 : sK), e = u*u*(3 - 2*u), b = mv*(1 - e*0.7); // subida da arma até o olho
