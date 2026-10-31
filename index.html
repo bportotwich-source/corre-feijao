@@ -3678,7 +3678,7 @@ function buildLanes(fn, n, w){
   solids = solids.filter(b => b.mesh || b.max.x - b.min.x > 0.35 || !seams.some(s => Math.abs((b.min.x + b.max.x)/2 - s) < 0.4));
 }
 // sorteia a prova na hora, pelo número de vivos (só as que aguentam essa quantidade)
-const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27];
+const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30];
 const ROUND_OFF = [8, 16, 17, 19]; // provas tiradas do jogo (Frutas, Apagão, Cabo de Guerra, Domínio)
 // Sorteio (parte 6): cada partida tem um roteiro de tipos. Começa com corrida (todo mundo junto),
 // depois mistura sobrevivência, times e rodadas do Round 6 (Ponte de Vidro, Salas) sem repetir o tipo seguido.
@@ -4648,7 +4648,7 @@ const LOOKS = {
   manha:{top:0x58b8f5, hor:0xd8f4ff, sun:0xfffbe8, si:0.66, hs:0xf0fbff, hg:0x7fa0c0, hi:0.55, off:[-10, 22, 14], dir:[-0.35, 0.32, 0.88], wc:0xf2fbff},
   tarde:{top:0x4a8ee0, hor:0xffe2b8, sun:0xffdcaa, si:0.7, hs:0xfff2e2, hg:0x9a7a9a, hi:0.54, off:[20, 16, -12], dir:[0.6, 0.16, -0.78], wc:0xfff8f0},
   rosa:{top:0x7a6ae0, hor:0xffc4da, sun:0xffd0dc, si:0.64, hs:0xffeef6, hg:0x9a84cc, hi:0.58, off:[-18, 16, -12], dir:[-0.6, 0.14, -0.78], wc:0xfff4f8}};
-const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde'};
+const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde', 28:'rosa', 29:'tarde', 30:'dia'};
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
@@ -4727,7 +4727,7 @@ function buildField(color, stripe){
   [[-9, -16], [9, 16], [-16, 9], [16, -9], [0, -19.5], [0, 19.5]].forEach(([x, z]) => box(x - 1.2, x + 1.2, 0, 1.6, z - 1.2, z + 1.2, 0xff4fa3));
   robot = null;
 }
-const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde'};
+const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde', 28:'Dança das Cadeiras', 29:'O Chão é Lava', 30:'Estoura-Balão'};
 const RACE = r => r === 1 || r === 6 || r === 9 || r === 10 || r === 11 || r === 12 || r === 21;
 
 // Gangorras: corrida por gangorras que inclinam com o peso
@@ -5810,6 +5810,130 @@ function botHunt(p, dt, inp){ if(!pq.open) return inp; const sk = p.skill || 0.8
     if(p.pqAimT > 0.5/sk && p.pushCD <= 0 && p.pqTired <= 0){ const e = (1.25 - sk)*0.9 + d*0.03, lv = T.q ? T.q.vel : null, lead = d/PQ_V;
       p.pqAim = new V3(tx + (lv ? lv.x*lead : 0) + rand(-e, e), ty + rand(-e*0.5, e*0.5), tz + (lv ? lv.z*lead : 0) + rand(-e, e)); inp.push = true; p.pqAimT = 0.5/sk - rand(0.6, 1.4);
       if(T.o && Math.random() < 0.5) p.pqThink = Math.min(p.pqThink, 0.4); } }
+  return inp; }
+
+// ---------- Provas novas (lote 1, pedido do Bruno 31/10): Dança das Cadeiras (28), O Chão é Lava (29), Estoura-Balão (30) ----------
+// Metade passa nas três. Bots jogam todas.
+const L1_KEEP = n => Math.max(1, Math.ceil(n*0.5));
+function l1Reset(){ players.forEach(p => { if(p.blG){ p.m.g.remove(p.blG); p.blG = null; } p.blN = 0; p.dcSeat = null; }); }
+
+// ===== Dança das Cadeiras (28): a música toca e todo mundo dança; quando para, as cadeiras SOBEM do chão em lugares sorteados.
+// Sentou, tá salvo. Quem ficar em pé depois de 4 s sai. A cada rodada tem menos cadeiras, até sobrar a metade.
+let dc = null;
+function buildChairs(n){ clearWorld(); const W = [10, 15, 22][SZ];
+  box(-W, W, -1, 0, -W, W, 0xffd6ec); arenaWalls(W);
+  // pista de dança com quadrados que piscam
+  const tiles = [], S = 2, geo = new THREE.PlaneGeometry(S - 0.12, S - 0.12), cols = [0xff5ab4, 0x3ec7ff, 0xffd23f, 0x7ee05a, 0xb48cff];
+  for(let x = -W + S/2; x < W; x += S) for(let z = -W + S/2; z < W; z += S){ if((Math.round(x/S) + Math.round(z/S)) % 2) continue; const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:cols[tiles.length % 5], transparent:true, opacity:0.35})); m.rotation.x = -Math.PI/2; m.position.set(x, 0.02, z); world.add(m); tiles.push(m); }
+  // caixas de som nos cantos
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, b]) => { const x = a*(W - 1.2), z = b*(W - 1.2); box(x - 0.8, x + 0.8, 0, 2.6, z - 0.8, z + 0.8, 0x2b1846);
+    [0.8, 1.9].forEach(y => { const c = mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.08, 18), mat(0x6b4fd8), world); c.rotation.x = Math.PI/2; c.position.set(x - a*0.15, y, z - b*0.84); c.lookAt(0, y, 0); c.rotateX(Math.PI/2); }); });
+  dc = {W, tiles, chairs:[], phase:'music', t:0, dur:7, keep:L1_KEEP(n), mute:false, cycle:0}; }
+const DC_GEO = {};
+function dcChair(x, z, a){ const g = new THREE.Group(), G = DC_GEO.leg ? DC_GEO : Object.assign(DC_GEO, {leg:new THREE.BoxGeometry(0.08, 0.5, 0.08), seat:new THREE.BoxGeometry(0.7, 0.1, 0.7), back:new THREE.BoxGeometry(0.7, 0.6, 0.08), disk:new THREE.CircleGeometry(0.75, 20)});
+  const c = [0xffd23f, 0xff5ab4, 0x3ec7ff, 0x7ee05a][Math.floor(Math.random()*4)];
+  [[-0.28, -0.28], [0.28, -0.28], [-0.28, 0.28], [0.28, 0.28]].forEach(([lx, lz]) => { const l = mesh(G.leg, mat(0xf4efe6), g); l.position.set(lx, 0.25, lz); });
+  const s = mesh(G.seat, mat(c), g); s.position.y = 0.55; const b = mesh(G.back, mat(c), g); b.position.set(0, 0.88, -0.31);
+  const d = new THREE.Mesh(G.disk, new THREE.MeshBasicMaterial({color:0x2cc597, transparent:true, opacity:0.55, depthWrite:false})); d.rotation.x = -Math.PI/2; d.position.y = 0.03; g.add(d);
+  g.position.set(x, -1.2, z); g.rotation.y = a; world.add(g); return {g, d, x, z, a, p:null}; }
+// cadeiras sobem em lugares sorteados (anéis em volta do meio, com um giro aleatório)
+function dcLayout(k){ dc.chairs.forEach(c => world.remove(c.g)); dc.chairs = []; const W = dc.W, rings = [];
+  let left = k, R = Math.min(W - 2.2, Math.max(3, k*1.75/(2*Math.PI))); while(left > 0 && R >= 2.2){ const cap = Math.max(1, Math.floor(2*Math.PI*R/1.75)); rings.push([R, Math.min(cap, left)]); left -= Math.min(cap, left); R -= 2.6; }
+  while(left > 0){ rings.push([rand(2, W - 2), 1]); left--; }
+  rings.forEach(([R, m]) => { const a0 = rand(0, Math.PI*2); for(let i = 0; i < m; i++){ const a = a0 + i/m*Math.PI*2, x = Math.sin(a)*R, z = Math.cos(a)*R; dc.chairs.push(dcChair(x, z, a)); } }); }
+function dcSpawn(alive){ const c = Math.ceil(Math.sqrt(alive.length)), st = Math.min(1.6, (2*dc.W - 3)/c); alive.forEach((p, k) => { p.pos.set(-(c - 1)*st/2 + (k % c)*st + rand(-0.2, 0.2), 0, -(c - 1)*st/2 + Math.floor(k/c)*st); p.face = rand(0, 6.3); p.dcSeat = null; p.dcT = null; p.dcGo = null; }); }
+function dcSit(p, c){ c.p = p; p.dcSeat = c; p.vel.set(0, 0, 0); c.d.material.color.setHex(0xff5ab4); if(near(p, 30)) puff(c.x, 0.8, c.z, 6, 0xffd23f, 0.12, 2); sfxNear(p, 'ding', 20);
+  if(!p.isBot) banner(tag(p) + 'Sentou!', 'Tá salvo nessa rodada', 1000); }
+function dcPush(p){ p.pushCD = 0.9; p.pushAnim = 0.25; if(p.dcSeat) return; const fx = Math.sin(p.face), fz = Math.cos(p.face); let any = false;
+  for(const q of players){ if(q === p || !q.alive || q.dying > 0 || q.dcSeat) continue; const dx = q.pos.x - p.pos.x, dz = q.pos.z - p.pos.z, d = Math.hypot(dx, dz);
+    if(d < 1.6 && (dx*fx + dz*fz)/Math.max(d, 1e-3) > 0.35){ q.hitCD = 0; knock(q, fx*9, 4, fz*9, 0.45, 'push'); any = true; } }
+  sfxNear(p, any ? 'push' : 'whoosh'); }
+function updateChairs(dt){ if(!dc) return;
+  dc.tiles.forEach((m, i) => m.material.opacity = dc.mute ? 0.12 : 0.18 + 0.3*((Math.floor(clock*4) + i) % 3 === 0 ? 1 : 0));
+  for(const c of dc.chairs){ const up = dc.phase === 'stop' || dc.phase === 'judge'; c.g.position.y += ((up ? 0 : -1.2) - c.g.position.y)*Math.min(1, dt*14); }
+  for(const p of players){ const c = p.dcSeat; if(!c || !p.alive) continue; p.pos.set(c.x, 0.35, c.z); p.vel.set(0, 0, 0); p.face = c.a + Math.PI; }
+  if(R1.phase !== 'play') return; dc.t += dt;
+  if(dc.phase === 'music'){ if(dc.t >= dc.dur){ const alive = players.filter(p => p.alive).length, k = Math.max(dc.keep, alive - Math.max(1, Math.ceil(alive*0.25)));
+      dc.phase = 'stop'; dc.t = 0; dc.mute = true; dcLayout(k); sfx('red'); banner('PAROU!', `Corra pra uma das ${k} cadeiras!`, 1200);
+      players.forEach(p => { p.dcGo = null; p.dcT = rand(0.15, 0.6)/(p.skill || 0.8); }); } }
+  else if(dc.phase === 'stop'){
+    for(const c of dc.chairs){ if(c.p || c.g.position.y < -0.4) continue; let best = null, bd = 0.95; for(const p of players){ if(!p.alive || p.dcSeat || p.dying > 0) continue; const d = Math.hypot(p.pos.x - c.x, p.pos.z - c.z); if(d < bd && p.pos.y < 1.4){ bd = d; best = p; } } if(best) dcSit(best, c); }
+    const free = dc.chairs.filter(c => !c.p).length;
+    if(!free || dc.t > 4.5){ dc.phase = 'judge'; dc.t = 0; let n = 0; players.forEach(p => { if(p.alive && !p.dcSeat){ eliminate(p, 'Ficou sem cadeira'); n++; } }); if(n && humans().some(h => h.alive)) say(`<b>${n}</b> ficaram sem cadeira`, true); } }
+  else if(dc.phase === 'judge'){ if(dc.t > 1.6){ const alive = players.filter(p => p.alive).length;
+      if(alive <= dc.keep){ endRound(); return; }
+      dc.phase = 'music'; dc.t = 0; dc.dur = rand(5, 9); dc.mute = false; dc.cycle++; players.forEach(p => { if(p.dcSeat){ p.dcSeat = null; p.pos.y = 0.6; } }); dc.chairs.forEach(c => c.p = null);
+      banner('Música!', 'Dance e fique esperto: quando parar, as cadeiras aparecem', 1300); sfx('go'); } } }
+const dcInfo = p => !dc ? '' : dc.phase === 'music' ? `Dance! Quando a música parar, corra pra uma cadeira · Vivos ${players.filter(q => q.alive).length} · passam ${dc.keep}` : dc.phase === 'stop' ? `SENTE! Cadeiras livres ${dc.chairs.filter(c => !c.p).length}` : p && p.dcSeat ? 'Salvo!' : 'Contando...';
+function botChairs(p, dt, inp){ if(!dc || p.dcSeat) return inp;
+  if(dc.phase === 'music'){ // dança: anda em volta do meio e pula de vez em quando
+    const a = Math.atan2(p.pos.x, p.pos.z) + 0.6, R = clamp(Math.hypot(p.pos.x, p.pos.z), 3, dc.W - 2); pqGo(p, inp, Math.sin(a)*R, Math.cos(a)*R, 0.55); if(p.grounded && Math.random() < dt*0.6) inp.jump = true; return inp; }
+  if(dc.phase !== 'stop') return inp; p.dcT -= dt; if(p.dcT > 0) return inp;
+  if(!p.dcGo || p.dcGo.p){ let best = null, bs = 1e9; for(const c of dc.chairs){ if(c.p) continue; const d = Math.hypot(c.x - p.pos.x, c.z - p.pos.z); let rv = 0; for(const q of players) if(q !== p && q.alive && !q.dcSeat && q.dcGo === c && Math.hypot(c.x - q.pos.x, c.z - q.pos.z) < d) rv++; const s = d + rv*3 + rand(0, 1.5); if(s < bs){ bs = s; best = c; } } p.dcGo = best; }
+  if(p.dcGo){ pqGo(p, inp, p.dcGo.x, p.dcGo.z, 1); // alguém na frente disputando: empurra
+    const e = nearest(p, q => !q.dcSeat && q.dcGo === p.dcGo); if(e && e.d < 1.4 && p.pushCD <= 0 && Math.random() < dt*4*(p.skill || 0.8)){ p.face = Math.atan2(e.q.pos.x - p.pos.x, e.q.pos.z - p.pos.z); inp.push = true; } }
+  return inp; }
+
+// ===== O Chão é Lava (29): morro de blocos de alturas diferentes; a lava sobe e quem encostar sai. Suba pulando de bloco em bloco.
+let lv = null;
+function buildLava(n){ clearWorld(); const T = 2.6, N = [6, 8, 11][SZ], H = [8, 10, 12][SZ], W = N*T, grid = [];
+  const cols = [0x8a6fc1, 0x9b84d6, 0xb39cf0, 0xc9b6ff, 0xffd23f];
+  for(let i = 0; i < 2*N; i++){ grid.push([]); for(let j = 0; j < 2*N; j++){ const x = -W + (i + 0.5)*T, z = -W + (j + 0.5)*T, r = Math.min(1, Math.max(Math.abs(x), Math.abs(z))/W*0.6 + Math.hypot(x, z)/W*0.5);
+      let h = (1 - r)*H + rand(-0.9, 0.9); h = clamp(h, 0.8, H); if(Math.random() < 0.08 && h > 2) h -= 1.6; h = Math.round(h*5)/5; grid[i].push(h);
+      box(x - T/2, x + T/2, -8, h, z - T/2, z + T/2, cols[Math.min(4, Math.floor(h/H*4.99))]); } }
+  // pilares finos pra pular (atalhos arriscados)
+  for(let k = 0; k < [6, 10, 16][SZ]; k++){ const i = Math.floor(rand(1, 2*N - 1)), j = Math.floor(rand(1, 2*N - 1)), x = -W + (i + 0.5)*T, z = -W + (j + 0.5)*T, h = grid[i][j] + 1.6; box(x - 0.5, x + 0.5, grid[i][j], h, z - 0.5, z + 0.5, 0xffb23f); }
+  const lava = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshBasicMaterial({color:0xff5a1a})); lava.rotation.x = -Math.PI/2; lava.position.y = 0; world.add(lava);
+  const glowL = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshBasicMaterial({color:0xffd23f, transparent:true, opacity:0.35, depthWrite:false})); glowL.rotation.x = -Math.PI/2; world.add(glowL);
+  lv = {T, N, H, W, grid, lava, glowL, y:0, t:0, keep:L1_KEEP(n), rate:(H - 1.2)/68, bubbles:[]}; }
+const lvH = (x, z) => { if(!lv) return 0; const i = Math.floor((x + lv.W)/lv.T), j = Math.floor((z + lv.W)/lv.T); return lv.grid[i] && lv.grid[i][j] !== undefined ? lv.grid[i][j] : -9; };
+function lvSpawn(alive){ const {W, T} = lv, per = Math.max(8, Math.ceil(alive.length/4)); alive.forEach((p, k) => { const side = k % 4, f = (Math.floor(k/4) + 0.5)/Math.ceil(alive.length/4)*2 - 1, x = [f*(W - T/2), W - T/2, -f*(W - T/2), -W + T/2][side], z = [-W + T/2, f*(W - T/2), W - T/2, -f*(W - T/2)][side];
+  p.pos.set(x, lvH(x, z) + 0.3, z); p.face = Math.atan2(-x, -z); p.lvT = null; }); }
+function updateLava(dt){ if(!lv) return; lv.lava.material.color.setHSL(0.04 + Math.sin(clock*2)*0.012, 1, 0.52); lv.glowL.position.y = lv.y + 0.03; lv.glowL.material.opacity = 0.2 + 0.15*Math.sin(clock*3); lv.lava.position.y = lv.y;
+  if(Math.random() < dt*6){ const c = camPos; puff(c.x + rand(-14, 14), lv.y + 0.1, c.z + rand(-14, 14), 2, 0xffb23f, 0.16, 1.5); }
+  if(R1.phase !== 'play') return; lv.t += dt; if(lv.t > 5) lv.y = Math.min(lv.H - 0.6, lv.y + lv.rate*dt*(1 + Math.max(0, lv.t - 60)/60));
+  for(const p of players){ if(!p.alive || p.dying > 0) continue; if(p.pos.y < lv.y + 0.05){ if(near(p, 40)) puff(p.pos.x, lv.y + 0.4, p.pos.z, 14, 0xff8a00, 0.2, 4); sfxNear(p, 'zap', 40); eliminate(p, 'Encostou na lava'); } }
+  if(players.filter(p => p.alive).length <= lv.keep) endRound(); }
+const lvInfo = () => !lv ? '' : `A lava sobe! Fique no alto · Vivos ${players.filter(p => p.alive).length} · passam ${lv.keep}`;
+function botLava(p, dt, inp){ if(!lv) return inp; const sk = p.skill || 0.8, feet = p.grounded ? p.pos.y : lvH(p.pos.x, p.pos.z);
+  // escolhe um bloco por perto mais alto que dá pra alcançar pulando
+  if(!p.lvT || Math.random() < dt*0.5 || Math.hypot(p.lvT[0] - p.pos.x, p.lvT[1] - p.pos.z) < 0.7){ let best = null, bs = -1e9;
+    for(let k = 0; k < 12; k++){ const a = rand(0, 6.3), r = rand(1.5, 4.5), x = p.pos.x + Math.sin(a)*r, z = p.pos.z + Math.cos(a)*r, h = lvH(x, z); if(h < -1 || h > feet + 1.8) continue; const s = h + rand(0, 0.8)*(1.2 - sk) - Math.hypot(x, z)*0.05 - (h < lv.y + 1.2 ? 5 : 0); if(s > bs){ bs = s; best = [x, z]; } }
+    p.lvT = best || [p.pos.x*0.9, p.pos.z*0.9]; }
+  const d = pqGo(p, inp, p.lvT[0], p.lvT[1], 1); const l = Math.hypot(inp.mx, inp.mz) || 1, ax = p.pos.x + inp.mx/l*0.9, az = p.pos.z + inp.mz/l*0.9;
+  if(p.grounded && lvH(ax, az) > p.pos.y + 0.25 && Math.random() < dt*12*sk) inp.jump = true;
+  return inp; }
+
+// ===== Estoura-Balão (30): todo mundo tem 3 balões nas costas. F perto de alguém estoura um. Sem balão, sai. Até sobrar a metade.
+let bl = null; const BL_GEO = {};
+function buildBalloons(n){ clearWorld(); const W = [10, 15, 21][SZ]; box(-W, W, -1, 0, -W, W, 0xbfe8ff); arenaWalls(W);
+  // caixotes e plataformas com rampa pra fugir
+  for(let k = 0; k < [6, 10, 16][SZ]; k++){ const x = rand(-W + 3, W - 3), z = rand(-W + 3, W - 3); if(Math.hypot(x, z) < 3) continue; const w = rand(0.9, 1.6), h = k % 3 === 0 ? 1.6 : 1;
+    box(x - w, x + w, 0, h, z - w, z + w, [0xffd23f, 0xff8ac4, 0x9be15d][k % 3]); if(k % 3 === 0) ramp(x + w, x + w + 2.4, z - 0.8, z + 0.8, h, 0, false, 0xffb23f); }
+  bl = {W, keep:L1_KEEP(n), pops:0}; }
+function blGive(p){ if(p.blG) p.m.g.remove(p.blG); const G = BL_GEO.b ? BL_GEO : Object.assign(BL_GEO, {b:new THREE.SphereGeometry(0.25, 12, 10), s:new THREE.CylinderGeometry(0.01, 0.01, 0.7, 3)}), g = new THREE.Group(), col = COLORS[p.i % COLORS.length];
+  [[-0.32, 2.35, -0.55], [0, 2.6, -0.62], [0.32, 2.35, -0.55]].forEach(([x, y, z], k) => { const b = new THREE.Group(), s = mesh(G.b, mat([0xff4fa3, 0xffd23f, 0x3ec7ff][k]), b); s.scale.y = 1.18; s.castShadow = false; const st = mesh(G.s, mat(0xffffff), b); st.position.y = -0.62; st.castShadow = false; b.position.set(x, y, z); g.add(b); });
+  p.m.g.add(g); p.blG = g; p.blN = 3; p.blImm = 0; }
+function blPop(q, by){ if(q.blN <= 0) return; q.blN--; q.blImm = 2; const b = q.blG && q.blG.children[q.blN]; if(b){ b.visible = false; const w = b.getWorldPosition(new V3()); if(near(q, 40)) puff(w.x, w.y, w.z, 10, [0xff4fa3, 0xffd23f, 0x3ec7ff][q.blN], 0.15, 4); }
+  sfxNear(q, 'zap', 30); bl.pops++; if(!by.isBot){ bump('pops'); banner(tag(by) + 'Pou!', `${q.isBot ? q.name : 'Seu amigo'} tem ${q.blN} balã${q.blN === 1 ? 'o' : 'os'}`, 700); } if(!q.isBot && q.blN > 0) banner(tag(q) + 'Estouraram um balão!', `Sobram ${q.blN}`, 900);
+  if(q.blN <= 0) eliminate(q, `${by.isBot ? by.name : 'Alguém'} estourou seu último balão`); }
+function blPush(p){ p.pushCD = 1.3; p.pushAnim = 0.25; if(R1.phase !== 'play') return; const fx = Math.sin(p.face), fz = Math.cos(p.face); let best = null, bd = 1.8;
+  for(const q of players){ if(q === p || !q.alive || q.dying > 0 || q.blN <= 0 || q.blImm > 0) continue; const dx = q.pos.x - p.pos.x, dz = q.pos.z - p.pos.z, d = Math.hypot(dx, dz); if(d < bd && Math.abs(q.pos.y - p.pos.y) < 1.4 && (dx*fx + dz*fz)/Math.max(d, 1e-3) > 0.1 && (-dx*Math.sin(q.face) - dz*Math.cos(q.face))/Math.max(d, 1e-3) < 0.3){ bd = d; best = q; } }
+  if(best){ best.hitCD = 0; knock(best, fx*6, 3, fz*6, 0.3, null); blPop(best, p); } else { sfxNear(p, 'whoosh'); if(!p.isBot && players.some(q => q !== p && q.alive && q.blN > 0 && Math.hypot(q.pos.x - p.pos.x, q.pos.z - p.pos.z) < 1.8)) banner(tag(p) + 'Pelas costas!', 'Os balões ficam atrás: chegue por trás ou pelo lado', 900); } }
+function updateBalloons(dt){ if(!bl) return; for(const p of players){ if(p.blImm > 0) p.blImm -= dt; if(p.blG){ p.blG.visible = p.alive || p.dying > 0; p.blG.children.forEach((b, k) => { b.position.y = (k === 1 ? 2.6 : 2.35) + Math.sin(clock*3 + k + p.i)*0.06; }); } }
+  if(R1.phase === 'play' && players.filter(p => p.alive).length <= bl.keep) endRound(); }
+const blInfo = p => !bl ? '' : `${p && p.alive ? `Seus balões ${'🎈'.repeat(Math.max(0, p.blN))} · ` : ''}F por trás de alguém estoura um · Vivos ${players.filter(q => q.alive).length} · passam ${bl.keep}`;
+function botBalloons(p, dt, inp){ if(!bl) return inp; const sk = p.skill || 0.8;
+  if(!p.blT || !p.blT.alive || p.blT.blN <= 0 || Math.random() < dt*0.4){ let best = null, bs = 1e9; for(const q of players){ if(q === p || !q.alive || q.blN <= 0) continue; const s = Math.hypot(q.pos.x - p.pos.x, q.pos.z - p.pos.z) + rand(0, 6) - (3 - q.blN)*1.5; if(s < bs){ bs = s; best = q; } } p.blT = best; }
+  const T = p.blT; if(!T) return inp;
+  // chega por trás (onde estão os balões) e foge de quem vem de frente
+  const bx = T.pos.x - Math.sin(T.face)*0.9, bz = T.pos.z - Math.cos(T.face)*0.9; pqGo(p, inp, bx, bz, 1);
+  const thr = nearest(p, q => q.blN > 0 && Math.hypot(q.vel.x, q.vel.z) > 2 && ((p.pos.x - q.pos.x)*Math.sin(q.face) + (p.pos.z - q.pos.z)*Math.cos(q.face)) > 0);
+  if(thr && thr.d < 2.6 && thr.q !== T && Math.random() < 0.6*sk){ const ax = p.pos.x - thr.q.pos.x, az = p.pos.z - thr.q.pos.z, l = Math.hypot(ax, az) || 1; inp.mx = inp.mx*0.4 + ax/l*0.6; inp.mz = inp.mz*0.4 + az/l*0.6; if(p.grounded && Math.random() < dt*2) inp.jump = true; }
+  const d = Math.hypot(T.pos.x - p.pos.x, T.pos.z - p.pos.z), back = ((p.pos.x - T.pos.x)*Math.sin(T.face) + (p.pos.z - T.pos.z)*Math.cos(T.face))/Math.max(d, 1e-3) < 0.3;
+  // de frente pro atacante: vira pra encarar quem chega (protege os balões)
+  const att = nearest(p, q => q.blN > 0 && q.blT === p); if(att && att.d < 3 && Math.random() < 0.5*sk){ p.face = Math.atan2(att.q.pos.x - p.pos.x, att.q.pos.z - p.pos.z); }
+  if(d < 1.6 && back && p.pushCD <= 0 && T.blImm <= 0 && Math.random() < dt*(0.5 + sk*0.7)){ p.face = Math.atan2(T.pos.x - p.pos.x, T.pos.z - p.pos.z); inp.push = true; }
   return inp; }
 
 // Guerra de Tomate: battle royale. Cada tomate tira vida, a zona fecha e quem zerar a vida sai
@@ -10082,7 +10206,7 @@ let earn = null;
 const newEarn = () => ({coins:0, xp:0, done:false, res:null});
 function reward(c, x){ if(!earn || earn.done) return; earn.coins += Math.round(c*[0.7, 1, 1.4][DIFF]); earn.xp += x; }
 function rec(k, t){ const old = SAVE.st[k]; if(!old || t < old){ SAVE.st[k] = Math.round(t*10)/10; if(old) say(`<b>Novo recorde!</b> ${t.toFixed(1)}s`, true); } }
-const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27];
+const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30];
 const ACH = [
   ['a1', 'Primeira coroa', 'Vença uma partida completa', () => st('crowns') >= 1, 50],
   ['a2', 'Tricampeão', 'Ganhe 3 coroas', () => st('crowns') >= 3, 150],
@@ -10402,7 +10526,7 @@ function stepPlayer(p, dt, inp){
   if(control && inp.dive){ const fx = Math.sin(p.face), fz = Math.cos(p.face); p.vel.x = fx*12; p.vel.z = fz*12; p.vel.y = p.grounded ? 2 : Math.max(p.vel.y, 1); p.dive = 0.6; p.grounded = false; sfxNear(p, 'dive'); if(!p.isBot) bump('dives'); }
   if(control && inp.push && p.pushCD <= 0) doPush(p);
   if(control && inp.item && p.power && R1.phase === 'play') usePower(p);
-  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && round !== 27) doGrab(p);
+  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && ![27, 28, 29, 30].includes(round)) doGrab(p);
   if(p.dive > 0 && (p.grounded || p.dive > 0.3)) p.dive -= dt;
   if(p.grounded && p.ground && p.ground.kind === 'seesaw') p.pos.x -= Math.sin(p.ground.ang)*11*dt; // escorrega pro lado mais baixo
   p.vel.y += GRAV*dt;
@@ -10421,6 +10545,8 @@ function doPush(p){
   if(round === 25 && qz){ qzPush(p); return; }
   if(round === 26 && pb && pbPush(p)) return;
   if(round === 27 && pq){ pqPush(p); return; }
+  if(round === 28 && dc){ dcPush(p); return; }
+  if(round === 30 && bl){ blPush(p); return; }
   p.pushCD = 0.9; p.pushAnim = 0.25; const fx = Math.sin(p.face), fz = Math.cos(p.face);
   let any = false;
   for(const q of players){ if(q === p || !q.alive || q.dying > 0) continue;
@@ -10439,7 +10565,7 @@ function separate(){
 }
 
 // ---------- Bots ----------
-function botInput(p, dt){ const inp = botInput0(p, dt); if(round !== 27) botPower(p, dt, inp); return inp; }
+function botInput(p, dt){ const inp = botInput0(p, dt); if(![27, 28, 29, 30].includes(round)) botPower(p, dt, inp); return inp; }
 function botInput0(p, dt){
   const inp = {mx:0, mz:0, jump:false, dive:false, push:false};
   if(R1.phase !== 'play' || p.done || !p.alive) return inp;
@@ -10459,6 +10585,9 @@ function botInput0(p, dt){
   if(round === 25) return botQueimada(p, dt, inp);
   if(round === 26) return botFlags(p, dt, inp);
   if(round === 27) return botPique(p, dt, inp);
+  if(round === 28) return botChairs(p, dt, inp);
+  if(round === 29) return botLava(p, dt, inp);
+  if(round === 30) return botBalloons(p, dt, inp);
   if(round === 20) return botShoot(p, dt, inp);
   if(round === 8) return botFruit(p, dt, inp);
   if(round === 4 || round === 5) return botTag(p, dt, inp);
@@ -10650,7 +10779,7 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   if(PTS){ const back = players.filter(p => !p.alive).length; players.forEach(p => { p.alive = true; p.elT = 0; }); if(back && stage) say(`<b>${back}</b> feijões voltaram pra essa prova`, true); }
   const alive = players.filter(p => p.alive); SZ = szFor(alive.length); LX = [0]; LW = 14; RBIG = round === 1 && (BIG || SZ === 2); setTiles([[0, 0]]); TUPS = TAG_UPS; SPOTF = null; setNests(12.5);
   if([7, 17, 18, 19, 25, 26, 27].includes(round) && alive.length < 4){ round = 2; plan[stage] = 2; }
-  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; pqReset(); pq = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
+  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; pqReset(); pq = null; l1Reset(); dc = null; lv = null; bl = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
   alive.forEach(p => { p.item = false; p.passCD = 0; p.done = false; p.place = 0; p.vel.set(0,0,0); p.dive = 0; p.stun = 0; p.dying = 0; p.m.g.visible = true; p.m.g.scale.setScalar(1); p.redPos = null; });
   players.filter(p => !p.alive).forEach(p => p.m.g.visible = false);
   rev = null; players.forEach(p => { p.rev = false; p.revWait = 0; p.revUsed = false; p.card = false; p.cardUsed = false; p.stT = 0; }); R1.finished = 0; R1.t = 0; curLook = lookFor(round); setDark(false); mingle = null; tug = null; paint = null; zones = []; shots = []; hearts = []; hpBars = []; brZone = null; zoneP = null; plane = null; loot = []; drops = []; cars = []; players.forEach(p => p.car = null);
@@ -10680,6 +10809,15 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   } else if(round === 22){
     setupTeams(alive, 2); buildFut(alive.length); R1.timeLeft = fut.A.t; futSpawn(alive);
     banner('Futebol Arena', `${youTeamTxt()} Chute com F, mergulhe na bola pra bater forte e pule pra cabecear. A bola sobe nas paredes curvas! Pise nos círculos laranja pra correr mais. O time com menos gols sai!`, 3800);
+  } else if(round === 28){
+    buildChairs(alive.length); R1.timeLeft = 999; dcSpawn(alive);
+    banner('Dança das Cadeiras', `Dance enquanto a música toca. Quando parar, as cadeiras aparecem: sente rápido! Passam ${dc.keep}.`, 3600);
+  } else if(round === 29){
+    buildLava(alive.length); R1.timeLeft = 130; lvSpawn(alive);
+    banner('O Chão é Lava', `A lava vai subir! Pule de bloco em bloco até o alto. Passam ${lv.keep}.`, 3600);
+  } else if(round === 30){
+    buildBalloons(alive.length); R1.timeLeft = 120; alive.forEach((p, k) => { const a = k/alive.length*Math.PI*2, r = bl.W*0.75; p.pos.set(Math.sin(a)*r, 0, Math.cos(a)*r); p.face = a + Math.PI; blGive(p); });
+    banner('Estoura-Balão', `Você tem 3 balões nas costas. Chegue por trás de alguém e aperte F pra estourar um. Sem balão, sai! Passam ${bl.keep}.`, 3600);
   } else if(round === 27){
     buildPique(alive.length); pqSetup(alive); R1.timeLeft = pq.hideT + PQ_PLAY[SZ];
     const hs = humans().filter(h => h.alive), hh = hs.filter(h => h.pqHunt);
@@ -10849,6 +10987,9 @@ function showResult(won){
     : round === 13 ? 'O vidro quebrou ou o tempo acabou na Ponte de Vidro. Dica: espere alguém testar a fileira da frente. Quando um vidro quebra, o outro é seguro.'
     : round === 14 ? 'Você ficou fora de uma sala com o número certo nas Salas. Dica: corra pra uma sala mais vazia assim que o número aparecer, e empurre quem sobrar (F).'
     : round === 15 ? 'O chão sumiu embaixo de você nos Blocos Caindo. Dica: não fique parado, fuja dos blocos piscando em vermelho e guarde um cantinho seguro.'
+    : round === 28 ? 'Ficou sem cadeira. Dica: dance perto do meio, onde caem mais cadeiras, e empurre (F) quem chegar junto.'
+    : round === 29 ? 'A lava te pegou. Dica: suba logo no começo, sempre pro meio do morro, e pule pros blocos mais altos.'
+    : round === 30 ? 'Estouraram seus balões. Dica: não deixe ninguém chegar por trás e ataque quem está distraído.'
     : round === 27 ? 'Acharam você no Pique-Esconde. Dica: vire um objeto que tem outro igual do lado, fique parado (objeto que anda chama atenção) e fuja quando a tinta cair perto.'
     : round === 26 ? 'Seu time trouxe menos bandeiras. Dica: entre no campo do outro pelos cantos, use os caixotes pra se esconder, e no seu lado aperte F perto de quem invadir.'
     : round === 25 ? 'Seu time perdeu a Queimada. Dica: fique no fundo da quadra quando estiver sem bola, aperte F quando a bola vier pra agarrar, e jogue de perto da linha.'
@@ -11060,7 +11201,7 @@ const SONGS = {
   menu:{bpm:96, bass:[131,0,0,0,110,0,0,0,87,0,0,0,98,0,0,0], lead:[659,0,784,0,659,0,523,0,587,0,523,0,494,0,392,0], wave:'triangle', kick:[0,10], snare:[], soft:true},
   battle:{bpm:124, bass:[110,0,110,131,0,110,0,98,87,0,87,104,0,87,98,0], lead:[440,0,523,587,0,523,440,0,349,0,440,523,0,659,587,0], wave:'sawtooth', kick:[0,3,8,10], snare:[4,12], minor:true},
 };
-const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky'};
+const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky', 28:'bounce', 29:'epic', 30:'hyper'};
 let mStep = 0, mNext = 0, mTimer = null;
 const mKick = (w, d) => { tone(150, 0.16, 'sine', 0.5, 0.3, w, d); noise(0.02, 0.08, 3000, 0, 'highpass', 1, w, d); };
 const mSnare = (w, d) => { noise(0.14, 0.22, 1900, 1200, 'bandpass', 0.8, w, d); tone(190, 0.08, 'triangle', 0.12, 0.7, w, d); };
@@ -11071,7 +11212,7 @@ function playMusic(on){
   if(!ac) return; clearInterval(mTimer); if(!on || !musicOn) return;
   mNext = ac.currentTime + 0.1;
   mTimer = setInterval(() => {
-    while(mNext < ac.currentTime + 0.2){ const s = mStep % 16, spd = round === 2 && light === 'red' && R1.phase === 'play' ? 0 : 1, w = mNext - ac.currentTime, M = musicGain;
+    while(mNext < ac.currentTime + 0.2){ const s = mStep % 16, spd = (round === 2 && light === 'red' || round === 28 && dc && dc.mute) && R1.phase === 'play' ? 0 : 1, w = mNext - ac.currentTime, M = musicGain;
     const key = R1.phase === 'menu' ? 'menu' : R1.phase === 'podium' ? 'sunny' : BIG && round === 20 ? 'battle' : SONG_OF[round] || 'bounce', S = SONGS[key], lv = key === 'battle' ? brLevel() : 3, step = 60/(S.bpm + (key === 'battle' ? lv*6 : 0))/2;
     if(spd){
       if(S.bass[s]) tone(S.bass[s], step*0.9, 'triangle', 0.24, 0, w, M, 0.008);
@@ -11210,6 +11351,9 @@ function updateHUD(){
   else if(round === 25){ $('hInfo').textContent = qzInfo(you()); }
   else if(round === 26){ $('hInfo').textContent = pbInfo(you()); }
   else if(round === 27){ $('hInfo').textContent = pqInfo(you()); }
+  else if(round === 28){ $('hInfo').textContent = dcInfo(you()); }
+  else if(round === 29){ $('hInfo').textContent = lvInfo(); }
+  else if(round === 30){ $('hInfo').textContent = blInfo(you()); }
   else if(round === 13){ $('hInfo').textContent = `Atravessaram ${players.filter(p => p.alive && p.done).length} · Vivos ${alive}`; }
   else if(round === 14 && mingle){ $('hInfo').textContent = mingle.state === 'run' ? `Grupos de ${mingle.n}! · Vivos ${alive}` : `Vivos ${alive} · Rodada ${Math.min(mingle.cycle + 1, mingle.cycles)} de ${mingle.cycles}`; }
   else if(round === 5){ $('hInfo').textContent = `Com rabo ${players.filter(p => p.alive && p.item).length}/${alive}` + (twoP ? humans().filter(h => h.alive).map(h => ` · ${h.name} ${h.item ? 'tem' : 'NÃO tem'}`).join('') : you().alive ? (you().item ? ' · você tem' : ' · você NÃO tem') : ''); }
@@ -11243,7 +11387,7 @@ function tick(dt){
   R1.t += dt;
   if(R1.phase === 'intro' && R1.t > 2.8){ R1.phase = 'count'; R1.t = 0; countN = 4; }
   if(R1.phase === 'count'){ const n = 3 - Math.floor(R1.t); if(n !== countN && n >= 1){ countN = n; banner(String(n), '', 800); sfx('beep'); } if(R1.t >= 3){ R1.phase = 'play'; R1.t = 0; banner('Vai!', '', 700); sfx('go'); if(round === 16){ setDark(true); banner('Apagão!', 'Empurre e não caia', 1200); } if(round === 2){ lightT = 0; light = 'green'; } } }
-  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 27) updatePique(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
+  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 27) updatePique(dt); if(round === 28) updateChairs(dt); if(round === 29) updateLava(dt); if(round === 30) updateBalloons(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
   if(R1.phase === 'play'){
     R1.timeLeft -= dt; if(round === 2) updateLight(dt);
     if(round === 4){
@@ -11281,12 +11425,12 @@ function tick(dt){
       if(p.grounded && p.ground && p.ground.kind !== 'mover' && p.ground.kind !== 'lift'){ if(LX.length > 1) p.lx = laneAt(p.pos.x); for(const [th, rz, rx, ry] of course.cps){ if(p.pos.z > th){ if(rz > p.cp.z){ p.cp.set(0, ry || 0, rz); p.cpX = rx; } break; } } }
       if(p.pos.y < -5){ if(!p.isBot || Math.random() < (players.length > 16 ? 0.05 : 0.3)) say(`${nm(p)} caiu na água!`, !p.isBot); DBG.falls[Math.round(p.pos.z/4)*4] = (DBG.falls[Math.round(p.pos.z/4)*4]||0) + 1; { const g = round === 6 ? solidAt(p.lx || 0, p.cp.z + 0.6, 0, 2) : null; p.pos.set((g && g.kind === 'seesaw' ? g.cx : RBIG ? RTX[raceTrack(p)] : (p.lx || 0)) + rand(-p.cpX, p.cpX), p.cp.y + 0.5, p.cp.z + rand(-0.5, 0.5)); } p.vel.set(0, 0, 0); p.stun = 0; p.dive = 0; if(p.isBot && Math.random() < 0.4) p.route = null; if(!p.isBot){ sfx('dive'); bump('falls'); } }
       if(!p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) { finishPlayer(p); if(R1.finished >= R1.quota) endRound(); }
-    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27].includes(round)){
+    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30].includes(round)){
       if(p.pos.y < -4){ p.alive = false; p.elT = R1.t; elimOrder.push(p); say(`${nm(p)} caiu e está fora!`, true); p.m.g.visible = false; sfxNear(p, 'zap', 40);
         if(!p.isBot){ bump('falls'); banner(tag(p) + 'Caiu!', `${twoP ? p.name : 'Você'} foi parar na água`, 2000); sfx('lose'); if(!anyHumanAlive()) setTimeout(() => showResult(false), 2200); } }
       if(round === 13 && p.alive && !p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) finishPlayer(p);
       if(R1.phase === 'play' && round === 13 && players.every(q => !q.alive || q.done)) endRound();
-      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22, 27].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
+      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22, 27, 28, 29, 30].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
     } else {
       if(!p.done && p.pos.z > 130){ p.done = true; if(!p.isBot){ banner(tag(p) + 'Passou!', 'Agora é só esperar', 1600); sfx('win'); reward(8, 20); rec('t2', R1.t); } }
       if(R1.phase === 'play' && players.every(q => !q.alive || q.done)) endRound();
@@ -11515,14 +11659,17 @@ const MAPS = [
   [24, 'Bombas caem do céu: fuja dos anéis vermelhos. A explosão arremessa e racha os pisos', '#ff6f3c'],
   [25, 'Em times: queimada. Pegue a bola e queime os adversários. Do cemitério dá pra voltar', '#3ec7ff'],
   [26, 'Em times: pegue a bandeira do outro time e leve pra sua base. No seu lado, F pega o invasor', '#38d16a'],
+  [28, 'A música para e as cadeiras aparecem: sente rápido! Quem ficar em pé sai', '#ff5ab4'],
+  [29, 'A lava sobe: pule de bloco em bloco até o alto do morro', '#ff6f3c'],
+  [30, 'Três balões nas costas: chegue por trás de alguém e aperte F pra estourar um. Sem balão, sai', '#3ec7ff'],
   [27, 'Pique-esconde: os caçadores atiram tinta, os outros viram objetos do quintal (F perto de um objeto)', '#ff4fa3'],
   [22, 'Em times: futebol numa arena fechada com paredes curvas e bola gigante. O time com menos gols sai', '#ff9f1c'],
   [20, 'Battle royale: jogue tomates, a zona fecha e quem zerar a vida sai', '#ff3b4e'],
   [3, 'A final: seja o último em cima da arena', '#ffd23f'],
 ];
-const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
+const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 28:'surv', 29:'surv', 30:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
 const CAT_NAME = {race:'Corrida', surv:'Sobrevivência', team:'Equipe', crab:'Crab Game', final:'Final'};
-const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈'};
+const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈', 28:'🪑', 29:'🌋', 30:'🎈'};
 function renderMaps(cat='all'){
   $('maps').innerHTML = '';
   MAPS.filter(([id]) => !ROUND_OFF.includes(id)).filter(([id]) => cat === 'all' || (cat === 'final' ? FINALS.includes(id) : MAP_CAT[id] === cat)).forEach(([id, desc, col]) => { const b = document.createElement('button'); b.className = 'map' + (cat === 'final' || id === 3 ? ' final' : ''); b.id = 'map-' + id;
