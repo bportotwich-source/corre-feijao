@@ -9870,7 +9870,7 @@ function attOn(p, x, k){ if(!x || !ATT[k] || !ATT[k].ok.includes(x.k) || (x.att 
 function aqOk(){ const me = players[0]; return !!(me && me.alive && me.inv && me.inv[me.sel] && !me.glide && !me.down && BIG && round === 20 && !twoP && R1.phase === 'play' && !PAUSED); }
 function aqToggle(on){ if(on && !aqOk()) return; if(on && bagOn) bagToggle(false); if(on === AQM.on) return; AQM.on = on; AQM.hov = null; AQM.sig = AQM.tsig = ''; const el = $('aq'); document.body.classList.toggle('aqOn', on);
   if(on){ el.hidden = false; AQM.rot = 0; if(WH.on) whClose(false); mouseHeld = false; mouseR = false; if(document.pointerLockElement) document.exitPointerLock(); sfx('click'); }
-  else { el.innerHTML = ''; el.hidden = true; AQM.el = {}; try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} } }
+  else { el.innerHTML = ''; el.hidden = true; AQM.el = {}; fjRelock(); } }
 // a arma levantada: cena própria desenhada por cima do jogo (igual à arma da 1ª pessoa), com as luvas do feijão segurando
 const aqSc = new THREE.Scene(), aqCam = new THREE.PerspectiveCamera(40, 2, 0.01, 20), aqPiv = new THREE.Group(); aqSc.add(aqPiv);
 aqSc.add(new THREE.HemisphereLight(0xffffff, 0x8a6fc1, 1.05)); { const d = new THREE.DirectionalLight(0xfff1dd, 1.0); d.position.set(-1, 2, 1.5); aqSc.add(d); const r = new THREE.DirectionalLight(0xbcd4ff, 0.45); r.position.set(1.5, 0.5, -2); aqSc.add(r); }
@@ -10388,7 +10388,7 @@ function updateLoot(dt){ const cs = twoP ? [cam1.pos, cam2.pos] : [cam1.pos];
 let bagOn = false, bagNear = [], bagBoxes = [];
 function bagToggle(on){ const me = players[0]; if(on && !(me && me.alive && me.inv && !me.glide)) return; if(on && AQM.on) aqToggle(false); bagOn = on; $('nhBag').hidden = !on; $('nhBagIn')._h = ''; NHD.drag = -1; if(on && WH.on) whClose(false);
   if(on){ mouseHeld = false; mouseR = false; if(document.pointerLockElement) document.exitPointerLock(); }
-  else { try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} } }
+  else fjRelock(); }
 function bagDrop(p, k, lv, ammo, att){ const a = p.face || 0, [dx, dy, dz] = dropSpot(p, Math.sin(a)*1.4 + rand(-0.3, 0.3), Math.cos(a)*1.4 + rand(-0.3, 0.3)), L = addLoot(k, dx, Math.max(0, dy), dz, ammo, lv, att); if(L){ L.noBy = p; L.noT = R1.t + 4; } sfx('pickup'); }
 // tirou o pente estendido: o que sobra no pente volta pra reserva
 function attFixMag(x){ const n = normIt(x), m = WI(n).mag; if(n.mag > m){ if(n.ammo !== Infinity) n.ammo += n.mag - m; n.mag = m; } }
@@ -12700,8 +12700,16 @@ const inMatch = () => R1.phase !== 'menu' && R1.phase !== 'podium' && $('result'
 let lockT = 0;
 function pause(on){ if(on && !inMatch()) return; PAUSED = on; $('pause').hidden = !on; ['settings', 'ctrls'].forEach(x => $(x).hidden = true);
   if(on){ returnTo = 'pause'; if(document.pointerLockElement) document.exitPointerLock(); for(const k in keys) keys[k] = false; mouseHeld = false; mouseR = false; setTimeout(() => $('pResume').focus(), 30); }
-  else { $('keys').hidden = false; canvas.focus(); if(!twoP){ lockT = Date.now(); try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(e){} } } }
-document.addEventListener('pointerlockchange', () => { if(document.pointerLockElement) lockT = Date.now(); else if(inMatch() && !PAUSED && !bagOn && Date.now() - lockT > 250) pause(true); });
+  else { $('keys').hidden = false; canvas.focus(); if(!twoP){ lockT = Date.now(); fjRelock(); } } }
+// ---------- mouse preso de volta: ao fechar um painel o jogo pede o mouse; se o navegador recusar, a próxima tecla ou clique prende (o clique não atira) ----------
+const FJML = {want:false};
+function fjPanelOpen(){ return PAUSED || bagOn || (typeof AQM !== 'undefined' && AQM.on) || (typeof WD !== 'undefined' && WD.shop) || !$('result').hidden; }
+function fjLockNow(){ if(document.pointerLockElement === canvas) return; lockT = Date.now(); try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} }
+function fjRelock(){ if(twoP || !inMatch()) return; FJML.want = true; mouseHeld = false; mouseR = false; dragging = false; fjLockNow(); }
+document.addEventListener('pointerlockchange', () => { if(document.pointerLockElement === canvas) FJML.want = false; });
+addEventListener('keydown', e => { if(!FJML.want || e.code === 'Escape' || document.pointerLockElement === canvas) return; if(twoP || !inMatch() || fjPanelOpen()){ FJML.want = false; return; } fjLockNow(); }, true);
+addEventListener('mousedown', e => { if(!FJML.want || document.pointerLockElement === canvas) return; if(twoP || !inMatch() || fjPanelOpen()){ FJML.want = false; return; } if(e.target !== canvas) return; fjLockNow(); e.preventDefault(); e.stopImmediatePropagation(); }, true);
+document.addEventListener('pointerlockchange', () => { if(document.pointerLockElement) lockT = Date.now(); else if(inMatch() && !fjPanelOpen() && Date.now() - lockT > 250) pause(true); });
 $('pResume').onclick = () => pause(false);
 $('pSettings').onclick = () => { $('pause').hidden = true; openSettings('pause'); };
 $('pKeys').onclick = () => { $('pause').hidden = true; returnTo = 'pause'; $('ctrls').hidden = false; setTimeout(() => $('ctrls').querySelector('.back').focus(), 30); };
@@ -12893,9 +12901,9 @@ function wdHud(){ const el = $('wdHud'); if(!el) return; const me = you(), S = e
   const m = $('wdMoney'), mh = `🫘 <b>${me.wdM}</b>${wdAtHQ(me) && me.alive ? ' <span><kbd>B</kbd> loja</span>' : ''}`; if(m._h !== mh){ m._h = mh; m.innerHTML = mh; }
   const r = $('wdResp'); r.hidden = me.alive || WD.over; if(!me.alive){ const h = `Voltando na base em <b>${Math.max(0, Math.ceil(me.wdResp ?? WD.RESP))}</b> s · <kbd>B</kbd> loja`; if(r._h !== h){ r._h = h; r.innerHTML = h; } } }
 function wdShopOpen(on){ const me = you(); if(on && (!WAR || WD.over || !(me.alive ? wdAtHQ(me) : true))){ if(on && me.alive) banner('Loja só na base', 'Volte pra base da sua tropa (bandeira) pra comprar', 1200); return; }
-  WD.shop = on; let el = $('wdShop'); if(!el){ el = document.createElement('div'); el.id = 'wdShop'; document.body.appendChild(el);
+  const wasOn = WD.shop; WD.shop = on; let el = $('wdShop'); if(!el){ el = document.createElement('div'); el.id = 'wdShop'; document.body.appendChild(el);
     el.addEventListener('click', e => { const b = e.target.closest('[data-wb]'), t = e.target.closest('[data-wt]'); if(b) wdBuy(you(), b.dataset.wb); else if(t){ WD.tab = t.dataset.wt; sfx('click'); wdShopRender(); } else if(e.target.closest('[data-wx]')) wdShopOpen(false); }); }
-  el.hidden = !on; if(on){ if(bagOn) bagToggle(false); try{ document.exitPointerLock(); }catch(e){} wdShopRender(); sfx('click'); } }
+  el.hidden = !on; if(on){ if(bagOn) bagToggle(false); try{ document.exitPointerLock(); }catch(e){} wdShopRender(); sfx('click'); } else if(wasOn && !WD.over) fjRelock(); }
 function wdShopRender(){ const el = $('wdShop'); if(!el || el.hidden) return; const me = you(), L = WD_SHOP.filter(e => e.cat === WD.tab);
   const have = e => e.k === 'ammo' ? me.inv && me.inv.some(x => x && x.k === e.c) : true;
   el.innerHTML = `<div class="wdP"><div class="wdH"><h2>🛒 Loja da base</h2><span class="wdM">🫘 <b>${me.wdM}</b></span><button class="back" data-wx>Fechar <kbd>B</kbd></button></div>
