@@ -11185,11 +11185,11 @@ function stepPlayer(p, dt, inp){
   if(Math.abs(p.leanK || 0) > 0.05 && p.leanF !== undefined && !p.isBot){ let d = p.leanF - p.face; d = Math.atan2(Math.sin(d), Math.cos(d)); p.face += d*Math.min(1, 18*dt); }
   if(control && inp.jump && p.grounded){ p.vel.y = JUMP; p.grounded = false; if(p.gV){ p.vel.x = p.gV[0]; p.vel.z = p.gV[1]; } sfxNear(p, 'jump'); }
   p.gV = null;
-  if(control && inp.dive){ const fx = Math.sin(p.face), fz = Math.cos(p.face); p.vel.x = fx*12; p.vel.z = fz*12; p.vel.y = p.grounded ? 2 : Math.max(p.vel.y, 1); p.dive = 0.6; p.grounded = false; sfxNear(p, 'dive'); if(!p.isBot) bump('dives'); }
+  if(control && inp.dive && !p.glide){ const fx = Math.sin(p.face), fz = Math.cos(p.face); p.vel.x = fx*12; p.vel.z = fz*12; p.vel.y = p.grounded ? 2 : Math.max(p.vel.y, 1); p.dive = 0.6; p.grounded = false; sfxNear(p, 'dive'); if(!p.isBot) bump('dives'); }
   if(control && inp.push && p.pushCD <= 0) doPush(p);
   if(control && inp.item && p.power && R1.phase === 'play') usePower(p);
   if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && ![27, 28, 29, 30, 31, 32, 33, 34, 35].includes(round)) doGrab(p);
-  if(p.dive > 0 && (p.grounded || p.dive > 0.3)) p.dive -= dt;
+  if(p.dive > 0 && (p.grounded || p.dive > 0.3 || p.glide)) p.dive -= dt; if(p.glide && p.slideT > 0) p.slideT = 0;
   if(p.grounded && p.ground && p.ground.kind === 'seesaw') p.pos.x -= Math.sin(p.ground.ang)*11*dt; // escorrega pro lado mais baixo
   p.vel.y += GRAV*dt;
   const n = 3, sd = dt/n;
@@ -13328,7 +13328,7 @@ addEventListener('keydown', e => { if(!WAR || !BIG || round !== 20 || !inMatch()
 
 // feijão-mola no Modo 100: sobe até a altura do avião (fora a Torre Feijão, que tem teto), pra atravessar o mapa em queda livre e de paraquedas
 function molaLaunch(p){ const top = FJBIG ? 118 : 92, H = Math.max(25, top - p.pos.y); p.vel.y = Math.sqrt(-2*GRAV*H); p.vel.x = Math.sin(p.face)*6; p.vel.z = Math.cos(p.face)*6;
-  p.glide = 'fall'; p.mola = true; p.skyY = p.pos.y + H; p.wantChute = false; p.chuteCD = 0; p.land = null; p.climb = null; p.vault = null; p.stance = 0; p.ads = false; if(!p.m.chute) chute(p); p.m.chute.visible = false;
+  p.glide = 'fall'; p.mola = true; p.dive = 0; p.slideT = 0; p.skyY = p.pos.y + H; p.wantChute = false; p.chuteCD = 0; p.land = null; p.climb = null; p.vault = null; p.stance = 0; p.ads = false; if(!p.m.chute) chute(p); p.m.chute.visible = false;
   ringFx(p.pos.x, p.pos.y, p.pos.z, 0x38d16a, 5); sfx('whoosh'); banner(tag(p) + '🚀 Lá vai você!', 'Sobe até a altura do avião. Na descida, mire pra onde quer ir e aperte <kbd>Espaço</kbd> pra abrir o paraquedas', 1800); }
 // trator funciona igual ao jipe: anda 1,4x, leva 2 de carona no estribo de trás (a tropa sobe quando você para perto), tem 500 de vida
 WDV.info.trator = {nm:'Trator FEIJÃO', seats:3, hp:500, rad:1.4, box:[0.95, 2.3, 1.5], ic:'🚜', d:'3 lugares, forte no barro', seat:[[0, 0, -CAR_SEAT], [0.62, 0.42, -1.55], [-0.62, 0.42, -1.55]]};
