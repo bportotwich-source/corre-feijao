@@ -15845,7 +15845,7 @@ const FJR = {buf:{}, go:false, n:0, loops:{}, t:0, sea:0, city:0, scanT:0, rain:
 function fjrLoad(){ if(FJR.go || !ac || location.protocol === 'file:') return; FJR.go = true;
   // os curtos primeiro (tiros, passos), depois os loops de ambiente que são maiores
   const ks = Object.keys(FJR_MAN).sort((a, b) => (/^[ae]_/.test(a) ? 1 : 0) - (/^[ae]_/.test(b) ? 1 : 0));
-  let q = []; for(const k of ks) for(let i = 1; i <= FJR_MAN[k]; i++) q.push([k, i]);
+  let q = []; for(const k of ks.filter(k => !/^a_/.test(k))) for(let i = 1; i <= FJR_MAN[k]; i++) q.push([k, i]);  // ambiente gravado tirado a pedido do Bruno (alto demais, abafava o resto)
   const next = () => { const it = q.shift(); if(!it) return; const [k, i] = it;
     fetch('dados/sons/' + k + '_' + i + '.mp3').then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status)).then(a => ac.decodeAudioData(a))
       .then(b => { (FJR.buf[k] = FJR.buf[k] || []).push(b); FJR.n++; }).catch(() => { if(i === 1 && k === ks[0]) q = []; }).finally(next); };
