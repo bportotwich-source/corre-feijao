@@ -12210,7 +12210,7 @@ function armaBuild(k, att, sg){ const L = ARMA.lib, g = L[k].clone(true), has = 
   const cart = vmKid(g, 'cartucho'); if(cart) cart.visible = false;
   const put = (n, sock) => { const s = vmKid(g, sock); if(!n || !s || !L[n]) return null; const o = L[n].clone(true); o.position.copy(s.position); g.add(o); return o; };
   const optic = sg !== 'ferro' && has('s_mira') ? put(OPT_MDL[sg] || sg, 's_mira') : null;
-  if(optic && sg.startsWith('rd3x')) ['lupa', 'lupa_v'].forEach(n => { const o = vmKid(optic, n); if(o && sg === 'rd3x') o.rotation.z = -Math.PI/2; }); // lupa virada pro lado no 1x if(optic) ['alca', 'massa'].forEach(n => { const o = vmKid(g, n); if(o) o.visible = false; });
+  if(optic && sg.startsWith('rd3x')) ['lupa', 'lupa_v'].forEach(n => { const o = vmKid(optic, n); if(o && sg === 'rd3x') o.rotation.z = -Math.PI/2; }); /* lupa virada pro lado no 1x */ if(optic) ['alca', 'massa'].forEach(n => { const o = vmKid(g, n); if(o) o.visible = false; });
   for(const a in ATT_BL) if(att[a]) g.userData[a] = put(...ATT_BL[a]);
   g.userData.optic = optic; g.userData.bl = true; return g; }
 // recarga: t = 0..1 do tempo de recarga. Mexe as peças do Blender (pente, ferrolho, cartucho, telha, tampa, foguete) e devolve onde a mão de apoio vai buscar
