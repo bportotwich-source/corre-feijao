@@ -6882,7 +6882,7 @@ addEventListener('load', () => setTimeout(cvLoad, 350));
 // x, z = centro do bloco da casa; rot = 0..3 (vezes 90 graus; 0 = porta pra +z). Ocupa x -6..8,8 e z -4,6..8,3 (com o quintal)
 function casaVermelha(x, z, y, rot){ const c = Math.cos(rot*Math.PI/2), sn = Math.sin(rot*Math.PI/2), P = (a, b) => [x + a*c + b*sn, z - a*sn + b*c];
   const R = (a0, a1, b0, b1) => { const q = [P(a0, b0), P(a1, b1)]; return [Math.min(q[0][0], q[1][0]), Math.max(q[0][0], q[1][0]), Math.min(q[0][1], q[1][1]), Math.max(q[0][1], q[1][1])]; };
-  const [bx0, bx1, bz0, bz1] = R(-5.4, 5.4, -4, 4);
+  const [bx0, bx1, bz0, bz1] = R(...(CV.ok ? [-7.29, 7.29, -5.4, 5.4] : [-5.4, 5.4, -4, 4]));   // 1,35x desde 31/10
   if(!CV.ok){ fjBuilding(bx0, bz0, bx1 - bx0, bz1 - bz0, 2, {y, c:0xa3301f, c2:0xf2e6c6, door:['z1', 'x1', 'z0', 'x0'][rot], roof:'pitch', rc:0x8a2c1f}); return y + 4.65; }
   const n0 = solids.length;
   CV_COL.forEach(([a0, a1, y0, y1, b0, b1, f]) => { const [u0, u1, w0, w1] = R(a0, a1, b0, b1); box(u0, u1, y + y0, y + y1, w0, w1, 0, f ? {invisible:true, noClimb:true} : {invisible:true}); });
@@ -6891,13 +6891,13 @@ function casaVermelha(x, z, y, rot){ const c = Math.cos(rot*Math.PI/2), sn = Mat
   if(CV.vgeo){ const v = new THREE.Mesh(CV.vgeo, CV.vmat); v.matrixAutoUpdate = false; v.matrix.copy(CV.vm); v.renderOrder = 2; v.userData.keep = true; g.add(v); }   // vidros transparentes (dá pra ver dentro e fora)
   for(let i = n0; i < solids.length; i++) solids[i].mesh = m;
   if(typeof CV_DOORS !== 'undefined' && CV_DOORS.length) fjDoorsAdd(CV_DOORS, x, z, y, rot, m);   // portas que abrem e fecham (E)
-  FJ_BLD.push([bx0, bx1, bz0, bz1, 0xa3301f, 'z1', 2, y, 'pitch']); const [wx0, wx1, wz0, wz1] = R(-1.4, 2.8, 4, 5.8); FJ_BLD.push([wx0, wx1, wz0, wz1, 0xa3301f]);
+  FJ_BLD.push([bx0, bx1, bz0, bz1, 0xa3301f, 'z1', 2, y, 'pitch']); const [wx0, wx1, wz0, wz1] = R(-1.89, 3.78, 5.4, 7.83); FJ_BLD.push([wx0, wx1, wz0, wz1, 0xa3301f]);
   return y + 4.65; }
 // lote 15 x 15 (casa + quintal) e porta virada pra (tx, tz)
 function cvAt(px, pz, tx, tz){ const a = Math.atan2(tx - px, tz - pz), rot = ((Math.round(a/(Math.PI/2)) % 4) + 4) % 4, c = Math.cos(rot*Math.PI/2), sn = Math.sin(rot*Math.PI/2);
   // (px, pz) = centro do lote todo (casa + quintal): o centro do bloco fica 1,4 / 1,85 pra trás dele
-  return [px - (1.4*c + 1.85*sn), pz - (-1.4*sn + 1.85*c), rot]; }
-function cvLot(g, x, z, used, tx, tz){ const p = fjLot(g, x, z, 15, 15, used); return p ? cvAt(p[0], p[1], tx, tz) : null; }
+  return [px - (1.89*c + 2.5*sn), pz - (-1.89*sn + 2.5*c), rot]; }
+function cvLot(g, x, z, used, tx, tz){ const p = fjLot(g, x, z, 20, 20, used); return p ? cvAt(p[0], p[1], tx, tz) : null; }
 // prédios novos do Blender (corre-feijao/predios-novos): 1 malha com textura + vidro por prédio; colisão = caixas invisíveis do .json
 const PNV = {ok:false, M:{}, n:0, done:0};
 function pnLoad(){ const D = window.PN_D; if(!D || !THREE.GLTFLoader || typeof MeshoptDecoder === 'undefined'){ PNV.fail = true; return; }
@@ -7323,7 +7323,7 @@ function fjMorro(){ const g = fjR('Morro'); let px = g[1], pz = g[2], ph = -1; f
 // Floresta Vagem: clareira com cabanas, torre de guarda florestal e acampamento (a mata fica em volta)
 function fjFloresta(){ const g = fjR('Floresta'); let best = null; for(let k=0; k<80; k++){ const a = k*0.618*6.283, d = (k % 8)*4, x = g[1] + Math.cos(a)*d, z = g[2] + Math.sin(a)*d, [lo, hi] = fjVar(x, z, 18);
     if(roadD(x, z) < 16) continue; const v = hi - lo; if(!best || v < best[2]) best = [x, z, v]; } if(!best) return; const [x, z] = best; FJ_CLR.push([x, z, 22]); let s = 4141; const r = () => (s = s*16807 % 2147483647)/2147483647;
-  if(CV.ok) [[-10, -9], [10, -10]].forEach(([a, b]) => { const [hx, hz, rot] = cvAt(x + a, z + b, x, z), c = Math.cos(rot*Math.PI/2), sn = Math.sin(rot*Math.PI/2), mx = hx + 0.7*c + 0.9*sn, mz = hz - 0.7*sn + 0.9*c, w = rot % 2 ? 11 : 12.5, d = rot % 2 ? 12.5 : 11; casaVermelha(hx, hz, fjPad(mx, mz, w, d, 0x8f8c86) - 0.1, rot); });
+  if(CV.ok) [[-13.5, -12], [13.5, -13.5]].forEach(([a, b]) => { const [hx, hz, rot] = cvAt(x + a, z + b, x, z), c = Math.cos(rot*Math.PI/2), sn = Math.sin(rot*Math.PI/2), mx = hx + 0.95*c + 1.2*sn, mz = hz - 0.95*sn + 1.2*c, w = rot % 2 ? 14.9 : 16.9, d = rot % 2 ? 16.9 : 14.9; casaVermelha(hx, hz, fjPad(mx, mz, w, d, 0x8f8c86) - 0.1, rot); });
   else { FJ_POIT.cabana(x - 9, z - 7, r); FJ_POIT.cabana(x + 8, z - 9, r); } FJ_POIT.acamp(x + 2, z + 8, r);
   const Y = fjPad(x - 8, z + 7, 5, 5, 0x8f8c86), t = fjTower(x - 8, z + 7, Y, 10, 2.2, 0x6b4426, {deck:0x8a5a2b, rail:0x6b4426, roof:0x4f6a3a}); bonusLoot.push(['sniper', x - 8, t, z + 7.6]);
   if(!CV.ok) FJ_BLD.push([x - 13, x - 5, z - 10, z - 4, 0x8a5a2b], [x + 4, x + 12, z - 12, z - 6, 0x8a5a2b]); }
