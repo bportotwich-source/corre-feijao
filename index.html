@@ -3761,7 +3761,7 @@ function arenaWalls2(WX, WZ, h=8){ [[-WX - 0.6, -WX, -WZ - 0.6, WZ + 0.6], [WX, 
 // O jogo procura sozinho os trechos livres do chão (sem barra, martelo, porta, largada, chegada ou ponto de volta) e sorteia onde e qual armadilha vai.
 // O grupo de cada armadilha fica em world (x = centro do trecho), então as pistas lado a lado já levam ele junto.
 let OBS = [], OB_TEX = {}, OB_SAY = 0;
-const OB_NAME = {belt:'Esteiras', punch:'Socadores', balls:'Bolas rolando', fan:'Ventania', bump:'Pinball', spin:'Disco giratório', gate:'Portões', saw:'Rodas dentadas', mud:'Lama', soap:'Sabão', spring:'Molas', geyser:'Gêiseres', cannon:'Canhões de tomate'};
+const OB_NAME = {belt:'Esteiras', punch:'Socadores', balls:'Bolas rolando', fan:'Ventania', bump:'Pinball', spin:'Disco giratório', gate:'Portões', saw:'Rodas dentadas', mud:'Lama', soap:'Sabão', spring:'Molas', geyser:'Gêiseres', cannon:'Canhões de tomate', log:'Troncos rolando', pendulum:'Pêndulos', melon:'Melancias caindo', banana:'Cascas de banana'};
 const OB_ALL = Object.keys(OB_NAME);
 const obX = o => o.g.position.x;
 const obNear = (x, z, d=26) => Math.hypot(x - camPos.x, z - camPos.z) < d;
@@ -4007,12 +4007,85 @@ function obCannon(S){ const g = obGroup(S), L = S.z1 - S.z0, n = Math.max(1, Mat
     hit(p){ if(!obHit(p, this.g.position.y, 1.9)) return; const X = obX(this);
       for(const q of C){ if(!q.on || Math.abs(p.pos.z - q.z) > 0.7 || Math.abs(p.pos.x - X - q.bx) > 0.7) continue; p.hitCD = 0; knock(p, -q.s*10, 6, rand(-1, 1), 0.8, 'tomate'); if(obNear(p.pos.x, p.pos.z)) puff(p.pos.x, p.pos.y + 1, p.pos.z, 10, 0xff3b4e, 0.12, 3); q.on = false; q.ball.visible = false; } } }; }
 
-const OB_MAKE = {belt:obBelt, punch:obPunch, balls:obBalls, fan:obFan, bump:obBump, spin:obSpin, gate:obGate, saw:obSaw, mud:obMud, soap:obSoap, spring:obSpring, geyser:obGeyser, cannon:obCannon};
+// ---------- Armadilhas novas das corridas (lote 4, pedido do Bruno 31/10): troncos rolando, pêndulos, melancias caindo, cascas de banana ----------
+// bots pulam na hora (com erro conforme a habilidade)
+const obCool = p => { if(p.obT && clock - p.obT < 0.9) return true; p.obT = clock; return false; };
+const obBotJump = (p, chance) => { if(p.isBot && p.grounded && p.stun <= 0 && Math.random() < chance){ p.vel.y = JUMP; p.grounded = false; } };
+
+// troncos rolando: troncos da largura da pista descem rolando na sua direção. Pule!
+function obLog(S){ const g = obGroup(S), L = S.z1 - S.z0, R = 0.45, n = L > 5 ? 2 : 1, spd = rand(4, 5.2), T = (L + 2)/spd + 0.9, Lg = [];
+  const wood = mat(0x9a6b3c), end = mat(0xe0b884), ring = mat(0x7a5230);
+  const hop = mesh(new THREE.BoxGeometry(S.w*2 + 0.8, 0.5, 1.2), new THREE.MeshLambertMaterial({map:obTex('warn')}), g); hop.position.set(0, 1.6, S.z1 + 0.8);
+  [-1, 1].forEach(s => { const p = mesh(new THREE.BoxGeometry(0.4, 2.2, 0.4), mat(0x2b1846), g); p.position.set(s*(S.w + 0.2), 0.7, S.z1 + 0.8); });
+  for(let k = 0; k < n; k++){ const t = new THREE.Group(), c = mesh(new THREE.CylinderGeometry(R, R, S.w*2 - 0.1, 14), wood, t); c.rotation.z = Math.PI/2;
+    [-1, 1].forEach(s => { const e = mesh(new THREE.CircleGeometry(R*0.98, 14), end, t); e.position.x = s*(S.w - 0.04); e.rotation.y = s*Math.PI/2; const r2 = mesh(new THREE.TorusGeometry(R*0.55, 0.03, 4, 14), ring, t); r2.position.x = s*(S.w - 0.03); r2.rotation.y = Math.PI/2; });
+    for(let i = 0; i < 3; i++){ const kn = mesh(new THREE.SphereGeometry(0.1, 6, 5), ring, c); kn.position.set(R*0.95, rand(-S.w, S.w)*0.8, 0); kn.rotation.y = rand(0, 6); }
+    g.add(t); t.visible = false; Lg.push({t, z:S.z1, ph:k*T/n, on:false, was:false}); }
+  return {g, Lg,
+    upd(dt){ const X = obX(this), Y = this.g.position.y;
+      for(const q of Lg){ const u = (clock + q.ph) % T, on = u > 0.9; if(on && !q.was && obNear(X, S.z1)) obSfx(X, Y, S.z1, 'whoosh'); q.was = on; q.on = on;
+        q.z = S.z1 + 0.6 - (u - 0.9)*spd; const sink = q.z < S.z0 - 0.4 ? Math.min(1, (S.z0 - 0.4 - q.z)*1.5) : 0; q.t.visible = on && sink < 1;
+        q.t.position.set(0, R - sink*1.2, q.z); q.t.rotation.x = (u - 0.9)*spd/R; } },
+    hit(p){ if(!obHit(p, this.g.position.y, 1.2)) return; const Y = this.g.position.y;
+      for(const q of Lg){ if(!q.on || q.z < S.z0 - 0.3) continue; const dz = q.z - p.pos.z;
+        if(p.isBot && dz > 0.3 && dz < (p.obLJ || (p.obLJ = 4.2 + rand(-1, 1)*4.2*(1.25 - (p.skill || 0.8))))){ obBotJump(p, 1); p.obLJ = 0; }
+        if(Math.abs(dz) < 0.55 && p.pos.y - Y < R*2 - 0.05 && !obCool(p)){ p.hitCD = 0; knock(p, rand(-1.5, 1.5), 10, 3.5, 0.75, 'log'); p.pos.y = Math.max(p.pos.y, Y + R*2 + 0.05); if(obNear(p.pos.x, p.pos.z)) puff(p.pos.x, p.pos.y + 0.4, p.pos.z, 6, 0xc9a37a, 0.12, 2); } } }}; }
+
+// pêndulos: bolas gigantes penduradas num pórtico, balançando de um lado pro outro da pista
+function obPendulum(S){ const g = obGroup(S), L = S.z1 - S.z0, n = L > 5.5 ? 2 : 1, R = Math.max(4.4, S.w + 1.2), H = R + 1.2, P = [];
+  for(let k = 0; k < n; k++){ const z = n === 1 ? (S.z0 + S.z1)/2 : S.z0 + 1.3 + k*(L - 2.6);
+    [-1, 1].forEach(s => { const p = mesh(new THREE.BoxGeometry(0.45, H + 6, 0.45), mat(0x2b1846), g); p.position.set(s*(S.w + 0.5), H/2 - 3, z); });
+    const beam = mesh(new THREE.BoxGeometry(S.w*2 + 1.6, 0.5, 0.5), new THREE.MeshLambertMaterial({map:obTex('warn')}), g); beam.position.set(0, H + 0.2, z);
+    const piv = new THREE.Group(); piv.position.set(0, H, z); g.add(piv);
+    const rod = mesh(new THREE.CylinderGeometry(0.06, 0.06, R, 6), mat(0xc0c4d0), piv); rod.position.y = -R/2;
+    const ball = mesh(new THREE.SphereGeometry(0.75, 18, 14), mat([0xff4fa3, 0x6b4fd8, 0xff9f1c][k % 3]), piv); ball.position.y = -R;
+    for(let i = 0; i < 6; i++){ const sp = mesh(new THREE.ConeGeometry(0.16, 0.45, 6), mat(0xffffff), ball); const a = i/6*Math.PI*2; sp.position.set(Math.cos(a)*0.75, 0, Math.sin(a)*0.75); sp.rotation.z = -Math.PI/2; sp.rotation.y = -a; }
+    const A = Math.asin(Math.min(0.97, (S.w + 0.4)/R)); P.push({z, piv, A, w:rand(1.5, 2), ph:rand(0, 6), th:0, dth:0, bx:0, by:0}); }
+  return {g, P,
+    upd(dt){ for(const q of P){ const th = q.A*Math.sin(clock*q.w + q.ph); q.dth = (th - q.th)/Math.max(dt, 1e-3); q.th = th; q.piv.rotation.z = th; q.bx = Math.sin(th)*R; q.by = H - Math.cos(th)*R; } },
+    hit(p){ if(!obHit(p, this.g.position.y, H)) return; const X = obX(this), Y = this.g.position.y;
+      for(const q of P){ const dx = p.pos.x - X - q.bx, dy = p.pos.y + 0.8 - Y - q.by, dz = p.pos.z - q.z; if(dx*dx + dy*dy + dz*dz < 1.25*1.25 && !obCool(p)){ p.hitCD = 0; knock(p, Math.sign(q.dth || dx)*12, 6, (Math.sign(dz) || 1)*2, 0.9, 'pendulum'); if(obNear(p.pos.x, p.pos.z)) obSfx(p.pos.x, p.pos.y, p.pos.z, 'hit'); } } },
+    avoid(p, mx){ const X = obX(this); for(const q of P){ const dz = q.z - p.pos.z; if(dz > 0 && dz < 2.5 && p.skill > 0.65 && Math.abs(p.pos.x - X - q.bx) < 1.6) return p.pos.x - X - q.bx > 0 ? 1 : -1; } return mx; }}; }
+
+// melancias caindo: aparece a sombra no chão e, logo depois, uma melancia gigante cai do céu
+function obMelon(S){ const g = obGroup(S), L = S.z1 - S.z0, n = clamp(Math.round(S.w*L/9), 2, 5), T = 2.8, M = [];
+  for(let k = 0; k < n; k++){ const sh = new THREE.Mesh(new THREE.CircleGeometry(1.1, 22), new THREE.MeshBasicMaterial({color:0x2b1846, transparent:true, opacity:0, depthWrite:false})); sh.rotation.x = -Math.PI/2; g.add(sh);
+    const rim = new THREE.Mesh(new THREE.RingGeometry(1.0, 1.15, 26), new THREE.MeshBasicMaterial({color:0xff3b4e, transparent:true, opacity:0, depthWrite:false})); rim.rotation.x = -Math.PI/2; g.add(rim);
+    const mel = new THREE.Group(), b = mesh(new THREE.SphereGeometry(0.95, 18, 14), mat(0x2f9e44), mel); b.scale.y = 0.85;
+    for(let i = 0; i < 6; i++){ const st = mesh(new THREE.SphereGeometry(0.96, 18, 14, i/6*Math.PI*2, 0.18), mat(0x1c6b2c), mel); st.scale.y = 0.86; }
+    const tail = mesh(new THREE.CylinderGeometry(0.05, 0.03, 0.3, 5), mat(0x7a5230), mel); tail.position.y = 0.9; g.add(mel); mel.visible = false;
+    M.push({sh, rim, mel, x:0, z:0, ph:k*T/n + rand(0, 0.5), was:-1, hot:false}); }
+  return {g, M,
+    upd(dt){ const X = obX(this), Y = this.g.position.y;
+      for(const q of M){ const u = (clock + q.ph) % T, cyc = Math.floor((clock + q.ph)/T);
+        if(cyc !== q.was){ q.was = cyc; q.x = rand(-S.w + 0.9, S.w - 0.9); q.z = rand(S.z0 + 0.9, S.z1 - 0.9); q.sh.position.set(q.x, 0.04, q.z); q.rim.position.set(q.x, 0.05, q.z); }
+        const warn = u < 1.3, fall = u >= 1.3 && u < 1.55, lie = u >= 1.55 && u < 2.3, k = warn ? u/1.3 : 1;
+        q.sh.material.opacity = u < 2.3 ? 0.15 + 0.35*k : 0; q.sh.scale.setScalar(0.3 + 0.7*k); q.rim.material.opacity = warn ? (Math.floor(u*8) % 2 ? 0.9 : 0.3) : 0;
+        q.mel.visible = fall || lie; q.hot = fall && u > 1.45; const yy = fall ? 14*(1 - (u - 1.3)/0.25) + 0.8 : 0.8 - Math.max(0, u - 2.0)*3;
+        q.mel.position.set(q.x, yy, q.z); q.mel.rotation.y += dt;
+        if(lie && u - dt < 1.55 && obNear(X + q.x, q.z)){ puff(X + q.x, Y + 0.3, q.z, 10, 0xff6b6b, 0.14, 3.5); obSfx(X + q.x, Y, q.z, 'hit'); } } },
+    hit(p){ if(!obHit(p, this.g.position.y, 2)) return; const X = obX(this);
+      for(const q of M){ if(!q.hot) continue; const dx = p.pos.x - X - q.x, dz = p.pos.z - q.z; if(dx*dx + dz*dz < 1.25 && !obCool(p)){ p.hitCD = 0; knock(p, dx*3, 2, dz*3 - 1, 1.3, 'melon'); p.sq = -0.9; } } },
+    avoid(p, mx){ const X = obX(this); for(const q of M){ const u = (clock + q.ph) % T, dz = q.z - p.pos.z, dx = X + q.x - p.pos.x; if(u > 0.4 && u < 1.55 && dz > -0.8 && dz < 2.6 && Math.abs(dx) < 1.5 && p.skill > 0.5) return dx > 0 ? -1 : 1; } return mx; }}; }
+
+// cascas de banana espalhadas: pisou, escorrega pra frente e cai de cara
+function obBanana(S){ const g = obGroup(S), L = S.z1 - S.z0, n = clamp(Math.round(S.w*L/4), 3, 12), B = [], peel = mat(0xffd23f), tip = mat(0x7a5230);
+  const spot = () => [rand(-S.w + 0.4, S.w - 0.4), rand(S.z0 + 0.4, S.z1 - 0.4)];
+  for(let k = 0; k < n; k++){ const m = new THREE.Group(), c = mesh(new THREE.SphereGeometry(0.2, 10, 8), peel, m); c.scale.set(1, 0.45, 1); c.position.y = 0.08;
+    for(let i = 0; i < 3; i++){ const f = mesh(new THREE.SphereGeometry(0.11, 8, 6), peel, m); f.scale.set(0.8, 0.35, 2.2); const a = i/3*Math.PI*2; f.position.set(Math.sin(a)*0.26, 0.04, Math.cos(a)*0.26); f.rotation.y = a; }
+    const t = mesh(new THREE.CylinderGeometry(0.03, 0.04, 0.12, 5), tip, m); t.position.y = 0.2; const [x, z] = spot(); m.position.set(x, 0, z); m.scale.setScalar(1.6); m.rotation.y = rand(0, 6); g.add(m); B.push({m, x, z, off:0}); }
+  return {g, B,
+    upd(dt){ for(const b of B){ if(b.off > 0){ b.off -= dt; b.m.rotation.y += dt*14; b.m.position.y = Math.max(0, b.m.position.y - dt*2); if(b.off <= 0){ [b.x, b.z] = spot(); b.m.position.set(b.x, 0, b.z); } } } },
+    hit(p){ if(!p.grounded || Math.abs(p.pos.y - this.g.position.y) > 0.4 || p.stun > 0) return; const X = obX(this);
+      for(const b of B){ if(b.off > 0) continue; const dx = p.pos.x - X - b.x, dz = p.pos.z - b.z; if(dx*dx + dz*dz < 0.3 && !obCool(p)){ const v = Math.hypot(p.vel.x, p.vel.z) || 1; p.hitCD = 0; knock(p, p.vel.x/v*9, 4, p.vel.z/v*9, 1.0, 'banana'); b.off = 3; b.m.position.y = 0.6; break; } } },
+    avoid(p, mx){ const X = obX(this); for(const b of B){ if(b.off > 0) continue; const dz = b.z - p.pos.z, dx = X + b.x - p.pos.x; if(dz > 0 && dz < 1.8 && Math.abs(dx) < 0.55 && Math.random() < p.skill) return dx > 0 ? -1 : 1; } return mx; }}; }
+
+const OB_MAKE = {belt:obBelt, punch:obPunch, balls:obBalls, fan:obFan, bump:obBump, spin:obSpin, gate:obGate, saw:obSaw, mud:obMud, soap:obSoap, spring:obSpring, geyser:obGeyser, cannon:obCannon, log:obLog, pendulum:obPendulum, melon:obMelon, banana:obBanana};
 // que armadilha cabe num trecho: ponte estreita, chão largo, gelo ou alto da Escalada. Corrida Maluca sem bolas rolando (pedido do Bruno)
 function obFits(S, r){ const L = S.z1 - S.z0;
-  if(S.soft) return ['fan', 'punch', 'cannon', 'geyser'];
-  let t = S.w < 3.2 ? ['belt', 'punch', 'balls', 'fan', 'saw', 'mud', 'soap', 'cannon', 'geyser'] : OB_ALL.slice();
-  if(r === 9) t = ['bump', 'gate', 'mud', 'soap', 'saw'];
+  if(S.soft) return ['fan', 'punch', 'cannon', 'geyser', 'pendulum', 'melon'];
+  let t = S.w < 3.2 ? ['belt', 'punch', 'balls', 'fan', 'saw', 'mud', 'soap', 'cannon', 'geyser', 'log', 'pendulum', 'melon', 'banana'] : OB_ALL.slice();
+  if(r === 9) t = ['bump', 'gate', 'mud', 'soap', 'saw', 'banana', 'melon'];
   if(r === 1) t = t.filter(k => k !== 'balls');
   return t.filter(k => (k !== 'spin' || Math.min(S.w, L/2) > 2.2) && (k !== 'gate' || S.w >= 3) && (k !== 'bump' || S.w >= 2.5) && (k !== 'spring' || S.w >= 2.5)); }
 // trechos livres do chão do que acabou de ser montado (só as caixas novas: as pistas de antes já foram arredadas)
@@ -11369,7 +11442,7 @@ function say(html, force){
   setTimeout(() => { d.style.opacity = 0; setTimeout(() => d.remove(), 700); }, 3800);
 }
 const nm = p => p.isBot || twoP ? `<b>${p.name}</b>` : '<b>Você</b>';
-const HIT_TXT = {trator:'foi atropelado por um trator', bar:'levou uma barrada', hammer:'levou uma martelada', push:'foi empurrado', fruit:'levou uma frutada', door:'deu de cara numa porta de verdade', banana:'escorregou numa banana', tomate:'levou uma tomatada', bomba:'voou com uma bomba', onda:'foi arremessado pela onda', punch:'levou um soco da parede', ball:'foi atropelado por uma bola', bump:'quicou no pinball', saw:'foi pego por uma roda dentada', geyser:'voou num gêiser'};
+const HIT_TXT = {trator:'foi atropelado por um trator', bar:'levou uma barrada', hammer:'levou uma martelada', push:'foi empurrado', fruit:'levou uma frutada', door:'deu de cara numa porta de verdade', banana:'escorregou numa banana', tomate:'levou uma tomatada', bomba:'voou com uma bomba', onda:'foi arremessado pela onda', punch:'levou um soco da parede', ball:'foi atropelado por uma bola', bump:'quicou no pinball', saw:'foi pego por uma roda dentada', geyser:'voou num gêiser', log:'foi atropelado por um tronco', pendulum:'levou uma pendulada', melon:'foi amassado por uma melancia'};
 const confs = [];
 function confetti(){ const me = humans().find(h => h.alive) || you(); for(let i=0;i<140;i++){ const c = new THREE.Mesh(new THREE.PlaneGeometry(0.18, 0.1), new THREE.MeshBasicMaterial({color:COLORS[i%COLORS.length], side:THREE.DoubleSide})); c.position.copy(me.pos).add(new V3(rand(-1,1), 2, rand(-1,1))); c.userData.v = new V3(rand(-6,6), rand(8,15), rand(-6,6)); c.userData.r = new V3(rand(-9,9), rand(-9,9), 0); scene.add(c); confs.push(c); } }
 
