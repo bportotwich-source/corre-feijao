@@ -3678,7 +3678,7 @@ function buildLanes(fn, n, w){
   solids = solids.filter(b => b.mesh || b.max.x - b.min.x > 0.35 || !seams.some(s => Math.abs((b.min.x + b.max.x)/2 - s) < 0.4));
 }
 // sorteia a prova na hora, pelo número de vivos (só as que aguentam essa quantidade)
-const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33];
+const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
 const ROUND_OFF = [8, 16, 17, 19]; // provas tiradas do jogo (Frutas, Apagão, Cabo de Guerra, Domínio)
 // Sorteio (parte 6): cada partida tem um roteiro de tipos. Começa com corrida (todo mundo junto),
 // depois mistura sobrevivência, times e rodadas do Round 6 (Ponte de Vidro, Salas) sem repetir o tipo seguido.
@@ -4648,7 +4648,7 @@ const LOOKS = {
   manha:{top:0x58b8f5, hor:0xd8f4ff, sun:0xfffbe8, si:0.66, hs:0xf0fbff, hg:0x7fa0c0, hi:0.55, off:[-10, 22, 14], dir:[-0.35, 0.32, 0.88], wc:0xf2fbff},
   tarde:{top:0x4a8ee0, hor:0xffe2b8, sun:0xffdcaa, si:0.7, hs:0xfff2e2, hg:0x9a7a9a, hi:0.54, off:[20, 16, -12], dir:[0.6, 0.16, -0.78], wc:0xfff8f0},
   rosa:{top:0x7a6ae0, hor:0xffc4da, sun:0xffd0dc, si:0.64, hs:0xffeef6, hg:0x9a84cc, hi:0.58, off:[-18, 16, -12], dir:[-0.6, 0.14, -0.78], wc:0xfff4f8}};
-const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde', 28:'rosa', 29:'tarde', 30:'dia', 31:'manha', 32:'dia', 33:'tarde'};
+const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde', 28:'rosa', 29:'tarde', 30:'dia', 31:'manha', 32:'dia', 33:'tarde', 34:'rosa', 35:'dia'};
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
@@ -4727,7 +4727,7 @@ function buildField(color, stripe){
   [[-9, -16], [9, 16], [-16, 9], [16, -9], [0, -19.5], [0, 19.5]].forEach(([x, z]) => box(x - 1.2, x + 1.2, 0, 1.6, z - 1.2, z + 1.2, 0xff4fa3));
   robot = null;
 }
-const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde', 28:'Dança das Cadeiras', 29:'O Chão é Lava', 30:'Estoura-Balão', 31:'Pula-Corda Gigante', 32:'Descida de Paraquedas', 33:'Revezamento'};
+const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde', 28:'Dança das Cadeiras', 29:'O Chão é Lava', 30:'Estoura-Balão', 31:'Pula-Corda Gigante', 32:'Descida de Paraquedas', 33:'Revezamento', 34:'Labirinto que Muda', 35:'Caça ao Tesouro'};
 const RACE = r => r === 1 || r === 6 || r === 9 || r === 10 || r === 11 || r === 12 || r === 21;
 
 // Gangorras: corrida por gangorras que inclinam com o peso
@@ -6087,6 +6087,129 @@ function botRelay(p, dt, inp){ if(!rl) return inp; const lane = rl.lanes[p.team]
   if(p.grounded){ const z = p.pos.z; if(p.rlJ === undefined || p.rlJ === null) p.rlJ = 1.2 + rand(-0.6, 0.6)*(1.4 - sk);
     const ahead = rl.hurd.some(h => h - z > 0 && h - z < p.rlJ) || rl.steps.some(([a, b]) => a - z > 0 && a - z < p.rlJ*0.8);
     if(ahead && Math.random() < dt*30*sk){ inp.jump = true; p.rlJ = null; } }
+  return inp; }
+
+// ---------- Provas novas (lote 3, pedido do Bruno 31/10): Labirinto que Muda (34), Caça ao Tesouro (35) ----------
+function l3Reset(){ players.forEach(p => { p.lbCell = null; p.lbNext = null; p.tsS = 0; p.tsDig = null; p.tsT = null; }); }
+
+// ===== Labirinto que Muda (34): ache o centro do labirinto (siga o feixe dourado). Parte das paredes sobe e desce de tempos
+// em tempos, abrindo e fechando atalhos. Metade que chegar primeiro passa.
+let lb = null;
+function buildMaze(n){ clearWorld(); const C = [13, 15, 19][SZ], S = 3.4, W = C*S/2, O = W + 5, H = 2.6, T = 0.4, m = (C - 1)/2;
+  box(-O, O, -1, 0, -O, O, 0xd9f2c4); arenaWalls(O);
+  const V = [], Hh = [], seen = []; for(let i = 0; i < C; i++){ V.push(Array(C).fill(1)); Hh.push(Array(C).fill(1)); seen.push(Array(C).fill(false)); }
+  const open = (i, j, a, b) => { if(a === 1) V[i][j] = 0; if(a === -1) V[i - 1][j] = 0; if(b === 1) Hh[i][j] = 0; if(b === -1) Hh[i][j - 1] = 0; };
+  // labirinto perfeito (sempre tem caminho), feito a partir do meio
+  const st = [[m, m]]; seen[m][m] = true;
+  while(st.length){ const [i, j] = st[st.length - 1], nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([a, b]) => [i + a, j + b, a, b]).filter(([x, y]) => x >= 0 && y >= 0 && x < C && y < C && !seen[x][y]);
+    if(!nb.length){ st.pop(); continue; } const [x, y, a, b] = nb[Math.floor(Math.random()*nb.length)]; open(i, j, a, b); seen[x][y] = true; st.push([x, y]); }
+  // praça do meio 3x3 aberta e uns poucos atalhos fixos
+  for(let i = m - 1; i <= m + 1; i++) for(let j = m - 1; j <= m + 1; j++){ if(i < m + 1) V[i][j] = 0; if(j < m + 1) Hh[i][j] = 0; }
+  for(let i = 0; i < C; i++) for(let j = 0; j < C; j++){ if(i < C - 1 && V[i][j] && Math.random() < 0.02) V[i][j] = 0; if(j < C - 1 && Hh[i][j] && Math.random() < 0.02) Hh[i][j] = 0; }
+  const cx = i => -W + (i + 0.5)*S, fixed = [], gates = [], gm = [new THREE.MeshLambertMaterial({color:0xff5ab4}), new THREE.MeshLambertMaterial({color:0x3ec7ff})];
+  const wall = (x0, x1, z0, z1, gate, key) => { if(gate){ const g = Math.random() < 0.5 ? 0 : 1, b = box(x0, x1, -H, 0, z0, z1, 0); b.mesh.material = gm[g]; b.active = g === 0; b.mesh.position.y = g === 0 ? H/2 : -H/2 - 0.05; b.min.y = 0; b.max.y = H;
+      const G = {b, g, key, x:(x0 + x1)/2, z:(z0 + z1)/2}; gates.push(G); return G; } box(x0, x1, 0, H, z0, z1, 0, {invisible:true}); fixed.push([x0, x1, z0, z1]); return null; };
+  const gV = [], gH = []; for(let i = 0; i < C; i++){ gV.push([]); gH.push([]); }
+  for(let i = 0; i < C; i++) for(let j = 0; j < C; j++){
+    if(i < C - 1 && V[i][j]){ const x = -W + (i + 1)*S, gate = Math.abs(i - m) + Math.abs(j - m) > 2 && Math.random() < 0.14; gV[i][j] = wall(x - T/2, x + T/2, -W + j*S - T/2, -W + (j + 1)*S + T/2, gate, ['v', i, j]); }
+    if(j < C - 1 && Hh[i][j]){ const z = -W + (j + 1)*S, gate = Math.abs(i - m) + Math.abs(j - m) > 2 && Math.random() < 0.14; gH[i][j] = wall(-W + i*S - T/2, -W + (i + 1)*S + T/2, z - T/2, z + T/2, gate, ['h', i, j]); } }
+  // borda com entradas em todos os lados
+  const k = [2, 3, 4][SZ], ent = new Set(), entL = []; for(let t = 0; t < k; t++) ent.add(Math.round((t + 0.5)/k*C - 0.5));
+  for(let q = 0; q < C; q++){ const a = -W + q*S - T/2, b = -W + (q + 1)*S + T/2;
+    if(!ent.has(q)){ wall(-W - T/2, -W + T/2, a, b); wall(W - T/2, W + T/2, a, b); wall(a, b, -W - T/2, -W + T/2); wall(a, b, W - T/2, W + T/2); }
+    else entL.push({i:0, j:q, ox:-W - 2, oz:cx(q)}, {i:C - 1, j:q, ox:W + 2, oz:cx(q)}, {i:q, j:0, ox:cx(q), oz:-W - 2}, {i:q, j:C - 1, ox:cx(q), oz:W + 2}); }
+  // paredes fixas num InstancedMesh só (1 chamada de desenho)
+  const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0x8a6fc1), fixed.length), o = new THREE.Object3D();
+  fixed.forEach(([x0, x1, z0, z1], i) => { o.position.set((x0 + x1)/2, H/2, (z0 + z1)/2); o.scale.set(x1 - x0, H, z1 - z0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); });
+  im.castShadow = im.receiveShadow = true; im.userData.keep = true; world.add(im);
+  const tops = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(0xb39cf0), fixed.length);
+  fixed.forEach(([x0, x1, z0, z1], i) => { o.position.set((x0 + x1)/2, H + 0.06, (z0 + z1)/2); o.scale.set(x1 - x0 + 0.06, 0.12, z1 - z0 + 0.06); o.updateMatrix(); tops.setMatrixAt(i, o.matrix); }); tops.userData.keep = true; world.add(tops);
+  // alvo no meio: disco dourado, feixe de luz e o pódio lá em cima pra quem chegou
+  const pad = mesh(new THREE.CylinderGeometry(1.5, 1.5, 0.12, 28), mat(0xffd23f), world); pad.position.y = 0.06;
+  const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 40, 16, 1, true), new THREE.MeshBasicMaterial({color:0xffe066, transparent:true, opacity:0.28, depthWrite:false, side:THREE.DoubleSide})); beam.position.y = 20; beam.userData.keep = true; world.add(beam);
+  box(-2.6, 2.6, 6, 6.4, -2.6, 2.6, 0xffd23f); [[-2.8, -2.6, -2.8, 2.8], [2.6, 2.8, -2.8, 2.8], [-2.8, 2.8, -2.8, -2.6], [-2.8, 2.8, 2.6, 2.8]].forEach(([a, b, c, d]) => box(a, b, 6.4, 7.6, c, d, 0, {invisible:true}));
+  lb = {C, S, W, O, H, m, V, Hh, gV, gH, gates, entL, keep:L1_KEEP(n), know:0.12, t:0, swapT:9, warn:false, gm, dist:null, ver:0, beam};
+  lbField(); }
+// passagem aberta entre (i,j) e o vizinho (i+a, j+b)?
+function lbOpen(i, j, a, b){ const {C, V, Hh, gV, gH} = lb, x = i + a, y = j + b; if(x < 0 || y < 0 || x >= C || y >= C) return false;
+  if(a){ const ii = a > 0 ? i : x; if(!V[ii][j]) return true; const G = gV[ii][j]; return !!G && !G.b.active; }
+  const jj = b > 0 ? j : y; if(!Hh[i][jj]) return true; const G = gH[i][jj]; return !!G && !G.b.active; }
+// distância de cada célula até o meio (os bots usam pra se achar)
+function lbField(){ const {C, m} = lb, d = []; for(let i = 0; i < C; i++) d.push(Array(C).fill(1e9)); d[m][m] = 0; const q = [[m, m]];
+  for(let h = 0; h < q.length; h++){ const [i, j] = q[h]; for(const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if(lbOpen(i, j, a, b) && d[i + a][j + b] > d[i][j] + 1){ d[i + a][j + b] = d[i][j] + 1; q.push([i + a, j + b]); } }
+  lb.dist = d; lb.ver++; }
+const lbCellOf = p => { const i = Math.floor((p.pos.x + lb.W)/lb.S), j = Math.floor((p.pos.z + lb.W)/lb.S); return i >= 0 && j >= 0 && i < lb.C && j < lb.C ? [i, j] : null; };
+const lbCx = i => -lb.W + (i + 0.5)*lb.S;
+function lbSpawn(alive){ const R = lb.W + 2.6, P = 8*R; alive.forEach((p, k) => { let u = (k + 0.5)/alive.length*P, x, z; const side = Math.floor(u/(2*R)), f = u % (2*R) - R;
+  [x, z] = [[f, -R], [R, f], [-f, R], [-R, -f]][side % 4]; x += rand(-0.3, 0.3); z += rand(-0.3, 0.3); p.pos.set(x, 0, z); p.face = Math.atan2(-x, -z); p.lbCell = null; p.lbNext = null; p.lbEnt = null; }); }
+function updateMaze(dt){ if(!lb) return; lb.beam.material.opacity = 0.22 + 0.1*Math.sin(clock*3);
+  for(const G of lb.gates){ const ty = G.b.active ? lb.H/2 : -lb.H/2 - 0.05; G.b.mesh.position.y += (ty - G.b.mesh.position.y)*Math.min(1, dt*6); }
+  if(R1.phase !== 'play') return; lb.t += dt; lb.swapT -= dt;
+  if(lb.swapT < 1.3 && !lb.warn){ lb.warn = true; sfx('beep'); } // aviso: as paredes que vão subir piscam
+  const dn = lb.gates.find(G => !G.b.active); lb.gm.forEach((m, g) => m.emissive.setHex(lb.warn && dn && dn.g === g && Math.floor(clock*8) % 2 ? 0x775500 : 0));
+  if(lb.swapT <= 0){ lb.swapT = 8; lb.warn = false;
+    for(const G of lb.gates){ const on = !G.b.active; G.b.active = on;
+      if(on) for(const p of players){ if(!p.alive || p.dying > 0) continue; const dx = p.pos.x - G.x, dz = p.pos.z - G.z, vert = G.key[0] === 'v';
+        if(Math.abs(vert ? dx : dz) < 0.75 && Math.abs(vert ? dz : dx) < lb.S/2 + 0.3){ const s = Math.sign(vert ? dx : dz) || 1; if(vert) p.pos.x = G.x + s*0.8; else p.pos.z = G.z + s*0.8; } } }
+    lbField(); sfx('red'); if(humans().some(h => h.alive && !h.done)) say('🌀 O labirinto mudou!', true); }
+  for(const p of players){ if(!p.alive || p.done || p.dying > 0) continue;
+    if(p.grounded && p.pos.y < 0.5 && Math.hypot(p.pos.x, p.pos.z) < 1.5){ finishPlayer(p); p.pos.set(rand(-1.8, 1.8), 6.6, rand(-1.8, 1.8)); p.vel.set(0, 0, 0); if(near(p, 30)) ringFx(0, 0.2, 0, 0xffd23f, 3);
+      if(R1.finished >= lb.keep){ endRound(); return; } } } }
+const lbInfo = p => !lb ? '' : p && p.done ? `Você chegou! Classificados ${R1.finished}/${lb.keep}` : `Ache o centro (feixe dourado) · Classificados ${R1.finished}/${lb.keep}`;
+function botMaze(p, dt, inp){ if(!lb) return inp; if(p.done){ if(p.grounded && Math.random() < dt) inp.jump = true; return inp; } const sk = p.skill || 0.8, c = lbCellOf(p);
+  if(!c){ // fora do labirinto: vai pra uma entrada
+    if(!p.lbEnt){ let best = null, bs = 1e9; for(const e of lb.entL){ const s = Math.hypot(e.ox - p.pos.x, e.oz - p.pos.z) + rand(0, 6); if(s < bs){ bs = s; best = e; } } p.lbEnt = best; }
+    const e = p.lbEnt, dO = Math.hypot(e.ox - p.pos.x, e.oz - p.pos.z); if(dO > 1.2 && !p.lbIn) pqGo(p, inp, e.ox, e.oz, 1); else { p.lbIn = true; pqGo(p, inp, lbCx(e.i), lbCx(e.j), 1); } return inp; }
+  p.lbIn = false; const [i, j] = c, key = i*100 + j;
+  if(p.lbCell !== key || p.lbVer !== lb.ver){ if(p.lbCell !== key){ p.lbFrom = p.lbCell; p.lbCell = key; } const from = p.lbFrom, opts = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([a, b]) => lbOpen(i, j, a, b));
+    const back = from !== null && from !== undefined && from !== key ? opts.find(([a, b]) => (i + a)*100 + j + b === from) : null, fw = opts.filter(o => o !== back);
+    let pick; const best = opts.slice().sort((A, B) => lb.dist[i + A[0]][j + A[1]] - lb.dist[i + B[0]][j + B[1]])[0];
+    if(!fw.length) pick = back || best; else if(Math.random() < lb.know + 0.25*sk || fw.length === 1 && fw[0] === best) pick = best && fw.includes(best) ? best : fw[Math.floor(Math.random()*fw.length)]; else pick = fw[Math.floor(Math.random()*fw.length)];
+    p.lbVer = lb.ver; p.lbNext = pick ? [i + pick[0], j + pick[1]] : [i, j]; }
+  const [ni, nj] = p.lbNext; pqGo(p, inp, lbCx(ni), lbCx(nj), 1); return inp; }
+
+// ===== Caça ao Tesouro (35): praia cheia de montinhos de areia. F perto de um montinho cava (fique parado 1 s).
+// Pode ter tesouro (+1, baú dourado +3), nada, ou um caranguejo que te belisca. O detector mostra se está quente ou frio.
+// No fim, metade com mais pontos passa.
+let ts = null; const TS_GEO = {};
+function buildTreasure(n){ clearWorld(); const W = [13, 19, 26][SZ]; box(-W, W, -1, 0, -W, W, 0xffe3a3); arenaWalls(W);
+  for(let k = 0; k < [6, 10, 16][SZ]; k++){ const x = rand(-W + 2, W - 2), z = rand(-W + 2, W - 2); if(Math.hypot(x, z) < 3) continue;
+    if(k % 2){ box(x - 0.25, x + 0.25, 0, 3.6, z - 0.25, z + 0.25, 0x9a6b3c); const f = mesh(new THREE.ConeGeometry(1.7, 1, 7), mat(0x2cc597), world); f.position.set(x, 3.8, z); }
+    else box(x - rand(0.6, 1.2), x + rand(0.6, 1.2), 0, rand(0.8, 1.4), z - rand(0.6, 1.2), z + rand(0.6, 1.2), 0xa9a4b8); }
+  const G = TS_GEO.m ? TS_GEO : Object.assign(TS_GEO, {m:new THREE.SphereGeometry(0.7, 12, 8), x:new THREE.BoxGeometry(0.9, 0.04, 0.16), chest:new THREE.BoxGeometry(0.7, 0.45, 0.5), lid:new THREE.BoxGeometry(0.72, 0.14, 0.52)});
+  ts = {W, G, mounds:[], fx:[], keep:L1_KEEP(n), mm:mat(0xe8c27a), xm:mat(0xc0392b)}; const N = [26, 60, 130][SZ]; for(let k = 0; k < N; k++) tsMound(); }
+function tsMound(){ const W = ts.W - 1.5; let x, z, ok = false; for(let t = 0; t < 20 && !ok; t++){ x = rand(-W, W); z = rand(-W, W); ok = Math.hypot(x, z) > 2.5 && !solidPt(x, 0.3, z) && !ts.mounds.some(M => Math.hypot(M.x - x, M.z - z) < 1.8); }
+  const g = new THREE.Group(), s = mesh(ts.G.m, ts.mm, g); s.scale.set(1, 0.38, 1); s.position.y = 0;
+  const r = Math.random(), v = r < 0.06 ? 3 : r < 0.36 ? 1 : r < 0.46 ? -1 : 0;
+  if(Math.random() < 0.35){ [0.6, -0.6].forEach(a => { const xm = mesh(ts.G.x, ts.xm, g); xm.position.y = 0.27; xm.rotation.y = a; }); } // alguns têm um X (pode ser pista falsa)
+  g.position.set(x, 0, z); world.add(g); ts.mounds.push({g, x, z, v, sp:rand(1, 5)}); }
+function tsChest(x, z, gold){ const g = new THREE.Group(), c = mesh(ts.G.chest, mat(0x8b5a2b), g), l = mesh(ts.G.lid, mat(gold ? 0xffd23f : 0xc9a37a), g); c.position.y = 0.22; l.position.y = 0.5; g.position.set(x, 0, z); world.add(g); ts.fx.push({g, t:0}); }
+function tsPush(p){ if(R1.phase !== 'play' || p.tsDig) return true; let best = null, bd = 1.6; for(const M of ts.mounds){ const d = Math.hypot(M.x - p.pos.x, M.z - p.pos.z); if(d < bd){ bd = d; best = M; } }
+  if(!best) return false; p.pushCD = 0.4; p.pushAnim = 0.25; p.tsDig = {M:best, t:1.0}; sfxNear(p, 'whoosh', 20); return true; }
+function tsDug(p, M){ ts.mounds.splice(ts.mounds.indexOf(M), 1); world.remove(M.g); if(near(p, 35)) puff(M.x, 0.3, M.z, 10, 0xe8c27a, 0.14, 2.4);
+  if(M.v > 0){ p.tsS = (p.tsS || 0) + M.v; tsChest(M.x, M.z, M.v > 1); sfxNear(p, 'ding', 30); if(!p.isBot){ bump('treasures'); banner(tag(p) + (M.v > 1 ? '⭐ Baú dourado! +3' : 'Tesouro! +1'), `Total ${p.tsS} pontos`, 1100); } }
+  else if(M.v < 0){ p.hitCD = 0; knock(p, rand(-4, 4), 5, rand(-4, 4), 1.2, null); if(!p.isBot) banner(tag(p) + '🦀 Caranguejo!', 'Ele te beliscou', 1000); sfxNear(p, 'hit', 25); }
+  else if(!p.isBot) say('Só areia...', true);
+  tsMound(); }
+function updateTreasure(dt){ if(!ts) return;
+  for(let k = ts.fx.length - 1; k >= 0; k--){ const f = ts.fx[k]; f.t += dt; f.g.position.y = Math.min(1.4, f.t*3); f.g.rotation.y += dt*4; if(f.t > 1.1){ f.g.scale.setScalar(Math.max(0.01, 1 - (f.t - 1.1)*4)); } if(f.t > 1.35){ world.remove(f.g); ts.fx.splice(k, 1); } }
+  for(const M of ts.mounds) if(M.v > 0){ M.sp -= dt; if(M.sp <= 0){ M.sp = rand(3, 6); M.seen = clock; if(Math.hypot(M.x - camPos.x, M.z - camPos.z) < 30) puff(M.x, 0.4, M.z, 3, 0xffe066, 0.1, 1.2); } }
+  if(R1.phase !== 'play') return;
+  for(const p of players){ const D = p.tsDig; if(!D) continue; if(!p.alive || p.stun > 0 || !ts.mounds.includes(D.M) || Math.hypot(D.M.x - p.pos.x, D.M.z - p.pos.z) > 1.9){ p.tsDig = null; continue; }
+    p.vel.x *= 0.6; p.vel.z *= 0.6; p.face = Math.atan2(D.M.x - p.pos.x, D.M.z - p.pos.z); p.pushAnim = 0.2; D.t -= dt; if(near(p, 25) && Math.random() < dt*10) puff(D.M.x, 0.2, D.M.z, 1, 0xe8c27a, 0.1, 1.5);
+    if(D.t <= 0){ p.tsDig = null; tsDug(p, D.M); } } }
+function tsEnd(){ if(!ts) return; const al = players.filter(p => p.alive).sort((a, b) => (a.tsS || 0) - (b.tsS || 0) || Math.random() - 0.5), cut = Math.max(0, al.length - ts.keep);
+  al.slice(0, cut).forEach(p => eliminate(p, `Achou só ${p.tsS || 0} ponto${p.tsS === 1 ? '' : 's'} de tesouro`)); }
+const tsInfo = p => { if(!ts || !p || !p.alive) return ''; let d = 1e9; for(const M of ts.mounds) if(M.v > 0) d = Math.min(d, Math.hypot(M.x - p.pos.x, M.z - p.pos.z));
+  return `Tesouro ${p.tsS || 0} pts · Detector: ${d < 3.5 ? '🔥 QUENTE' : d < 8 ? '🌤️ morno' : '❄️ frio'} · F perto de um montinho cava · passam ${ts.keep}`; };
+function botTreasure(p, dt, inp){ if(!ts) return inp; if(p.tsDig) return inp; const sk = p.skill || 0.8;
+  if(!p.tsT || !ts.mounds.includes(p.tsT) || Math.random() < dt*0.15){ let best = null, bs = 1e9;
+    for(const M of ts.mounds){ const d = Math.hypot(M.x - p.pos.x, M.z - p.pos.z); if(d > 22) continue; let s = d + rand(0, 4);
+      if(M.v > 0 && M.seen && clock - M.seen < 4 && d < 14) s -= 6*sk; // viu o brilho
+      if(players.some(q => q !== p && q.tsDig && q.tsDig.M === M)) s += 8; if(s < bs){ bs = s; best = M; } }
+    p.tsT = best; }
+  const M = p.tsT; if(!M){ pqGo(p, inp, 0, 0, 0.6); return inp; }
+  const d = pqGo(p, inp, M.x, M.z, 1); if(d < 1.2 && p.pushCD <= 0){ inp.mx = inp.mz = 0; inp.push = true; }
   return inp; }
 
 // Guerra de Tomate: battle royale. Cada tomate tira vida, a zona fecha e quem zerar a vida sai
@@ -10359,7 +10482,7 @@ let earn = null;
 const newEarn = () => ({coins:0, xp:0, done:false, res:null});
 function reward(c, x){ if(!earn || earn.done) return; earn.coins += Math.round(c*[0.7, 1, 1.4][DIFF]); earn.xp += x; }
 function rec(k, t){ const old = SAVE.st[k]; if(!old || t < old){ SAVE.st[k] = Math.round(t*10)/10; if(old) say(`<b>Novo recorde!</b> ${t.toFixed(1)}s`, true); } }
-const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33];
+const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
 const ACH = [
   ['a1', 'Primeira coroa', 'Vença uma partida completa', () => st('crowns') >= 1, 50],
   ['a2', 'Tricampeão', 'Ganhe 3 coroas', () => st('crowns') >= 3, 150],
@@ -10679,7 +10802,7 @@ function stepPlayer(p, dt, inp){
   if(control && inp.dive){ const fx = Math.sin(p.face), fz = Math.cos(p.face); p.vel.x = fx*12; p.vel.z = fz*12; p.vel.y = p.grounded ? 2 : Math.max(p.vel.y, 1); p.dive = 0.6; p.grounded = false; sfxNear(p, 'dive'); if(!p.isBot) bump('dives'); }
   if(control && inp.push && p.pushCD <= 0) doPush(p);
   if(control && inp.item && p.power && R1.phase === 'play') usePower(p);
-  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && ![27, 28, 29, 30, 31, 32, 33].includes(round)) doGrab(p);
+  if(control && inp.grab && p.grabCD <= 0 && R1.phase === 'play' && ![27, 28, 29, 30, 31, 32, 33, 34, 35].includes(round)) doGrab(p);
   if(p.dive > 0 && (p.grounded || p.dive > 0.3)) p.dive -= dt;
   if(p.grounded && p.ground && p.ground.kind === 'seesaw') p.pos.x -= Math.sin(p.ground.ang)*11*dt; // escorrega pro lado mais baixo
   p.vel.y += GRAV*dt;
@@ -10700,6 +10823,7 @@ function doPush(p){
   if(round === 27 && pq){ pqPush(p); return; }
   if(round === 28 && dc){ dcPush(p); return; }
   if(round === 30 && bl){ blPush(p); return; }
+  if(round === 35 && ts && tsPush(p)) return;
   p.pushCD = 0.9; p.pushAnim = 0.25; const fx = Math.sin(p.face), fz = Math.cos(p.face);
   let any = false;
   for(const q of players){ if(q === p || !q.alive || q.dying > 0) continue;
@@ -10718,7 +10842,7 @@ function separate(){
 }
 
 // ---------- Bots ----------
-function botInput(p, dt){ const inp = botInput0(p, dt); if(![27, 28, 29, 30, 31, 32, 33].includes(round)) botPower(p, dt, inp); return inp; }
+function botInput(p, dt){ const inp = botInput0(p, dt); if(![27, 28, 29, 30, 31, 32, 33, 34, 35].includes(round)) botPower(p, dt, inp); return inp; }
 function botInput0(p, dt){
   const inp = {mx:0, mz:0, jump:false, dive:false, push:false};
   if(R1.phase !== 'play' || p.done || !p.alive) return inp;
@@ -10744,6 +10868,8 @@ function botInput0(p, dt){
   if(round === 31) return botRope(p, dt, inp);
   if(round === 32) return botSky(p, dt, inp);
   if(round === 33) return botRelay(p, dt, inp);
+  if(round === 34) return botMaze(p, dt, inp);
+  if(round === 35) return botTreasure(p, dt, inp);
   if(round === 20) return botShoot(p, dt, inp);
   if(round === 8) return botFruit(p, dt, inp);
   if(round === 4 || round === 5) return botTag(p, dt, inp);
@@ -10935,7 +11061,7 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   if(PTS){ const back = players.filter(p => !p.alive).length; players.forEach(p => { p.alive = true; p.elT = 0; }); if(back && stage) say(`<b>${back}</b> feijões voltaram pra essa prova`, true); }
   const alive = players.filter(p => p.alive); SZ = szFor(alive.length); LX = [0]; LW = 14; RBIG = round === 1 && (BIG || SZ === 2); setTiles([[0, 0]]); TUPS = TAG_UPS; SPOTF = null; setNests(12.5);
   if([7, 17, 18, 19, 25, 26, 27, 33].includes(round) && alive.length < 4){ round = 2; plan[stage] = 2; }
-  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; pqReset(); pq = null; l1Reset(); dc = null; lv = null; bl = null; l2Reset(); jr = null; pc = null; rl = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
+  ball = null; fut = null; mf = null; cb = null; qz = null; pb = null; pqReset(); pq = null; l1Reset(); dc = null; lv = null; bl = null; l2Reset(); jr = null; pc = null; rl = null; l3Reset(); lb = null; ts = null; fruits = []; R1.extra = false; eggs = []; players.forEach(p => p.egg = null);
   alive.forEach(p => { p.item = false; p.passCD = 0; p.done = false; p.place = 0; p.vel.set(0,0,0); p.dive = 0; p.stun = 0; p.dying = 0; p.m.g.visible = true; p.m.g.scale.setScalar(1); p.redPos = null; });
   players.filter(p => !p.alive).forEach(p => p.m.g.visible = false);
   rev = null; players.forEach(p => { p.rev = false; p.revWait = 0; p.revUsed = false; p.card = false; p.cardUsed = false; p.stT = 0; }); R1.finished = 0; R1.t = 0; curLook = lookFor(round); setDark(false); mingle = null; tug = null; paint = null; zones = []; shots = []; hearts = []; hpBars = []; brZone = null; zoneP = null; plane = null; loot = []; drops = []; cars = []; players.forEach(p => p.car = null);
@@ -10965,6 +11091,12 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   } else if(round === 22){
     setupTeams(alive, 2); buildFut(alive.length); R1.timeLeft = fut.A.t; futSpawn(alive);
     banner('Futebol Arena', `${youTeamTxt()} Chute com F, mergulhe na bola pra bater forte e pule pra cabecear. A bola sobe nas paredes curvas! Pise nos círculos laranja pra correr mais. O time com menos gols sai!`, 3800);
+  } else if(round === 34){
+    buildMaze(alive.length); R1.timeLeft = [90, 110, 130][SZ]; R1.finished = 0; lbSpawn(alive);
+    banner('Labirinto que Muda', `Ache o centro do labirinto: siga o feixe dourado! As paredes rosa e azul sobem e descem. Passam os ${lb.keep} primeiros.`, 3800);
+  } else if(round === 35){
+    buildTreasure(alive.length); R1.timeLeft = [60, 70, 80][SZ]; alive.forEach((p, k) => { const a = k/alive.length*Math.PI*2, r = 2.2 + (k % 3)*0.9; p.pos.set(Math.sin(a)*r, 0, Math.cos(a)*r); p.face = a; });
+    banner('Caça ao Tesouro', `F perto de um montinho de areia cava (fique parado). Tesouro +1, baú dourado +3. O detector diz se está quente ou frio. Passam ${ts.keep}.`, 3800);
   } else if(round === 31){
     buildRope(alive.length); R1.timeLeft = 150; jrSpawn(alive);
     banner('Pula-Corda Gigante', `A corda gira rente ao chão: pule quando ela chegar! Se pegar, você voa longe. Passam ${jr.keep}.`, 3600);
@@ -11088,6 +11220,8 @@ function endRound(){ stopRev(); players.forEach(p => p.revWait = 0);
   else if(round === 22) elimLowest(futScore, 'Seu time fez menos gols');
   else if(round === 27) pqEnd();
   else if(round === 32) pcEnd();
+  else if(round === 34) players.forEach(p => { if(p.alive && !p.done) eliminate(p, 'Não achou o centro do labirinto a tempo'); });
+  else if(round === 35) tsEnd();
   else if(round === 33) elimLowest(rlScore, 'Seu time chegou por último no revezamento');
   else if(round === 26){ players.forEach(p => { if(p.pbF) pbDrop(p); }); elimLowest(pbRank, pb && pb.score.a === pb.score.b ? 'Empate nas bandeiras: seu time ficou menos tempo com a bandeira do outro' : 'Seu time trouxe menos bandeiras'); }
   else if(round === 25) elimLowest(qzScore, 'Seu time ficou com menos gente na quadra');
@@ -11154,6 +11288,8 @@ function showResult(won){
     : round === 13 ? 'O vidro quebrou ou o tempo acabou na Ponte de Vidro. Dica: espere alguém testar a fileira da frente. Quando um vidro quebra, o outro é seguro.'
     : round === 14 ? 'Você ficou fora de uma sala com o número certo nas Salas. Dica: corra pra uma sala mais vazia assim que o número aparecer, e empurre quem sobrar (F).'
     : round === 15 ? 'O chão sumiu embaixo de você nos Blocos Caindo. Dica: não fique parado, fuja dos blocos piscando em vermelho e guarde um cantinho seguro.'
+    : round === 34 ? 'Não achou o centro a tempo. Dica: o feixe dourado mostra o meio, e quando as paredes piscam é porque vão subir.'
+    : round === 35 ? 'Pouco tesouro. Dica: olhe o detector (quente/frio) e corra pros montinhos que soltam brilho dourado.'
     : round === 31 ? 'A corda te jogou longe. Dica: fique longe da borda e pule um pouquinho antes da corda chegar.'
     : round === 32 ? 'Poucos pontos na descida. Dica: mire nos anéis logo abaixo de você, os dourados valem 3, e abra o paraquedas em cima do centro do alvo.'
     : round === 33 ? 'Seu time chegou por último. Dica: pule as barreiras sem parar e passe direto pela lama.'
@@ -11371,7 +11507,7 @@ const SONGS = {
   menu:{bpm:96, bass:[131,0,0,0,110,0,0,0,87,0,0,0,98,0,0,0], lead:[659,0,784,0,659,0,523,0,587,0,523,0,494,0,392,0], wave:'triangle', kick:[0,10], snare:[], soft:true},
   battle:{bpm:124, bass:[110,0,110,131,0,110,0,98,87,0,87,104,0,87,98,0], lead:[440,0,523,587,0,523,440,0,349,0,440,523,0,659,587,0], wave:'sawtooth', kick:[0,3,8,10], snare:[4,12], minor:true},
 };
-const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky', 28:'bounce', 29:'epic', 30:'hyper', 31:'bounce', 32:'epic', 33:'hyper'};
+const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky', 28:'bounce', 29:'epic', 30:'hyper', 31:'bounce', 32:'epic', 33:'hyper', 34:'sneaky', 35:'bounce'};
 let mStep = 0, mNext = 0, mTimer = null;
 const mKick = (w, d) => { tone(150, 0.16, 'sine', 0.5, 0.3, w, d); noise(0.02, 0.08, 3000, 0, 'highpass', 1, w, d); };
 const mSnare = (w, d) => { noise(0.14, 0.22, 1900, 1200, 'bandpass', 0.8, w, d); tone(190, 0.08, 'triangle', 0.12, 0.7, w, d); };
@@ -11527,6 +11663,8 @@ function updateHUD(){
   else if(round === 31){ $('hInfo').textContent = jrInfo(); }
   else if(round === 32){ $('hInfo').textContent = pcInfo(you()); }
   else if(round === 33){ $('hInfo').textContent = rlInfo(you()); }
+  else if(round === 34){ $('hInfo').textContent = lbInfo(you()); }
+  else if(round === 35){ $('hInfo').textContent = tsInfo(you()); }
   else if(round === 13){ $('hInfo').textContent = `Atravessaram ${players.filter(p => p.alive && p.done).length} · Vivos ${alive}`; }
   else if(round === 14 && mingle){ $('hInfo').textContent = mingle.state === 'run' ? `Grupos de ${mingle.n}! · Vivos ${alive}` : `Vivos ${alive} · Rodada ${Math.min(mingle.cycle + 1, mingle.cycles)} de ${mingle.cycles}`; }
   else if(round === 5){ $('hInfo').textContent = `Com rabo ${players.filter(p => p.alive && p.item).length}/${alive}` + (twoP ? humans().filter(h => h.alive).map(h => ` · ${h.name} ${h.item ? 'tem' : 'NÃO tem'}`).join('') : you().alive ? (you().item ? ' · você tem' : ' · você NÃO tem') : ''); }
@@ -11560,7 +11698,7 @@ function tick(dt){
   R1.t += dt;
   if(R1.phase === 'intro' && R1.t > 2.8){ R1.phase = 'count'; R1.t = 0; countN = 4; }
   if(R1.phase === 'count'){ const n = 3 - Math.floor(R1.t); if(n !== countN && n >= 1){ countN = n; banner(String(n), '', 800); sfx('beep'); } if(R1.t >= 3){ R1.phase = 'play'; R1.t = 0; banner('Vai!', '', 700); sfx('go'); if(round === 16){ setDark(true); banner('Apagão!', 'Empurre e não caia', 1200); } if(round === 2){ lightT = 0; light = 'green'; } } }
-  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 27) updatePique(dt); if(round === 28) updateChairs(dt); if(round === 29) updateLava(dt); if(round === 30) updateBalloons(dt); if(round === 31) updateRope(dt); if(round === 32) updateSky(dt); if(round === 33) updateRelay(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
+  updateWorld(dt); updateObs(dt); updateDeco(); if(round === 7) updateEggs(dt); if(round === 17) updateTug(dt); if(round === 18) updatePaint(); if(round === 19) updateZones(dt); if(round === 22) updateFut(dt); if(round === 23) updateMem(dt); if(round === 24) updateBombs(dt); if(round === 25) updateQueimada(dt); if(round === 26) updateFlags(dt); if(round === 27) updatePique(dt); if(round === 28) updateChairs(dt); if(round === 29) updateLava(dt); if(round === 30) updateBalloons(dt); if(round === 31) updateRope(dt); if(round === 32) updateSky(dt); if(round === 33) updateRelay(dt); if(round === 34) updateMaze(dt); if(round === 35) updateTreasure(dt); if(round === 20){ updateShoot(dt); if(BIG && R1.phase === 'play') updateRev(dt); } updateFruits(dt); if(round === 10) updateDoors(dt); updateItems(dt); if(round === 13) updateGlass(); if(round === 14) updateMingle(dt); if(round === 15) updateDrop(dt);
   if(R1.phase === 'play'){
     R1.timeLeft -= dt; if(round === 2) updateLight(dt);
     if(round === 4){
@@ -11598,12 +11736,12 @@ function tick(dt){
       if(p.grounded && p.ground && p.ground.kind !== 'mover' && p.ground.kind !== 'lift'){ if(LX.length > 1) p.lx = laneAt(p.pos.x); for(const [th, rz, rx, ry] of course.cps){ if(p.pos.z > th){ if(rz > p.cp.z){ p.cp.set(0, ry || 0, rz); p.cpX = rx; } break; } } }
       if(p.pos.y < -5){ if(!p.isBot || Math.random() < (players.length > 16 ? 0.05 : 0.3)) say(`${nm(p)} caiu na água!`, !p.isBot); DBG.falls[Math.round(p.pos.z/4)*4] = (DBG.falls[Math.round(p.pos.z/4)*4]||0) + 1; { const g = round === 6 ? solidAt(p.lx || 0, p.cp.z + 0.6, 0, 2) : null; p.pos.set((g && g.kind === 'seesaw' ? g.cx : RBIG ? RTX[raceTrack(p)] : (p.lx || 0)) + rand(-p.cpX, p.cpX), p.cp.y + 0.5, p.cp.z + rand(-0.5, 0.5)); } p.vel.set(0, 0, 0); p.stun = 0; p.dive = 0; if(p.isBot && Math.random() < 0.4) p.route = null; if(!p.isBot){ sfx('dive'); bump('falls'); } }
       if(!p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) { finishPlayer(p); if(R1.finished >= R1.quota) endRound(); }
-    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33].includes(round)){
+    } else if([3, 7, 8, 13, 14, 15, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35].includes(round)){
       if(p.pos.y < -4){ p.alive = false; p.elT = R1.t; elimOrder.push(p); say(`${nm(p)} caiu e está fora!`, true); p.m.g.visible = false; sfxNear(p, 'zap', 40);
         if(!p.isBot){ bump('falls'); banner(tag(p) + 'Caiu!', `${twoP ? p.name : 'Você'} foi parar na água`, 2000); sfx('lose'); if(!anyHumanAlive()) setTimeout(() => showResult(false), 2200); } }
       if(round === 13 && p.alive && !p.done && R1.phase === 'play' && p.pos.z > course.finish && p.grounded) finishPlayer(p);
       if(R1.phase === 'play' && round === 13 && players.every(q => !q.alive || q.done)) endRound();
-      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22, 27, 28, 29, 30, 31, 32, 33].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
+      else if(R1.phase === 'play' && ![7, 13, 17, 18, 19, 20, 22, 27, 28, 29, 30, 31, 32, 33, 34, 35].includes(round) && players.filter(q => q.alive).length <= 1) endRound();
     } else {
       if(!p.done && p.pos.z > 130){ p.done = true; if(!p.isBot){ banner(tag(p) + 'Passou!', 'Agora é só esperar', 1600); sfx('win'); reward(8, 20); rec('t2', R1.t); } }
       if(R1.phase === 'play' && players.every(q => !q.alive || q.done)) endRound();
@@ -11758,7 +11896,7 @@ function aim(c, me, dt){
     const fpq = br && fpOn(me), aE = fpq ? Math.max(c.adsK, c.scK) : c.adsK, dist = br ? camDist + (3.3 - camDist)*aE + ((fpq ? 0.02 : 0.22) - 3.3)*c.scK : camDist;
     const pe = br ? c.pe : c.pitch, yE = br ? c.yE : c.yaw, tgt = new V3(lk.x + Math.sin(yE)*Math.cos(pe)*dist, lk.y + Math.sin(pe)*dist, lk.z + Math.cos(yE)*Math.cos(pe)*dist);
     if(tgt.y < (TWR() ? -6 : -3)) tgt.y = TWR() ? -6 : -3;
-    if(round === 4 || round === 5 || round === 20 || round === 27){ // arena com andares: aproxima a câmera se tiver plataforma no caminho
+    if(round === 4 || round === 5 || round === 20 || round === 27 || round === 34){ // arena com andares: aproxima a câmera se tiver plataforma no caminho
       const d = tgt.clone().sub(lk), q = new V3();
       for(let k=0.12; k<=1; k+=0.08){ q.copy(lk).addScaledVector(d, k);
         if(solidsAt(q.x, q.z).some(b => b.mesh && b.kind !== 'ramp' && q.x > b.min.x - 0.25 && q.x < b.max.x + 0.25 && q.y > b.min.y - 0.35 && q.y < b.max.y + 0.35 && q.z > b.min.z - 0.25 && q.z < b.max.z + 0.25)){ tgt.copy(lk).addScaledVector(d, Math.max(0.12, k - 0.1)); break; } } }
@@ -11832,6 +11970,8 @@ const MAPS = [
   [24, 'Bombas caem do céu: fuja dos anéis vermelhos. A explosão arremessa e racha os pisos', '#ff6f3c'],
   [25, 'Em times: queimada. Pegue a bola e queime os adversários. Do cemitério dá pra voltar', '#3ec7ff'],
   [26, 'Em times: pegue a bandeira do outro time e leve pra sua base. No seu lado, F pega o invasor', '#38d16a'],
+  [34, 'Labirinto que muda: ache o centro seguindo o feixe dourado. Paredes sobem e descem!', '#b48cff'],
+  [35, 'Caça ao tesouro: F perto de um montinho de areia cava. Olhe o detector: quente ou frio', '#ffb23f'],
   [31, 'A corda gira rente ao chão: pule na hora certa ou voa longe', '#ffb23f'],
   [32, 'Pule lá do alto, passe pelos anéis e pouse no centro do alvo (Espaço abre o paraquedas)', '#3ec7ff'],
   [33, 'Revezamento: leve o bastão até o próximo do seu time pulando as barreiras', '#2cc597'],
@@ -11843,9 +11983,9 @@ const MAPS = [
   [20, 'Battle royale: jogue tomates, a zona fecha e quem zerar a vida sai', '#ff3b4e'],
   [3, 'A final: seja o último em cima da arena', '#ffd23f'],
 ];
-const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 28:'surv', 29:'surv', 30:'surv', 31:'surv', 32:'surv', 33:'team', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
+const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 28:'surv', 29:'surv', 30:'surv', 31:'surv', 32:'surv', 33:'team', 34:'surv', 35:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
 const CAT_NAME = {race:'Corrida', surv:'Sobrevivência', team:'Equipe', crab:'Crab Game', final:'Final'};
-const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈', 28:'🪑', 29:'🌋', 30:'🎈', 31:'🪢', 32:'🪂', 33:'🏃'};
+const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈', 28:'🪑', 29:'🌋', 30:'🎈', 31:'🪢', 32:'🪂', 33:'🏃', 34:'🌀', 35:'💰'};
 function renderMaps(cat='all'){
   $('maps').innerHTML = '';
   MAPS.filter(([id]) => !ROUND_OFF.includes(id)).filter(([id]) => cat === 'all' || (cat === 'final' ? FINALS.includes(id) : MAP_CAT[id] === cat)).forEach(([id, desc, col]) => { const b = document.createElement('button'); b.className = 'map' + (cat === 'final' || id === 3 ? ' final' : ''); b.id = 'map-' + id;
