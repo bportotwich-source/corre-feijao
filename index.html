@@ -9458,8 +9458,8 @@ function leanStep(p, dt){ const ok = p.i === 0 && !twoP && p.alive && !p.down &&
 function leanV(p, h){ const L = p.leanK || 0, o = Math.sin(L*LEAN_A)*h; return new V3(-Math.cos(p.face)*o, -(1 - Math.cos(L*LEAN_A))*h, Math.sin(p.face)*o); }
 function leanD(q, P){ if(!q.leanK) return Math.hypot(q.pos.x - P.x, q.pos.z - P.z); const v = leanV(q, Math.max(0, P.y - q.pos.y)); return Math.hypot(q.pos.x + v.x - P.x, q.pos.z + v.z - P.z); }
 function aimDir(p, pt, w){
-  const v = w ? w.v : SHOT_V, gr = w ? w.g : SHOT_G, from = p.pos.clone().add(new V3(0, 1.32, 0)).add(leanV(p, 1.32)), d = pt.clone().sub(from), dh = Math.hypot(d.x, d.z), dg = w && w.drag, t = dg ? (Math.exp(Math.min(6, dg*dh/v)) - 1)/dg : dh/v;
-  if(!(w && w.hs)) d.y -= 0.5*gr*t*t; return d.normalize();
+  const v = w ? w.v : SHOT_V, gr = w ? w.g : SHOT_G, from = p.pos.clone().add(new V3(0, 1.32, 0)).add(leanV(p, 1.32)), d = pt.clone().sub(from), dh = Math.hypot(d.x, d.z), dg = w && w.drag, zr = !p.isBot && w && !w.boom && !w.flame ? Math.min(dh, w.rng >= 50 ? 100 : 50) : dh, tz = dg ? (Math.exp(Math.min(6, dg*zr/v)) - 1)/dg : zr/v;
+  if(!(w && w.hs)) d.y -= 0.5*gr*tz*tz*(zr > 0.01 ? dh/zr : 1); return d.normalize(); // até a distância de zeragem acerta a cruz; depois a bala cai
 }
 function crossRay(c){
   const f = (c.lk || c.look).clone().sub(c.pos).normalize(), r = new V3().crossVectors(f, new V3(0, 1, 0)).normalize(), u = new V3().crossVectors(r, f);
@@ -12409,7 +12409,7 @@ function reticleTex(kind){ const c = document.createElement('canvas'); c.width =
   const vig = (a, b) => { const v = g.createRadialGradient(m, m, a, m, m, 256); v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(0.7, 'rgba(8,4,16,.45)'); v.addColorStop(1, 'rgba(8,4,16,.95)'); g.fillStyle = v; g.fillRect(0, 0, 512, 512); };
   if(kind === 'lpvo' || kind === 'lpvoz'){ const z = kind === 'lpvoz'; g.strokeStyle = '#120a1e'; g.lineWidth = z ? 2 : 1.6; g.beginPath(); g.moveTo(0, m); g.lineTo(512, m); g.moveTo(m, 0); g.lineTo(m, 512); g.stroke();
     g.lineWidth = 8; [[0, m, 170, m], [342, m, 512, m], [m, 342, m, 512]].forEach(([a, b, c2, d]) => { g.beginPath(); g.moveTo(a, b); g.lineTo(c2, d); g.stroke(); });
-    g.strokeStyle = '#ff2a3a'; g.shadowColor = '#ff3040'; g.shadowBlur = z ? 4 : 12; g.lineWidth = z ? 2.5 : 5; g.beginPath(); g.arc(m, m, z ? 22 : 64, 0, 7); g.stroke(); g.fillStyle = '#ff2a3a'; g.beginPath(); g.arc(m, m, z ? 3 : 6, 0, 7); g.fill(); g.shadowBlur = 0;
+    g.strokeStyle = '#ff2a3a'; g.shadowColor = '#ff3040'; g.shadowBlur = z ? 3 : 5; g.lineWidth = z ? 1.6 : 2.5; g.beginPath(); g.arc(m, m, z ? 12 : 28, 0, 7); g.stroke(); g.fillStyle = '#ff2a3a'; g.beginPath(); g.arc(m, m, z ? 2 : 3.5, 0, 7); g.fill(); g.shadowBlur = 0;
     if(z){ g.strokeStyle = '#120a1e'; g.lineWidth = 2; for(let i=1;i<5;i++){ const w = i % 2 ? 14 : 9; g.beginPath(); g.moveTo(m - w, m + 40 + i*24); g.lineTo(m + w, m + 40 + i*24); g.stroke(); } }
     vig(z ? 180 : 215); }
   else if(kind === 'rd3xz'){ g.fillStyle = '#ff2a3a'; g.shadowColor = '#ff4050'; g.shadowBlur = 6; g.beginPath(); g.arc(m, m, 4, 0, 7); g.fill(); g.fillStyle = '#ffd0d4'; g.shadowBlur = 0; g.beginPath(); g.arc(m, m, 1.5, 0, 7); g.fill(); vig(190); }
