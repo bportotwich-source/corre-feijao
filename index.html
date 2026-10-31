@@ -4851,7 +4851,7 @@ const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
-const lookFor = r => BIG && r === 20 ? ({vale:'dia', lego:'manha', ilha:'tarde', serra:'manha', feijoada:'dia', mata:'manha', front:'tarde', metro:'tarde'})[BIGMAP] || 'dia' : LOOK_OF[r] || 'dia';
+let lookFor = r => BIG && r === 20 ? ({vale:'dia', lego:'manha', ilha:'tarde', serra:'manha', feijoada:'dia', mata:'manha', front:'tarde', metro:'tarde'})[BIGMAP] || 'dia' : LOOK_OF[r] || 'dia';
 function setDark(on){ farIsles.visible = !on; birds.forEach(o => o.b.visible = !on); if(!on){ sky.visible = true; applyLook(curLook); return; } hemiL.intensity = 0.07; sun.intensity = 0.05; scene.background.setHex(0x0b0820); scene.fog.color.setHex(0x0b0820); sky.visible = false; }
 function buildDark(){
   clearWorld();
@@ -7177,6 +7177,7 @@ function cdGrid(o){ let s = o.seed || 9191; const sr = () => (s = s*16807 % 2147
     // postes na beira da rua, a cada ~14 m, alternando os lados
     for(let u = a0 + 6, k = 0; u < a1 - 3; u += 14, k++){ const sd = (k + li + j) % 2 ? 1 : -1, v = c + sd*(wc/2 - 0.35); lamps.push(t ? [u, v, sd, 1] : [v, u, sd, 0]); } } });
   lines(LX, LZ, 0); lines(LZ, LX, 1);
+  if(typeof vvCity === 'function') vvCity(asf, lamps, cx, cz, Y);
   const W = r => [cx + r[0], cx + r[1], cz + r[2], cz + r[3]], Ya = Y + 0.03, pav = asf.map(W); pav.forEach(r => cdMark(...r)); cdQuads(pav, Ya, 0x5f5b58);
   cdQuads(mk.map(W), Ya + 0.006, 0xf2e6c0); cdQuads(cw.map(W), Ya + 0.008, 0xf4f2ec);
   // postes (2 malhas instanciadas) + colisão fina
@@ -12659,7 +12660,7 @@ addEventListener('blur', applyAudio); addEventListener('focus', applyAudio);
 const SET_UI = {
   video:[['full', 'Modo de tela', 'seg', [[false, 'Janela'], [true, 'Tela cheia']]], ['quality', 'Qualidade gráfica', 'seg', [[0, 'Baixa'], [1, 'Média'], [2, 'Alta'], [3, 'Ultra']]],
     ['scale', 'Escala de renderização', 'range', [50, 100, 5, '%']], ['autoRes', 'Resolução automática (baixa um pouco quando o FPS cai)', 'tog'], ['shadows', 'Sombras', 'tog'], ['toon', 'Visual de desenho (contorno e luz em faixas)', 'tog'], ['fov', 'Campo de visão', 'range', [50, 90, 1, '°']],
-    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['occ', 'Deixar transparente o que cobre o feijão', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
+    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['occ', 'Deixar transparente o que cobre o feijão', 'tog'], ['clima', 'Hora do dia e clima sorteados (chuva, neblina, neve)', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
   audio:[['vol', 'Volume geral', 'range', [0, 100, 1, '%']], ['music', 'Música', 'range', [0, 100, 1, '%']], ['sfx', 'Efeitos', 'range', [0, 100, 1, '%']], ['muteBlur', 'Silenciar quando a janela perde o foco', 'tog']],
   ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['fpp', 'Modo 100 em primeira pessoa (tecla P troca na partida)', 'tog'], ['keys']],
   game:[['name', 'Nome do jogador', 'text'], ['cross', 'Mira (Modo 100 e Guerra de Tomate)', 'seg', [['cruz', 'Cruz'], ['ponto', 'Ponto'], ['circulo', 'Círculo']]], ['hudTheme', 'Cor da HUD do Modo 100', 'seg', [['tatico', 'Tático'], ['creme', 'Creme'], ['roxo', 'Roxo']]], ['autoQ', 'Tecla 5 escolhe a melhor cura quando o marcado acaba', 'tog'], ['tips', 'Mensagens no canto (quem caiu, quem pegou o quê)', 'tog'], ['lang', 'Idioma', 'seg', [['pt', 'Português (Brasil)']]], ['wipe']],
@@ -14354,6 +14355,439 @@ function fjEngTick(){ if(!ac || !sfxGain) return; fjEngInit(); const now = ac.cu
 // passar o mouse por cima de um botão do menu: tique bem baixinho
 document.addEventListener('mouseover', e => { const b = e.target.closest && e.target.closest('button, .map, [data-sq], .tab'); if(b === FJS.hov) return; FJS.hov = b; if(!b || !ac) return;
   const t = performance.now(); if(t - FJS.uiT < 45) return; FJS.uiT = t; playSnd('hover', {ui:true}); }, true);
+
+// ===== Jogo mais vivo, lote 1 (pedido do Bruno 31/10): vento nas árvores, folhas no ar, pássaros que levantam voo, borboletas,
+// peixes pulando na água e poeira/partículas (passos, pouso, pneus, hélice, respingo, fumaça da fogueira, impacto dos tiros, explosão).
+// Tudo junto custa ~6 chamadas de desenho: partículas num THREE.Points só, bichos e folhas em InstancedMesh.
+const VV = {t:0, U:{uWT:{value:0}}, shots:[], ok:true};
+const vvR = (a, b) => a + Math.random()*(b - a);
+const vvLive = () => TER && BIG && R1.phase !== 'menu' && R1.phase !== 'podium';
+
+// ---------- 1. Vento: árvores e moitas balançam (copa inteira devagar + folhas tremendo), sombra junto ----------
+function vvWind(m, depth){ if(!m || m.userData.vv) return; m.userData.vv = 1; const prev = m.onBeforeCompile, key = m.customProgramCacheKey ? m.customProgramCacheKey() : '';
+  m.onBeforeCompile = (sh, r) => { if(prev) prev.call(m, sh, r); sh.uniforms.uWT = VV.U.uWT;
+    sh.vertexShader = 'uniform float uWT;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+#ifdef USE_INSTANCING
+  vec3 vvP = instanceMatrix[3].xyz;
+#else
+  vec3 vvP = vec3(0.0);
+#endif
+  float vvH = max(0.0, position.y - 1.2), vvG = 0.55 + 0.45*sin(uWT*0.33 + vvP.x*0.012 + vvP.z*0.008), vvA = uWT*1.15 + vvP.x*0.11 + vvP.z*0.07;
+  float vvB = pow(vvH, 1.6)*0.0048*vvG;
+  transformed.x += (sin(vvA)*0.7 + 0.45)*vvB; transformed.z += cos(vvA*0.83)*0.55*vvB;
+#ifdef USE_COLOR
+  float vvL = smoothstep(1.03, 1.18, color.g/max(color.r, 0.01));
+  transformed += vec3(sin(uWT*5.3 + position.x*3.1 + position.y*2.3), sin(uWT*4.4 + position.z*3.3)*0.6, cos(uWT*4.9 + position.y*2.9))*0.045*vvL*min(vvH*0.5, 1.0)*(0.5 + vvG);
+#endif
+`); };
+  m.customProgramCacheKey = () => key + 'vvW'; m.needsUpdate = true; }
+function vvWindInit(){ if(VV.wind || typeof ARV2 === 'undefined' || !ARV2.ok || !ARV2.mat) return; VV.wind = true; vvWind(ARV2.mat); vvWind(ARV2.dep, true); }
+
+// ---------- partículas: um Points só, sprite redondo e macio, cada uma com cor, tamanho, vida, gravidade e arrasto ----------
+const VP = {N:900, n:0, i:0};
+(function(){ const N = VP.N, g = new THREE.BufferGeometry();
+  VP.pos = new Float32Array(N*3); VP.col = new Float32Array(N*3); VP.sz = new Float32Array(N); VP.al = new Float32Array(N);
+  VP.v = new Float32Array(N*3); VP.life = new Float32Array(N); VP.max = new Float32Array(N); VP.s0 = new Float32Array(N); VP.s1 = new Float32Array(N); VP.a0 = new Float32Array(N); VP.gr = new Float32Array(N); VP.dr = new Float32Array(N);
+  g.setAttribute('position', new THREE.BufferAttribute(VP.pos, 3).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('color', new THREE.BufferAttribute(VP.col, 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('sz', new THREE.BufferAttribute(VP.sz, 1).setUsage(THREE.DynamicDrawUsage)); g.setAttribute('al', new THREE.BufferAttribute(VP.al, 1).setUsage(THREE.DynamicDrawUsage));
+  const m = new THREE.ShaderMaterial({transparent:true, depthWrite:false, vertexColors:true, uniforms:{uH:{value:600}, fogColor:{value:new THREE.Color()}, fogNear:{value:60}, fogFar:{value:160}},
+    vertexShader:`attribute float sz; attribute float al; varying vec3 vC; varying float vA; varying float vF; uniform float uH; uniform float fogNear; uniform float fogFar;
+      void main(){ vC = color; vA = al; vec4 mv = modelViewMatrix*vec4(position, 1.0); gl_Position = projectionMatrix*mv; gl_PointSize = al > 0.0 ? sz*uH/max(0.1, -mv.z) : 0.0; vF = smoothstep(fogNear, fogFar, -mv.z); }`,
+    fragmentShader:`uniform vec3 fogColor; varying vec3 vC; varying float vA; varying float vF;
+      void main(){ vec2 q = gl_PointCoord - 0.5; float d = dot(q, q)*4.0; if(d > 1.0) discard; float a = vA*(1.0 - d)*(1.0 - d*0.3); gl_FragColor = vec4(mix(vC, fogColor, vF), a); }`});
+  const pts = new THREE.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 5; VP.g = g; VP.m = m; VP.o = pts; scene.add(pts); })();
+const vvC = new THREE.Color();
+// x,y,z posição; vx,vy,vz velocidade; vida (s); tamanho inicial e final (m); cor; opacidade; gravidade; arrasto
+function vvEmit(x, y, z, vx, vy, vz, life, s0, s1, col, a0, gr, dr){ const i = VP.i; VP.i = (VP.i + 1) % VP.N; const k = i*3;
+  VP.pos[k] = x; VP.pos[k + 1] = y; VP.pos[k + 2] = z; VP.v[k] = vx; VP.v[k + 1] = vy; VP.v[k + 2] = vz; vvC.setHex(col); VP.col[k] = vvC.r; VP.col[k + 1] = vvC.g; VP.col[k + 2] = vvC.b;
+  VP.life[i] = 0; VP.max[i] = life; VP.s0[i] = s0; VP.s1[i] = s1; VP.a0[i] = a0; VP.gr[i] = gr || 0; VP.dr[i] = dr || 0; VP.al[i] = a0; VP.sz[i] = s0; }
+function vvParts(dt){ const P = VP.pos, V = VP.v; let any = false;
+  for(let i = 0; i < VP.N; i++){ if(VP.al[i] <= 0) continue; any = true; const L = (VP.life[i] += dt), u = L/VP.max[i]; if(u >= 1){ VP.al[i] = 0; continue; }
+    const k = i*3, d = Math.max(0, 1 - VP.dr[i]*dt); V[k] *= d; V[k + 2] *= d; V[k + 1] = V[k + 1]*d - VP.gr[i]*dt;
+    P[k] += V[k]*dt; P[k + 1] += V[k + 1]*dt; P[k + 2] += V[k + 2]*dt;
+    VP.sz[i] = VP.s0[i] + (VP.s1[i] - VP.s0[i])*Math.sqrt(u); VP.al[i] = Math.max(0.001, VP.a0[i]*(u < 0.15 ? u/0.15 : 1 - (u - 0.15)/0.85)); }
+  VP.o.visible = any; if(!any) return;
+  const m = VP.m.uniforms; m.uH.value = renderer.domElement.height/2/Math.tan(camera.fov*Math.PI/360);
+  if(scene.fog){ m.fogColor.value.copy(scene.fog.color); m.fogNear.value = scene.fog.near; m.fogFar.value = scene.fog.far; }
+  for(const k of ['position', 'color', 'sz', 'al']) VP.g.attributes[k].needsUpdate = true; }
+// cor da poeira pelo piso
+const VV_DUST = {g:0xb7a27a, a:0xe6d3a3, s:0xf4f8ff, h:0xbab4ab, w:0xffffff, p:0xd8c9a8};
+function vvDust(x, y, z, n, spd, sz, S, up){ const c = VV_DUST[S] || VV_DUST.g; for(let i = 0; i < n; i++){ const a = Math.random()*6.283, s = spd*vvR(0.4, 1);
+    vvEmit(x + vvR(-0.2, 0.2), y + vvR(0.02, 0.15), z + vvR(-0.2, 0.2), Math.cos(a)*s, vvR(0.2, 1)*(up || 0.6), Math.sin(a)*s, vvR(0.6, 1.1), sz*0.6, sz*vvR(1.6, 2.4), c, S === 's' ? 0.7 : 0.45, -0.15, 2.2); } }
+function vvSplash(x, y, z, n, k){ for(let i = 0; i < n; i++){ const a = Math.random()*6.283, s = vvR(0.5, 2.2)*k;
+    vvEmit(x, y + 0.05, z, Math.cos(a)*s, vvR(2.5, 5)*k, Math.sin(a)*s, vvR(0.5, 0.8), 0.07*k + 0.03, 0.05, 0xf4fbff, 0.85, 14, 0.5); }
+  for(let i = 0; i < n/2; i++){ const a = Math.random()*6.283; vvEmit(x + Math.cos(a)*0.3, y + 0.05, z + Math.sin(a)*0.3, Math.cos(a)*1.4*k, 0.15, Math.sin(a)*1.4*k, 0.9, 0.2*k, 0.6*k, 0xe8f6ff, 0.45, 0, 2.5); } }
+const vvSurf = (x, y, z) => typeof fjSurfAt === 'function' ? fjSurfAt(x, y, z) : 'g';
+function vvNearCam(x, y, z, r){ const c = camera.position, dx = x - c.x, dy = y - c.y, dz = z - c.z; return dx*dx + dy*dy + dz*dz < r*r; }
+
+// passos correndo, pouso forte, entrar na água, nadar
+function vvPlayers(dt){ for(const p of players){ if(!p.alive || !p.pos || !vvNearCam(p.pos.x, p.pos.y, p.pos.z, 40)){ if(p) p.vvG = p.grounded; continue; }
+    const S = vvSurf(p.pos.x, p.pos.y, p.pos.z), hv = Math.hypot(p.vel.x, p.vel.z), vy0 = p.vvVy || 0;
+    if(p.grounded && !p.car && !p.ride && S !== 'h'){
+      if(p.vvG === false && vy0 < -7.5) vvDust(p.pos.x, p.pos.y, p.pos.z, Math.min(22, 6 + (-vy0 - 7)*1.4), 2.2 + (-vy0 - 7)*0.12, 0.35, S, 0.5);
+      if(hv > 6.5 && (p.stance || 0) < 2){ p.vvT = (p.vvT || 0) - dt*hv; if(p.vvT <= 0){ p.vvT = 3.2; vvDust(p.pos.x - p.vel.x*0.04, p.pos.y, p.pos.z - p.vel.z*0.04, p.slideT > 0 ? 5 : 2, 0.6, 0.22, S, 0.5); } } }
+    if(TER && typeof FJ_WL === 'number'){ const wet = p.pos.y < FJ_WL + 0.05 && TER.h(p.pos.x, p.pos.z) < FJ_WL - 0.1;
+      if(wet && p.vvW === false && vy0 < -4) vvSplash(p.pos.x, FJ_WL, p.pos.z, 18, Math.min(1.6, 0.6 - vy0*0.05));
+      if(wet && hv > 1.5){ p.vvS = (p.vvS || 0) - dt*hv; if(p.vvS <= 0){ p.vvS = 2.2; vvEmit(p.pos.x + vvR(-0.3, 0.3), FJ_WL + 0.05, p.pos.z + vvR(-0.3, 0.3), 0, 0.05, 0, 1.2, 0.3, 1.3, 0xeaf7ff, 0.4, 0, 0); } }
+      p.vvW = wet; }
+    p.vvG = p.grounded; p.vvVy = p.vel.y; } }
+// trator e jipe levantam poeira das rodas, lancha joga água, helicóptero perto do chão espalha poeira em roda
+function vvCars(dt){ if(typeof cars === 'undefined') return; for(const c of cars){ if(c.dead || !c.m || !vvNearCam(c.x, c.y || 0, c.z, 70)) continue;
+    const sp = c._vvx === undefined ? 0 : Math.hypot(c.x - c._vvx, c.z - c._vvz)/Math.max(dt, 1e-3); c._vvx = c.x; c._vvz = c.z; const fx = Math.sin(c.face || 0), fz = Math.cos(c.face || 0);
+    if(c.heli){ const gy = typeof gY === 'function' ? gY(c.x, c.z) : 0, h = (c.y || 0) - gy; if(!(c.driver || h > 1.5) || h > 14) continue; const S = vvSurf(c.x, gy + 0.05, c.z), n = h < 6 ? 3 : 1;
+      for(let i = 0; i < n; i++){ const a = Math.random()*6.283, r = vvR(1, 4); if(S === 'w') vvEmit(c.x + Math.cos(a)*r, gy + 0.1, c.z + Math.sin(a)*r, Math.cos(a)*7, 0.6, Math.sin(a)*7, 0.9, 0.2, 0.9, 0xf2fbff, 0.5, 0, 1.6);
+        else vvEmit(c.x + Math.cos(a)*r, gy + 0.15, c.z + Math.sin(a)*r, Math.cos(a)*8, vvR(0.3, 1.2), Math.sin(a)*8, vvR(0.8, 1.3), 0.35, 1.4, VV_DUST[S] || VV_DUST.g, 0.4, 0, 1.8); } continue; }
+    if(sp < 3) continue; c.vvT = (c.vvT || 0) - dt*sp; if(c.vvT > 0) continue; c.vvT = c.boat ? 1.4 : 2.2;
+    if(c.boat){ for(const s of [-1, 1]) vvEmit(c.x - fx*1.6 + fz*s*0.9, FJ_WL + 0.1, c.z - fz*1.6 - fx*s*0.9, -fx*2 + fz*s*1.5, vvR(1, 2.4), -fz*2 - fx*s*1.5, 0.8, 0.15, 0.8, 0xf4fbff, 0.7, 5, 1.2); continue; }
+    const S = vvSurf(c.x, (c.y || 0) + 0.05, c.z); if(S === 'h') continue;
+    for(const s of [-1, 1]) vvEmit(c.x - fx*1.4 + fz*s*0.8, (c.y || 0) + 0.2, c.z - fz*1.4 - fx*s*0.8, -fx*1.2 + vvR(-0.4, 0.4), vvR(0.4, 1), -fz*1.2 + vvR(-0.4, 0.4), vvR(1, 1.5), 0.35, vvR(1.2, 1.8), VV_DUST[S] || VV_DUST.g, 0.45, -0.1, 1.2); } }
+// fumaça subindo das fogueiras
+function vvSmoke(dt){ if(!TER || typeof FJ_LIFE === 'undefined') return; VV.smT = (VV.smT || 0) - dt; if(VV.smT > 0) return; VV.smT = 0.12;
+  for(const L of FJ_LIFE){ if(L.k !== 'fire' || !L.f || !vvNearCam(L.f.position.x, L.y, L.f.position.z, 90)) continue;
+    vvEmit(L.f.position.x + vvR(-0.15, 0.15), L.y + 1.1, L.f.position.z + vvR(-0.15, 0.15), 0.35 + vvR(-0.1, 0.2), vvR(1.1, 1.6), vvR(-0.15, 0.15), vvR(3, 4.5), 0.25, 1.6, 0x8d8a86, 0.35, -0.05, 0.1);
+    if(Math.random() < 0.4) vvEmit(L.f.position.x, L.y + 0.7, L.f.position.z, vvR(-0.3, 0.3), vvR(1.5, 2.6), vvR(-0.3, 0.3), 0.8, 0.05, 0.02, 0xffb347, 1, -0.2, 0.5); } }
+// impacto do tiro pelo piso: terra, areia e neve espirram; água dá respingo; chão duro dá faísca e poeira
+function vvImpact(pos){ const S = vvSurf(pos.x, pos.y - 0.3, pos.z);
+  if(S === 'w'){ vvSplash(pos.x, typeof FJ_WL === 'number' && TER ? FJ_WL : pos.y, pos.z, 8, 0.6); return; }
+  if(S === 'h'){ for(let i = 0; i < 5; i++) vvEmit(pos.x, pos.y + 0.05, pos.z, vvR(-3, 3), vvR(1, 4), vvR(-3, 3), vvR(0.15, 0.3), 0.06, 0.02, 0xffd27a, 1, 9, 0.5); vvDust(pos.x, pos.y - 0.1, pos.z, 3, 0.8, 0.18, 'h', 0.8); return; }
+  const c = VV_DUST[S] || VV_DUST.g; for(let i = 0; i < 6; i++) vvEmit(pos.x, pos.y, pos.z, vvR(-1.2, 1.2), vvR(2, 4.5), vvR(-1.2, 1.2), vvR(0.4, 0.7), 0.09, 0.07, S === 'g' ? 0x6b5236 : c, 0.95, 12, 0.3);
+  vvDust(pos.x, pos.y - 0.1, pos.z, 4, 0.9, 0.22, S, 1.2); }
+{ const _sa = sfxAt; sfxAt = function(pos, k, range){ try{ if(k === 'splat' && BIG && pos && vvNearCam(pos.x, pos.y, pos.z, 70)) vvImpact(pos); }catch(e){} return _sa.apply(this, arguments); }; }
+// explosão: anel de poeira no chão e pedaços voando (fica junto com a fumaça que já existe)
+{ const _ex = explode; explode = function(s){ const r = _ex.apply(this, arguments); try{ if(BIG && s && s.pos && vvNearCam(s.pos.x, s.pos.y, s.pos.z, 120)){ const p = s.pos, gy = typeof gY === 'function' ? Math.max(gY(p.x, p.z), TER && typeof FJ_WL === 'number' ? FJ_WL : -99) : p.y, S = vvSurf(p.x, gy + 0.05, p.z);
+    for(let i = 0; i < 26; i++){ const a = i/26*6.283; vvEmit(p.x + Math.cos(a)*0.8, gy + 0.2, p.z + Math.sin(a)*0.8, Math.cos(a)*vvR(7, 10), vvR(0.3, 1.2), Math.sin(a)*vvR(7, 10), vvR(1.2, 1.8), 0.6, 2.6, VV_DUST[S] || VV_DUST.g, 0.5, -0.1, 2.6); }
+    for(let i = 0; i < 14; i++) vvEmit(p.x, gy + 0.4, p.z, vvR(-5, 5), vvR(5, 10), vvR(-5, 5), vvR(0.8, 1.3), 0.13, 0.1, S === 'w' ? 0xf4fbff : 0x4a3a2a, 1, 16, 0.2);
+    VV.shots.push([p.x, p.z, clock, 45]); } }catch(e){} return r; }; }
+// tiro assusta os bichos em volta
+{ const _fw = fireW; fireW = function(p){ try{ if(p && p.pos) VV.shots.push([p.pos.x, p.pos.z, clock, 32]); if(VV.shots.length > 24) VV.shots.splice(0, VV.shots.length - 24); }catch(e){} return _fw.apply(this, arguments); }; }
+
+// ---------- 2. Pássaros: bandos pousados no chão bicando; chegou perto (ou tiro/explosão) eles levantam voo e somem ----------
+const VB = {F:6, B:7, fl:[]};
+(function(){ const N = VB.F*VB.B, body = new THREE.SphereGeometry(0.11, 6, 4); body.scale(1, 0.85, 1.7);
+  const head = new THREE.SphereGeometry(0.07, 6, 4); head.translate(0, 0.08, 0.17); const beak = new THREE.ConeGeometry(0.025, 0.07, 4); beak.rotateX(Math.PI/2); beak.translate(0, 0.07, 0.26);
+  const tail = new THREE.BoxGeometry(0.1, 0.02, 0.14); tail.translate(0, 0.02, -0.22);
+  const parts = [[body, 0x6b5a4a], [head, 0x3b3030], [beak, 0xf0a020], [tail, 0x5a4a3c]], pos = [], col = [], nor = [], c = new THREE.Color();
+  parts.forEach(([g, h]) => { const q = g.index ? g.toNonIndexed() : g; q.computeVertexNormals(); c.setHex(h); for(let i = 0; i < q.attributes.position.count; i++){ pos.push(q.attributes.position.getX(i), q.attributes.position.getY(i), q.attributes.position.getZ(i)); nor.push(q.attributes.normal.getX(i), q.attributes.normal.getY(i), q.attributes.normal.getZ(i)); col.push(c.r, c.g, c.b); } });
+  const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); bg.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); bg.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  const wg = new THREE.BoxGeometry(0.34, 0.015, 0.16); wg.translate(0.17, 0, 0);
+  const mB = new THREE.MeshLambertMaterial({vertexColors:true}), mW = new THREE.MeshLambertMaterial({color:0x5c4c3e});
+  VB.body = new THREE.InstancedMesh(bg, mB, N); VB.wl = new THREE.InstancedMesh(wg, mW, N); VB.wr = new THREE.InstancedMesh(wg, mW, N);
+  [VB.body, VB.wl, VB.wr].forEach(m => { m.frustumCulled = false; m.castShadow = false; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.count = 0; m.userData.keep = true; scene.add(m); });
+  for(let f = 0; f < VB.F; f++) VB.fl.push({st:'off', t:vvR(0, 3), b:[]}); })();
+const VBo = new THREE.Object3D(), VBm = new THREE.Matrix4(), VBq = new THREE.Quaternion(), VBe = new THREE.Euler(0, 0, 0, 'YXZ'), VBv = new THREE.Vector3(), VBs = new THREE.Vector3(1, 1, 1);
+function vvOkGround(x, z){ if(!TER || Math.abs(x) > TER.X - 4 || Math.abs(z) > TER.Z - 4) return false; const h = TER.h(x, z); if(h < FJ_WL + 1.2 || h > 40 || fjSlope(x, z) > 0.5 || roadD(x, z) < 3) return false;
+  for(const b of solidsAt(x, z)) if(b.max.y > h - 0.3 && b.min.y < h + 3 && x > b.min.x - 1 && x < b.max.x + 1 && z > b.min.z - 1 && z < b.max.z + 1) return false; return true; }
+function vvFlock(F, x, z){ F.st = 'ground'; F.x = x; F.z = z; F.t = 0; F.b = [];
+  for(let i = 0; i < VB.B; i++){ const bx = x + vvR(-2.2, 2.2), bz = z + vvR(-2.2, 2.2); F.b.push({x:bx, z:bz, y:TER.h(bx, bz), h:Math.random()*6.283, pk:Math.random()*3, hop:0, vx:0, vy:0, vz:0, fl:Math.random()*6, s:vvR(0.85, 1.15)}); } }
+function vvBirds(dt){ const live = vvLive() && BIGMAP !== 'campo', C = camera.position; let n = 0;
+  for(const F of VB.fl){
+    if(F.st === 'off'){ if(!live) continue; F.t -= dt; if(F.t > 0) continue; F.t = vvR(2, 5);
+      for(let k = 0; k < 6; k++){ const a = Math.random()*6.283, d = vvR(25, 55), x = C.x + Math.cos(a)*d, z = C.z + Math.sin(a)*d; if(!vvOkGround(x, z) || VB.fl.some(o => o !== F && o.st !== 'off' && Math.hypot(o.x - x, o.z - z) < 20)) continue; vvFlock(F, x, z); break; } }
+    if(F.st === 'off') continue;
+    if(!live){ F.st = 'off'; F.t = 2; continue; }
+    const dc = Math.hypot(F.x - C.x, F.z - C.z);
+    if(F.st === 'ground'){
+      if(dc > 95){ F.st = 'off'; F.t = 1; continue; }
+      let scare = false; for(const p of players){ if(p.alive && p.pos && Math.abs(p.pos.x - F.x) < 11 && Math.abs(p.pos.z - F.z) < 11 && Math.hypot(p.pos.x - F.x, p.pos.z - F.z) < (p.stance === 2 ? 5 : p.stance === 1 ? 7 : 10)){ scare = p; break; } }
+      if(!scare) for(const s of VV.shots) if(clock - s[2] < 0.5 && Math.hypot(s[0] - F.x, s[1] - F.z) < s[3]){ scare = {pos:{x:s[0], z:s[1]}}; break; }
+      if(!scare && typeof cars !== 'undefined') for(const c of cars) if(c.driver && Math.hypot(c.x - F.x, c.z - F.z) < 18){ scare = {pos:{x:c.x, z:c.z}}; break; }
+      if(scare){ F.st = 'fly'; F.t = 0; const ax = F.x - scare.pos.x, az = F.z - scare.pos.z, L = Math.hypot(ax, az) || 1;
+        F.b.forEach(b => { const s = vvR(5, 8); b.vx = ax/L*s + vvR(-2.5, 2.5); b.vz = az/L*s + vvR(-2.5, 2.5); b.vy = vvR(4, 6.5); b.dl = Math.random()*0.35; });
+        if(typeof sfxAt === 'function' && typeof SND !== 'undefined' && SND.vvFlap) sfxAt({x:F.x, y:TER.h(F.x, F.z) + 0.5, z:F.z}, 'vvFlap', 40); }
+      else F.b.forEach(b => { b.pk -= dt; if(b.pk <= 0){ b.pk = vvR(0.6, 2.4); if(Math.random() < 0.35){ b.hop = 0.25; b.h += vvR(-1.2, 1.2); } } if(b.hop > 0){ b.hop -= dt; const nx = b.x + Math.sin(b.h)*dt*1.4, nz = b.z + Math.cos(b.h)*dt*1.4; if(Math.hypot(nx - F.x, nz - F.z) < 3){ b.x = nx; b.z = nz; b.y = TER.h(b.x, b.z); } } }); }
+    else if(F.st === 'fly'){ F.t += dt; if(F.t > 7){ F.st = 'off'; F.t = vvR(4, 9); continue; }
+      F.b.forEach(b => { if(b.dl > 0){ b.dl -= dt; return; } b.x += b.vx*dt; b.y += b.vy*dt; b.z += b.vz*dt; b.vy = Math.max(1.2, b.vy - dt*0.8); b.h = Math.atan2(b.vx, b.vz); }); }
+    for(const b of F.b){ if(n >= VB.F*VB.B) break; const flying = F.st === 'fly' && !(b.dl > 0), sc = b.s*(F.st === 'fly' && F.t > 5.5 ? Math.max(0, (7 - F.t)/1.5) : 1);
+      const peck = !flying && b.pk < 0.35 && b.hop <= 0 ? 0.5 : 0; VBe.set(flying ? -0.25 : peck, b.h, 0); VBq.setFromEuler(VBe); VBs.setScalar(sc);
+      VBm.compose(VBv.set(b.x, b.y + (flying ? 0 : 0.11*sc) + (b.hop > 0 ? Math.abs(Math.sin(b.hop*25))*0.08 : 0), b.z), VBq, VBs); VB.body.setMatrixAt(n, VBm);
+      const fl = flying ? Math.sin(clock*22 + b.fl)*0.9 : 0, fold = flying ? 0 : 1;
+      for(const [m, sd] of [[VB.wl, -1], [VB.wr, 1]]){ VBo.position.set(b.x, b.y + (flying ? 0.02 : 0.13*sc), b.z); VBo.quaternion.copy(VBq); VBo.scale.set(sc*(fold ? 0.55 : 1), sc, sc);
+        if(sd < 0) VBo.rotateY(Math.PI); VBo.rotateZ(flying ? fl : -0.2); VBo.updateMatrix(); m.setMatrixAt(n, VBo.matrix); }
+      n++; } }
+  VB.body.count = VB.wl.count = VB.wr.count = n; if(n){ VB.body.instanceMatrix.needsUpdate = VB.wl.instanceMatrix.needsUpdate = VB.wr.instanceMatrix.needsUpdate = true; } }
+
+// ---------- borboletas perto da câmera (grama, de dia) e folhas soltas no vento ----------
+const VF = {N:16, b:[]}, VL = {N:70, l:[]};
+(function(){ const wg = new THREE.PlaneGeometry(0.16, 0.13); wg.translate(0.08, 0, 0); wg.rotateX(-Math.PI/2);
+  const mt = new THREE.MeshBasicMaterial({side:THREE.DoubleSide, color:0xffffff});
+  VF.l = new THREE.InstancedMesh(wg, mt, VF.N); VF.r = new THREE.InstancedMesh(wg, mt, VF.N);
+  const cols = [0xffd23f, 0xff8ad1, 0xffffff, 0x8fd3ff, 0xff9a3c, 0xc7a6ff], c = new THREE.Color();
+  for(let i = 0; i < VF.N; i++){ c.setHex(cols[i % cols.length]); VF.l.setColorAt(i, c); VF.r.setColorAt(i, c); VF.b.push({on:false, ph:Math.random()*20}); }
+  const lg = new THREE.PlaneGeometry(0.13, 0.08); VL.m = new THREE.InstancedMesh(lg, new THREE.MeshLambertMaterial({side:THREE.DoubleSide, color:0xffffff}), VL.N);
+  const lc = [0x7da844, 0x9bbf4a, 0xc9a43a, 0xb5702c, 0x6e9a3a]; for(let i = 0; i < VL.N; i++){ c.setHex(lc[i % lc.length]); VL.m.setColorAt(i, c); VL.l.push({on:false}); }
+  [VF.l, VF.r, VL.m].forEach(m => { m.frustumCulled = false; m.castShadow = false; m.count = 0; m.instanceMatrix.setUsage(THREE.DynamicDrawUsage); m.userData.keep = true; scene.add(m); }); })();
+function vvFlies(dt){ const live = vvLive() && BIGMAP !== 'serra' && BIGMAP !== 'campo' && !(typeof DARK !== 'undefined' && DARK), C = camera.position; let n = 0;
+  const hc = TER ? C.y - TER.h(C.x, C.z) : 99;
+  for(const b of VF.b){ if(!live || hc > 30){ b.on = false; continue; }
+    if(!b.on || Math.hypot(b.x - C.x, b.z - C.z) > 26){ const a = Math.random()*6.283, d = vvR(6, 22), x = C.x + Math.cos(a)*d, z = C.z + Math.sin(a)*d; if(!vvOkGround(x, z)){ b.on = false; continue; } b.on = true; b.x = x; b.z = z; b.cx = x; b.cz = z; b.h = vvR(0.5, 1.6); }
+    b.ph += dt; const t = b.ph; b.x = b.cx + Math.sin(t*0.53)*2.2 + Math.sin(t*1.7)*0.5; b.z = b.cz + Math.cos(t*0.41)*2.2 + Math.cos(t*1.3)*0.5;
+    const y = TER.h(b.x, b.z) + b.h + Math.sin(t*2.3)*0.35 + Math.abs(Math.sin(t*9))*0.12, yaw = Math.atan2(Math.cos(t*0.53)*1.16, -Math.sin(t*0.41)*0.9), fl = Math.sin(t*18 + b.ph)*1.1;
+    for(const [m, sd] of [[VF.l, -1], [VF.r, 1]]){ VBo.position.set(b.x, y, b.z); VBo.rotation.set(0, yaw, 0); VBo.scale.set(sd, 1, 1); VBo.rotateZ(sd*fl); VBo.updateMatrix(); m.setMatrixAt(n, VBo.matrix); }
+    n++; }
+  VF.l.count = VF.r.count = n; if(n){ VF.l.instanceMatrix.needsUpdate = VF.r.instanceMatrix.needsUpdate = true; }
+  // folhas: caem rodando e vão com o vento, perto das árvores (e um pouco em qualquer lugar com grama)
+  let k = 0; const wind = 0.6 + 0.4*Math.sin(VV.t*0.33);
+  for(const L of VL.l){ if(!live || hc > 40){ L.on = false; continue; }
+    if(!L.on || L.y < (L.g ?? -99) || Math.hypot(L.x - C.x, L.z - C.z) > 30){ if(Math.random() > dt*3){ if(!L.on) continue; L.on = false; continue; }
+      const a = Math.random()*6.283, d = vvR(5, 26), x = C.x + Math.cos(a)*d, z = C.z + Math.sin(a)*d, h = TER.h(x, z); if(h < FJ_WL + 0.5){ L.on = false; continue; }
+      L.on = true; L.x = x; L.z = z; L.y = h + vvR(3, 9); L.g = h; L.r = Math.random()*6.283; L.s = vvR(0.7, 1.3); L.p = Math.random()*6; }
+    L.p += dt; L.x += (1.6*wind + Math.sin(L.p*1.3)*0.6)*dt; L.z += (0.6*wind + Math.cos(L.p*0.9)*0.5)*dt; L.y -= (0.55 + Math.sin(L.p*2.6)*0.35)*dt; L.r += dt*3;
+    VBo.position.set(L.x, L.y, L.z); VBo.rotation.set(L.r, L.r*0.7, Math.sin(L.p*2)*1.2); VBo.scale.setScalar(L.s); VBo.updateMatrix(); VL.m.setMatrixAt(k++, VBo.matrix); }
+  VL.m.count = k; if(k) VL.m.instanceMatrix.needsUpdate = true; }
+
+// ---------- peixes pulando na água perto de você ----------
+const VX = {f:[], t:3};
+(function(){ const g = new THREE.SphereGeometry(0.12, 8, 6); g.scale(0.7, 1, 2.4); const tl = new THREE.ConeGeometry(0.12, 0.2, 4); tl.rotateX(-Math.PI/2); tl.translate(0, 0, -0.36);
+  [0xf08a3c, 0xc9d3dc].forEach(col => { const m = new THREE.Group(), b = new THREE.Mesh(g, new THREE.MeshLambertMaterial({color:col})), t = new THREE.Mesh(tl, new THREE.MeshLambertMaterial({color:col})); m.add(b, t); m.visible = false; m.userData.keep = true; scene.add(m); VX.f.push({m, on:false}); }); })();
+function vvFish(dt){ const live = vvLive() && typeof FJ_WL === 'number' && BIGMAP !== 'serra', C = camera.position;
+  if(live){ VX.t -= dt; if(VX.t <= 0){ VX.t = vvR(2.5, 6); const F = VX.f.find(f => !f.on);
+      if(F) for(let k = 0; k < 12; k++){ const a = Math.random()*6.283, d = vvR(8, 34), x = C.x + Math.cos(a)*d, z = C.z + Math.sin(a)*d; if(Math.abs(x) > TER.X || Math.abs(z) > TER.Z || TER.h(x, z) > FJ_WL - 1.2) continue;
+        F.on = true; F.t = 0; F.x = x; F.z = z; F.h = Math.random()*6.283; F.T = vvR(0.8, 1.1); F.H = vvR(0.7, 1.3); F.L = vvR(1.2, 2.2); vvSplash(x, FJ_WL, z, 6, 0.5); break; } } }
+  for(const F of VX.f){ if(!F.on){ F.m.visible = false; continue; } if(!live){ F.on = false; continue; } F.t += dt; const u = F.t/F.T;
+    if(u >= 1){ F.on = false; F.m.visible = false; vvSplash(F.x + Math.sin(F.h)*F.L, FJ_WL, F.z + Math.cos(F.h)*F.L, 9, 0.55); continue; }
+    F.m.visible = true; F.m.position.set(F.x + Math.sin(F.h)*F.L*u, FJ_WL - 0.2 + 4*F.H*u*(1 - u), F.z + Math.cos(F.h)*F.L*u); F.m.rotation.set(-(1 - 2*u)*1.1, F.h, 0, 'YXZ'); F.m.children[1].rotation.y = Math.sin(F.t*30)*0.4; } }
+
+// ---------- laço: roda junto com o cenário (parado quando o jogo pausa) ----------
+function vvTick(dt){ if(!VV.ok) return; try{
+    VV.t += dt; VV.U.uWT.value = VV.t; vvWindInit();
+    if(vvLive()){ vvPlayers(dt); vvCars(dt); vvSmoke(dt); }
+    vvBirds(dt); vvFlies(dt); vvFish(dt); vvParts(dt);
+    const now = clock; while(VV.shots.length && now - VV.shots[0][2] > 1) VV.shots.shift();
+  }catch(e){ console.warn('vivo', e); VV.ok = false; } }
+{ const _us = updateScenery; updateScenery = function(dt){ _us(dt); vvTick(dt); }; }
+// som do bando levantando voo (bater de asas rapidinho)
+if(typeof SND !== 'undefined' && typeof noise === 'function') SND.vvFlap = d => { for(let i = 0; i < 9; i++) noise(0.05, 0.05, 1400 + Math.random()*900, 0, 'bandpass', 1.2, i*0.045 + Math.random()*0.02, d, 0.004); };
+
+// ===== Jogo mais vivo, lote 2 (pedido do Bruno 31/10): câmera viva + cidades vivas =====
+// Câmera: tremida suave (não aquele pulo seco) que diminui com a distância da explosão, afundada no pouso forte, balanço leve correndo,
+// vento forte do helicóptero perto. Tudo junto com a opção que já existia (Configurações > Vídeo > Tremer a câmera).
+// Cidade (Capital, Metrópole e toda cidade em grade): carros estacionados na beira da rua (dá pra se esconder atrás), lixeiras, hidrantes,
+// bancos e placas de rua nas calçadas, pombos nas praças. 6 chamadas de desenho pra cidade toda.
+const VC = {tr:0, amp:0, ph:0, dip:0, dipV:0, t:0};
+function vvTrauma(k){ VC.tr = Math.min(1, VC.tr + k); }
+function vvCamFx(c, me, dt){
+  const ads = !!(me.ads || c.scK > 0), fp = ads || (c.fpK || 0) > 0.5; VC.t += dt; const P = camera.position;
+  if(VC.tr > 0.001){ const s = VC.tr*VC.tr*(ads ? 0.5 : 1), t = VC.t*22;
+    P.x += (Math.sin(t*1.13) + Math.sin(t*2.71 + 1.3)*0.6)*0.2*s; P.y += (Math.sin(t*1.37 + 2) + Math.sin(t*3.1)*0.5)*0.2*s; P.z += (Math.sin(t*0.97 + 4) + Math.sin(t*2.3 + 0.7)*0.6)*0.2*s;
+    camera.rotateZ((Math.sin(t*0.83 + 0.5) + Math.sin(t*1.9)*0.5)*0.035*s); camera.rotateX(Math.sin(t*1.21 + 3)*0.012*s); VC.tr = Math.max(0, VC.tr - dt*1.3); }
+  const run = me.alive && me.grounded && !me.car && !me.ride && !me.swim && !me.climb ? Math.hypot(me.vel.x, me.vel.z) : 0;
+  const want = Math.max(0, Math.min(1, (run - 2.5)/7))*(me.sprinting ? 1.25 : 1)*(ads ? 0.2 : fp ? 0.6 : 1);
+  VC.amp += (want - VC.amp)*Math.min(1, dt*6); VC.ph += dt*Math.max(run, 3)*1.15;
+  if(VC.amp > 0.01){ P.y += (Math.abs(Math.sin(VC.ph)) - 0.5)*0.07*VC.amp; camera.rotateZ(Math.sin(VC.ph)*0.007*VC.amp); }
+  VC.dipV += (-VC.dip*110 - VC.dipV*15)*dt; VC.dip += VC.dipV*dt; if(Math.abs(VC.dip) > 0.001) P.y += VC.dip;
+  // helicóptero ligado bem perto: vento sacode um pouquinho
+  if(typeof cars !== 'undefined' && !me.car) for(const h of cars){ if(!h.heli || h.dead || !(h.driver || (h.y || 0) - gY(h.x, h.z) > 1.5)) continue; const d = Math.hypot(h.x - me.pos.x, (h.y || 0) - me.pos.y, h.z - me.pos.z); if(d < 16) VC.tr = Math.max(VC.tr, 0.22*(1 - d/16)); } }
+{ const _aim = aim; aim = function(c, me, dt){ const r = _aim.apply(this, arguments); try{ if(c === cam1 && CFG.shake && !PAUSED && me && R1.phase !== 'menu' && R1.phase !== 'podium' && !window.__camOv) vvCamFx(c, me, dt); }catch(e){} return r; }; }
+// explosão: treme mais perto, um pouco até 50 m
+{ const _ex = explode; explode = function(s){ const r = _ex.apply(this, arguments); try{ const me = players[0]; if(me && me.alive && s && s.pos){ const d = me.pos.distanceTo(s.pos); if(d < 50) vvTrauma(0.75*Math.pow(1 - d/50, 1.4)); } }catch(e){} return r; }; }
+// levar tiro: tranco proporcional ao dano
+{ const _h = hurt; hurt = function(q, by, dmg){ const r = _h.apply(this, arguments); try{ if(q === players[0] && dmg > 0 && by && by !== q) vvTrauma(Math.min(0.35, 0.06 + dmg*0.006)); }catch(e){} return r; }; }
+// pouso forte: câmera afunda e volta
+{ const _vp = vvPlayers; vvPlayers = function(dt){ const me = players[0]; const g0 = me && me.vvG, vy = me ? (me.vvVy || 0) : 0; _vp(dt);
+    if(me && me.alive && g0 === false && me.grounded && vy < -8 && !me.car){ const k = Math.min(1, (-vy - 8)/14); VC.dipV -= 2.2 + k*3.5; vvTrauma(0.12 + k*0.3); } }; }
+
+// ---------- cidade viva ----------
+const VCITY = {sets:[]};
+function vvGeo(parts){ const pos = [], nor = [], col = [], c = new THREE.Color();
+  parts.forEach(([g, h, m]) => { if(m) g.applyMatrix4(m); const q = g.index ? g.toNonIndexed() : g; q.computeVertexNormals(); c.setHex(h); const a = q.attributes.position, n = q.attributes.normal;
+    for(let i = 0; i < a.count; i++){ pos.push(a.getX(i), a.getY(i), a.getZ(i)); nor.push(n.getX(i), n.getY(i), n.getZ(i)); col.push(c.r, c.g, c.b); } });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeBoundingSphere(); return g; }
+const vvT = (x, y, z) => new THREE.Matrix4().makeTranslation(x, y, z), vvB = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+function vvRBox(w, h, d, r){ const g = new THREE.BoxGeometry(w, h, d, 3, 2, 3), p = g.attributes.position, v = new THREE.Vector3();
+  for(let i = 0; i < p.count; i++){ v.fromBufferAttribute(p, i); const ax = Math.abs(v.x) > w/2 - 1e-3, az = Math.abs(v.z) > d/2 - 1e-3, ay = v.y > h/2 - 1e-3; if(ay && (ax || az)){ v.x *= ax ? 1 - r/w : 1; v.z *= az ? 1 - r/d : 1; v.y -= r*0.4; } p.setXYZ(i, v.x, v.y, v.z); } return g; }
+let VCG = null;
+function vvCityGeo(){ if(VCG) return VCG; VCG = {};
+  // carro (frente pro +x): lataria pintada (cor da instância) + resto (vidro, pneus, faróis, para-choque)
+  const cab = vvRBox(2.2, 0.62, 1.62, 0.35);
+  VCG.body = vvGeo([[vvRBox(4.2, 0.72, 1.8, 0.25), 0xffffff, vvT(0, 0.68, 0)], [cab, 0xffffff, vvT(-0.25, 1.32, 0)]]);
+  const wheel = () => { const g = new THREE.CylinderGeometry(0.34, 0.34, 0.26, 12); g.rotateX(Math.PI/2); return g; }, hub = () => { const g = new THREE.CylinderGeometry(0.17, 0.17, 0.28, 8); g.rotateX(Math.PI/2); return g; };
+  const R = [[vvB(2.24, 0.42, 1.64), 0x22303c, vvT(-0.25, 1.33, 0)], [vvB(0.08, 0.3, 1.82), 0x3a3f45, vvT(2.1, 0.5, 0)], [vvB(0.08, 0.3, 1.82), 0x3a3f45, vvT(-2.1, 0.5, 0)],
+    [vvB(0.06, 0.14, 0.34), 0xfff4c8, vvT(2.11, 0.78, 0.6)], [vvB(0.06, 0.14, 0.34), 0xfff4c8, vvT(2.11, 0.78, -0.6)], [vvB(0.06, 0.14, 0.3), 0xd8262e, vvT(-2.11, 0.8, 0.62)], [vvB(0.06, 0.14, 0.3), 0xd8262e, vvT(-2.11, 0.8, -0.62)],
+    [vvB(0.05, 0.12, 0.4), 0xf2f2f2, vvT(-2.12, 0.5, 0)]];
+  for(const [x, z] of [[1.35, 0.82], [1.35, -0.82], [-1.35, 0.82], [-1.35, -0.82]]){ R.push([wheel(), 0x1d1d20, vvT(x, 0.34, z)]); R.push([hub(), 0xb8bcc2, vvT(x, 0.34, z*1.01)]); }
+  VCG.rest = vvGeo(R);
+  // lixeira, hidrante, banco, placa de rua
+  VCG.bin = vvGeo([[new THREE.CylinderGeometry(0.28, 0.24, 0.85, 10), 0x2f7d4a, vvT(0, 0.43, 0)], [new THREE.CylinderGeometry(0.3, 0.3, 0.08, 10), 0x26633b, vvT(0, 0.88, 0)], [vvB(0.12, 0.05, 0.24), 0xe9e4d8, vvT(0, 0.65, 0.25)]]);
+  VCG.hyd = vvGeo([[new THREE.CylinderGeometry(0.13, 0.15, 0.6, 8), 0xd6312c, vvT(0, 0.3, 0)], [new THREE.SphereGeometry(0.14, 8, 5, 0, Math.PI*2, 0, Math.PI/2), 0xd6312c, vvT(0, 0.6, 0)], [new THREE.CylinderGeometry(0.06, 0.06, 0.36, 6).rotateZ(Math.PI/2), 0xb02420, vvT(0, 0.4, 0)], [new THREE.CylinderGeometry(0.06, 0.06, 0.2, 6).rotateX(Math.PI/2), 0xf2c94c, vvT(0, 0.42, 0.12)]]);
+  const bench = [[vvB(1.7, 0.07, 0.42), 0xa86a3a, vvT(0, 0.46, 0)], [vvB(1.7, 0.36, 0.06), 0xa86a3a, vvT(0, 0.74, -0.2)]]; for(const x of [-0.7, 0.7]) bench.push([vvB(0.06, 0.46, 0.4), 0x2d3033, vvT(x, 0.23, 0)], [vvB(0.06, 0.5, 0.06), 0x2d3033, vvT(x, 0.7, -0.22)]);
+  VCG.bench = vvGeo(bench);
+  VCG.sign = vvGeo([[new THREE.CylinderGeometry(0.04, 0.04, 2.8, 6), 0x5c6168, vvT(0, 1.4, 0)], [vvB(0.9, 0.24, 0.03), 0x1f7a4a, vvT(0.3, 2.65, 0)], [vvB(0.8, 0.04, 0.035), 0xffffff, vvT(0.3, 2.65, 0)], [vvB(0.03, 0.24, 0.9), 0x1f7a4a, vvT(0, 2.38, 0.3)], [vvB(0.035, 0.04, 0.8), 0xffffff, vvT(0, 2.38, 0.3)]]);
+  return VCG; }
+const VV_CAR_COL = [0xd6312c, 0x2f6fd6, 0xf2f2f2, 0x24272b, 0xb9bec4, 0xf2c94c, 0x3fae6a, 0x8a5a3c, 0xff8a1c, 0x6b3fae, 0x9fb8c9];
+// chamada pelo cdGrid depois das ruas: asf = retângulos de asfalto, lamps = postes [x, z, lado, eixo] (relativos ao centro cx, cz)
+function vvCity(asf, lamps, cx, cz, Y){ try{ if(!lamps || !lamps.length) return; let s = 7000 + Math.round(Math.abs(cx)*3 + Math.abs(cz)*7); const sr = () => (s = s*16807 % 2147483647)/2147483647;
+  const G = vvCityGeo(), onAsf = (x, z) => asf.some(r => x > r[0] + 0.2 && x < r[1] - 0.2 && z > r[2] + 0.2 && z < r[3] - 0.2), cars = [], props = {bin:[], hyd:[], bench:[], sign:[]};
+  // cruzamento = retângulo de asfalto quase quadrado e largo nos dois sentidos; carro não para perto dele
+  const cross = asf.filter(r => Math.abs((r[1] - r[0]) - (r[3] - r[2])) < 0.5);
+  const nearCross = (x, z, d) => cross.some(r => x > r[0] - d && x < r[1] + d && z > r[2] - d && z < r[3] + d);
+  lamps.forEach(([x, z, sd, t], i) => {
+    // eixo: t = 1 rua corre em x (lado na z); t = 0 rua corre em z (lado na x)
+    const ax = t ? [1, 0] : [0, 1], sv = t ? [0, sd] : [sd, 0];
+    for(const off of [4.5, 9.5]){ if(sr() > (lamps.length > 300 ? 0.22 : 0.45) || cars.length >= 240) continue; const px = x + ax[0]*off - sv[0]*1.35, pz = z + ax[1]*off - sv[1]*1.35;
+      if(!onAsf(px + ax[0]*2.3, pz + ax[1]*2.3) || !onAsf(px - ax[0]*2.3, pz - ax[1]*2.3) || nearCross(px, pz, 3.5) || cars.some(c => Math.hypot(c[0] - px, c[1] - pz) < 4.8)) continue;
+      cars.push([px, pz, t ? (sr() < 0.5 ? 0 : Math.PI) : (sr() < 0.5 ? -Math.PI/2 : Math.PI/2) + 0, VV_CAR_COL[Math.floor(sr()*VV_CAR_COL.length)], t]); }
+    // calçada: do lado de fora do poste
+    const ox = x + sv[0]*0.9, oz = z + sv[1]*0.9, rot = t ? (sd > 0 ? Math.PI : 0) : (sd > 0 ? Math.PI/2 : -Math.PI/2), r = sr();
+    const at = (d) => [ox + ax[0]*d, oz + ax[1]*d];
+    if(r < 0.3) props.bin.push([...at(1.4), rot]); else if(r < 0.45) props.hyd.push([...at(2.2), rot]); else if(r < 0.62) props.bench.push([...at(3.5), rot + Math.PI]);
+    if(i % 5 === 2) props.sign.push([x + ax[0]*0.6, z + ax[1]*0.6, rot]); });
+  const o = new THREE.Object3D(), c = new THREE.Color(), add = (g, list, shadow, tint, h) => { if(!list.length) return null;
+    const m = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({vertexColors:true}), list.length);
+    list.forEach((e, i) => { const X = cx + e[0], Z = cz + e[1]; o.position.set(X, Y + 0.03, Z); o.rotation.set(0, e[2], 0); o.scale.setScalar(1); o.updateMatrix(); m.setMatrixAt(i, o.matrix); if(tint) m.setColorAt(i, c.setHex(e[3])); });
+    m.castShadow = shadow; m.receiveShadow = true; m.userData.keep = true; world.add(m); return m; };
+  const body = add(G.body, cars, true, true), rest = add(G.rest, cars, true, false);
+  cars.forEach(e => { const X = cx + e[0], Z = cz + e[1], hx = e[4] ? 2.1 : 0.9, hz = e[4] ? 0.9 : 2.1; const b = box(X - hx, X + hx, Y, Y + 1.0, Z - hz, Z + hz, 0, {invisible:true}); b.mesh = body;
+    const b2 = box(X - (e[4] ? 1.0 : 0.8), X + (e[4] ? 1.0 : 0.8), Y + 1.0, Y + 1.62, Z - (e[4] ? 0.8 : 1.0), Z + (e[4] ? 0.8 : 1.0), 0, {invisible:true}); b2.mesh = body; });
+  const bins = add(G.bin, props.bin, true), hyd = add(G.hyd, props.hyd, false), ben = add(G.bench, props.bench, true), sig = add(G.sign, props.sign, true);
+  props.bin.forEach(e => { const X = cx + e[0], Z = cz + e[1]; box(X - 0.28, X + 0.28, Y, Y + 0.92, Z - 0.28, Z + 0.28, 0, {invisible:true}).mesh = bins; });
+  // luz dos postes (acende no fim de tarde, ver lote 3): um brilho embaixo de cada cabeça de poste
+  const gl = new THREE.InstancedMesh(new THREE.BoxGeometry(1.1, 0.04, 0.26), new THREE.MeshBasicMaterial({color:0xffe2a0}), lamps.length);
+  lamps.forEach(([x, z, sd, t], i) => { const dx = t ? 0 : -sd*0.6, dz = t ? -sd*0.6 : 0; o.position.set(cx + x + dx, Y + 5.06, cz + z + dz); o.rotation.set(0, t ? Math.PI/2 : 0, 0); o.updateMatrix(); gl.setMatrixAt(i, o.matrix); });
+  gl.castShadow = false; gl.userData.keep = true; gl.visible = false; world.add(gl); VCITY.glow = (VCITY.glow || []).filter(g => g.parent).concat([gl]);
+  VCITY.sets.push({w:world, n:cars.length}); VCITY.pts = cars.map(e => [cx + e[0], cz + e[1], e[4]]); }catch(e){ console.warn('cidade viva', e); } }
+
+// ===== Jogo mais vivo, lote 3 (pedido do Bruno 31/10): hora do dia e clima sorteados a cada partida do Battle Royale/Guerra =====
+// Hora: manhã, meio-dia, tarde dourada ou pôr do sol (sol baixo, sombra comprida, postes da cidade acesos).
+// Clima: tempo bom (maioria), chuva com trovão, neblina; na Serra Gelada, neve caindo. Sorteio dentro do startRound,
+// então no online todo mundo vê o mesmo (o online já sorteia com a mesma semente). Opção em Configurações > Vídeo.
+Object.assign(LOOKS, {
+  dourada:{top:0x5a8fd8, hor:0xffd6a0, sun:0xffc98a, si:0.8, hs:0xffe8cc, hg:0x9a6f7a, hi:0.5, off:[24, 12, -10], dir:[0.72, 0.13, -0.68], wc:0xffeedd},
+  porsol:{top:0x4b5cb4, hor:0xffa070, sun:0xff9a5c, si:0.72, hs:0xffd2b4, hg:0x6a4f8a, hi:0.46, off:[26, 7, -6], dir:[0.84, 0.06, -0.54], wc:0xffd8c8},
+  chuva:{top:0x6c7b8c, hor:0xa9b3bd, sun:0xdfe6ee, si:0.3, hs:0xd8e0ea, hg:0x5f6a78, hi:0.66, off:[12, 25, -8], dir:[0.45, 0.55, -0.7], wc:0xc4d0d8},
+  nevoa:{top:0x9cb4c8, hor:0xdfe6ea, sun:0xf4f6f8, si:0.42, hs:0xf2f4f6, hg:0x8a94a0, hi:0.66, off:[12, 25, -8], dir:[0.45, 0.55, -0.7], wc:0xe8eef2}});
+const VW = {k:'sol', look:'', t:0, w:null, fog:null, thT:20, roof:0, a:0};
+if(CFG.clima === undefined) CFG.clima = true;
+const VW_NAME = {manha:'Manhã', dia:'Meio-dia', dourada:'Tarde dourada', porsol:'Pôr do sol', chuva:'Chuva', nevoa:'Neblina'};
+{ const _lf = lookFor; lookFor = function(r){ const base = _lf(r); VW.k = 'sol';
+    if(!(BIG && r === 20) || BIGMAP === 'campo' || CFG.clima === false) return base;
+    const a = Math.random(), b = Math.random(); let L = a < 0.22 ? 'manha' : a < 0.47 ? 'dia' : a < 0.75 ? 'dourada' : 'porsol';
+    if(BIGMAP === 'serra'){ if(b < 0.55) VW.k = 'neve'; }
+    else if(b < 0.15){ VW.k = 'chuva'; L = 'chuva'; } else if(b < 0.28){ VW.k = 'nevoa'; L = a < 0.5 ? 'nevoa' : L; }
+    VW.look = L; return L; }; }
+
+// chuva e neve: as gotas/flocos vivem numa caixa que anda com a câmera e se repete (conta feita na placa de vídeo, 1 desenho cada)
+function vvPrecip(kind){ const N = kind === 'chuva' ? 2600 : 1800, B = kind === 'chuva' ? [44, 26, 44] : [40, 22, 40], g = new THREE.BufferGeometry(), P = [], S = [], E = [];
+  for(let i = 0; i < N; i++){ const s = [Math.random(), Math.random(), Math.random()]; if(kind === 'chuva'){ P.push(0, 0, 0, 0, 0, 0); S.push(...s, ...s); E.push(0, 1); } else { P.push(0, 0, 0); S.push(...s); E.push(Math.random()); } }
+  g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('sd', new THREE.Float32BufferAttribute(S, 3)); g.setAttribute('e', new THREE.Float32BufferAttribute(E, 1));
+  const U = {uC:{value:new THREE.Vector3()}, uT:{value:0}, uB:{value:new THREE.Vector3(...B)}, uA:{value:1}, uH:{value:600}, fogColor:{value:new THREE.Color()}, fogNear:{value:30}, fogFar:{value:120}};
+  const rain = kind === 'chuva';
+  const vs = `attribute vec3 sd; attribute float e; uniform vec3 uC; uniform float uT; uniform vec3 uB; uniform float uH; uniform float fogNear; uniform float fogFar; varying float vA; varying float vF;
+    void main(){ vec3 vel = ${rain ? 'vec3(2.6, -24.0, 1.1)' : 'vec3(0.7, -1.7, 0.3)'}; vec3 p = mod(sd*uB*7.31 + vel*uT*(0.8 + 0.4*sd.y) - uC + uB*0.5, uB) - uB*0.5;
+      ${rain ? 'p -= normalize(vel)*e*(0.55 + 0.35*sd.x);' : 'p.x += sin(uT*1.3 + sd.z*30.0)*0.35; p.z += cos(uT*1.1 + sd.x*30.0)*0.35;'}
+      vec3 w = uC + p; vec4 mv = viewMatrix*vec4(w, 1.0); gl_Position = projectionMatrix*mv; vF = smoothstep(fogNear, fogFar, -mv.z);
+      vA = smoothstep(uB.x*0.5, uB.x*0.32, length(p.xz))*${rain ? '(1.0 - e*0.7)' : '1.0'}; ${rain ? '' : 'gl_PointSize = (0.08 + sd.z*0.09)*uH/max(0.1, -mv.z);'} }`;
+  const fs = `uniform float uA; uniform vec3 fogColor; varying float vA; varying float vF; void main(){ ${rain ? '' : 'vec2 q = gl_PointCoord - 0.5; if(dot(q, q) > 0.25) discard;'}
+      gl_FragColor = vec4(mix(${rain ? 'vec3(0.78, 0.84, 0.9)' : 'vec3(1.0)'}, fogColor, vF*0.6), vA*uA*${rain ? '0.42' : '0.9'}); }`;
+  const m = new THREE.ShaderMaterial({uniforms:U, vertexShader:vs, fragmentShader:fs, transparent:true, depthWrite:false});
+  const o = rain ? new THREE.LineSegments(g, m) : new THREE.Points(g, m); o.frustumCulled = false; o.renderOrder = 6; o.userData.U = U; return o; }
+const VWP = {};
+// som da chuva: ruído contínuo filtrado (mais baixo debaixo de telhado); trovão de vez em quando com clarão
+function vvRainSnd(on, k){ if(typeof ac === 'undefined' || !ac || typeof sfxGain === 'undefined' || !sfxGain) return;
+  if(on && !VW.snd){ const n = ac.sampleRate*2, buf = ac.createBuffer(1, n, ac.sampleRate), d = buf.getChannelData(0); for(let i = 0; i < n; i++) d[i] = Math.random()*2 - 1;
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true; const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 0.5;
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5000; const g = ac.createGain(); g.gain.value = 0; src.connect(bp); bp.connect(lp); lp.connect(g); g.connect(sfxGain); src.start(); VW.snd = {src, g, lp}; }
+  if(VW.snd){ const t = ac.currentTime; VW.snd.g.gain.setTargetAtTime(on ? 0.11*k : 0, t, 0.4); VW.snd.lp.frequency.setTargetAtTime(k < 0.6 ? 1400 : 5000, t, 0.3); } }
+function vvThunder(){ if(typeof SND === 'undefined') return; const far = Math.random();
+  VW.flash = 0.35; VW.flash2 = 0.18 + Math.random()*0.15;
+  if(typeof playSnd === 'function') playSnd('vvTrovao', {vol:0.6 + (1 - far)*0.5, delay:0.6 + far*2.4}); }
+if(typeof SND !== 'undefined' && typeof noise === 'function') SND.vvTrovao = d => { noise(0.25, 0.5, 900, 150, 'lowpass', 0.7, 0, d, 0.005); noise(3.2, 0.55, 220, 40, 'lowpass', 0.8, 0.05, d, 0.08); noise(2.4, 0.35, 120, 30, 'lowpass', 1, 0.6, d, 0.3); for(let i = 0; i < 4; i++) noise(0.4, 0.22, 300, 60, 'lowpass', 1, 0.3 + i*0.45 + Math.random()*0.2, d, 0.03); };
+function vvRoof(){ const c = camera.position; for(const b of solidsAt(c.x, c.z)) if(b.min.y > c.y + 0.3 && b.min.y < c.y + 30 && c.x > b.min.x && c.x < b.max.x && c.z > b.min.z && c.z < b.max.z) return true; return false; }
+function vvWeather(dt){ const live = BIG && round === 20 && R1.phase !== 'menu' && R1.phase !== 'podium' && CFG.clima !== false;
+  const k = live ? VW.k : 'sol';
+  // neblina: fecha o horizonte (depois que o mapa ajustou a névoa dele)
+  if(live && k === 'nevoa'){ if(VW.w !== world || !VW.fog){ VW.w = world; VW.fog = [scene.fog.near, scene.fog.far]; } scene.fog.near = Math.min(VW.fog[0], 8); scene.fog.far = Math.min(VW.fog[1], 95); }
+  else if(VW.fog){ if(VW.w === world){ scene.fog.near = VW.fog[0]; scene.fog.far = VW.fog[1]; } VW.fog = null; VW.w = null; }
+  if(live && k === 'chuva' && VW.w !== world){ VW.w = world; VW.fogR = [scene.fog.near, scene.fog.far]; scene.fog.near = Math.min(scene.fog.near, 25); scene.fog.far = Math.min(scene.fog.far, 190); }
+  // postes acesos no pôr do sol, na chuva e na neblina
+  if(typeof VCITY !== 'undefined' && VCITY.glow){ const on = live && (curLook === 'porsol' || k === 'chuva' || k === 'nevoa'); VCITY.glow.forEach(g => g.visible = on); }
+  for(const kind of ['chuva', 'neve']){ const want = k === kind; let o = VWP[kind];
+    if(want && !o){ o = VWP[kind] = vvPrecip(kind); scene.add(o); }
+    if(!o) continue; o.visible = want; if(!want) continue;
+    VW.roofT = (VW.roofT || 0) - dt; if(VW.roofT <= 0){ VW.roofT = 0.25; VW.roof = vvRoof() ? 1 : 0; }
+    VW.a += ((VW.roof ? 0 : 1) - VW.a)*Math.min(1, dt*4);
+    const U = o.userData.U; U.uC.value.copy(camera.position); U.uT.value += dt; U.uA.value = VW.a; U.uH.value = renderer.domElement.height/2/Math.tan(camera.fov*Math.PI/360);
+    U.fogColor.value.copy(scene.fog.color); U.fogNear.value = scene.fog.near; U.fogFar.value = scene.fog.far; }
+  // respingos no chão e trovão
+  if(k === 'chuva'){ vvRainSnd(true, VW.roof ? 0.45 : 1);
+    if(TER && !VW.roof){ const C = camera.position; for(let i = 0, n = Math.round(dt*90); i < n; i++){ const x = C.x + vvR(-14, 14), z = C.z + vvR(-14, 14), h = TER.h(x, z), y = h < FJ_WL ? FJ_WL : h;
+      vvEmit(x, y + 0.03, z, vvR(-0.4, 0.4), vvR(0.8, 1.5), vvR(-0.4, 0.4), 0.18, 0.05, 0.02, 0xdde8f0, 0.7, 9, 0); } }
+    VW.thT -= dt; if(VW.thT <= 0){ VW.thT = vvR(14, 34); vvThunder(); } }
+  else vvRainSnd(false, 0);
+  if(VW.flash > 0){ VW.flash -= dt; const f = VW.flash > 0.25 ? 1 : VW.flash > 0.18 ? 0 : VW.flash > 0.1 ? VW.flash2*3 : 0; hemiL.intensity = (LOOKS[curLook] || LOOKS.dia).hi + f*0.9; if(VW.flash <= 0) hemiL.intensity = (LOOKS[curLook] || LOOKS.dia).hi; } }
+{ const _vt = vvTick; vvTick = function(dt){ _vt(dt); try{ vvWeather(dt); }catch(e){ console.warn('clima', e); } }; }
+// nome do clima no começo da partida, junto do nome do mapa
+{ const _b = banner; banner = function(t, s, ms){ try{ if(BIG && round === 20 && VW.look && typeof t === 'string' && t.indexOf(MAPNAME()) === 0 && CFG.clima !== false){ const w = VW.k === 'neve' ? 'Neve' : VW.k === 'chuva' ? 'Chuva' : VW.k === 'nevoa' ? 'Neblina' : VW_NAME[VW.look] || ''; if(w) t = t + ' · ' + w; } }catch(e){} arguments[0] = t; return _b.apply(this, arguments); }; }
+
+// ===== Jogo mais vivo, lote 4 (pedido do Bruno 31/10): emotes, reações dos bots e feijões passeando no menu =====
+// Emotes: tecla N abre a rodinha, 1-5 escolhe (Acenar, Dancinha, Comemorar, Rir, Continência). Andar, pular ou atirar cancela.
+// Bots: às vezes comemoram depois de eliminar alguém e se assustam quando levam tiro de surpresa. Menu: feijões passeando, sentados, dançando e conversando no fundo.
+const VE = {L:[['wave', 'Acenar', '👋'], ['dance', 'Dancinha', '💃'], ['cheer', 'Comemorar', '🙌'], ['laugh', 'Rir', '😂'], ['salute', 'Continência', '🫡']], open:false, npc:[], npcW:null};
+// pose por cima da animação normal: mexe nas luvas (m.arms), no corpo (m.tilt) e nos pés (m.legs); k = 0..1 entra/sai suave
+function vvPose(m, kind, t, k){ if(!m || !m.arms || k <= 0.001) return; const A = m.arms, mix = (a, x, y, z) => { a.position.x += (x - a.position.x)*k; a.position.y += (y - a.position.y)*k; a.position.z += (z - a.position.z)*k; };
+  if(m.gun) m.gun.visible = k < 0.5;
+  if(kind === 'wave'){ mix(A[1], 0.66 + Math.sin(t*11)*0.13, 1.6, 0.12); A[1].rotation.z = Math.sin(t*11)*0.4*k; mix(A[0], -0.52, 0.74, 0.05); m.tilt.rotation.z += -0.06*k; }
+  else if(kind === 'dance'){ const s = Math.sin(t*6.5), c = Math.cos(t*6.5); m.tilt.rotation.z += s*0.2*k; m.tilt.position.y += Math.abs(s)*0.12*k; m.tilt.rotation.y += Math.sin(t*3.25)*0.45*k;
+    mix(A[0], -0.62, 0.95 + Math.max(0, s)*0.7, 0.25); mix(A[1], 0.62, 0.95 + Math.max(0, -s)*0.7, 0.25);
+    m.legs.forEach((l, i) => { l.position.y += Math.max(0, i ? c : -c)*0.12*k; }); }
+  else if(kind === 'cheer'){ const h = Math.abs(Math.sin(t*7)); m.tilt.position.y += h*0.28*k; mix(A[0], -0.58, 1.72 + Math.sin(t*14)*0.07, 0.1); mix(A[1], 0.58, 1.72 + Math.cos(t*14)*0.07, 0.1);
+    m.legs.forEach(l => { l.position.y += h*0.22*k; }); }
+  else if(kind === 'laugh'){ m.tilt.rotation.x += (-0.18 + Math.sin(t*22)*0.05)*k; m.tilt.position.y += Math.abs(Math.sin(t*22))*0.04*k; mix(A[0], -0.32, 0.62, 0.42); mix(A[1], 0.32, 0.62, 0.42);
+    if(m.mouth) m.mouth.scale.y += (1.3 - m.mouth.scale.y)*k; }
+  else if(kind === 'salute'){ mix(A[1], 0.3, 1.38, 0.36); A[1].rotation.z = -0.6*k; mix(A[0], -0.5, 0.7, 0.02); m.tilt.rotation.x += -0.04*k; }
+  else if(kind === 'sit'){ m.tilt.position.y += -0.36*k; m.tilt.rotation.x += -0.12*k; m.legs.forEach((l, i) => { l.position.z += (0.42 - l.position.z)*k; l.position.y += (0.18 - l.position.y)*k; l.rotation.x += (-1.3 - l.rotation.x)*k; });
+    mix(A[0], -0.52, 0.55, 0.12); mix(A[1], 0.52, 0.55, 0.12); }
+  else if(kind === 'scare'){ mix(A[0], -0.42, 1.25, 0.32); mix(A[1], 0.42, 1.25, 0.32); m.tilt.rotation.x += 0.12*k; m.eyes && m.eyes.forEach(e => e.scale.multiplyScalar(1 + 0.35*k)); } }
+{ const _ab = animateBean; animateBean = function(p, dt){ const r = _ab.apply(this, arguments); try{ const E = p.vvE; if(E && p.m){ E.t += dt; const k = Math.min(1, E.t*6, Math.max(0, (E.d - E.t)*5)); vvPose(p.m, E.k, E.t, k); if(E.t >= E.d){ p.vvE = null; if(p.m.gun) p.m.gun.visible = true; } } }catch(e){} return r; }; }
+function vvEmote(p, k, d){ if(!p || !p.alive || !p.m) return; p.vvE = {k, t:0, d:d || (k === 'dance' ? 6 : k === 'laugh' ? 3 : 2.6)}; if(!p.isBot && typeof sfx === 'function' && (k === 'cheer' || k === 'dance')) try{ playSnd('vvEmo', {vol:0.5}); }catch(e){} }
+if(typeof SND !== 'undefined' && typeof tone === 'function') SND.vvEmo = d => { [523, 659, 784].forEach((f, i) => tone(f, 0.1, 'triangle', 0.05, 1, i*0.08, d)); };
+// rodinha de emotes (tecla N)
+(function(){ const css = document.createElement('style'); css.textContent = `#vvEmo{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);display:flex;gap:8px;padding:10px 12px;border-radius:16px;background:rgba(20,16,36,.72);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.18);z-index:60;font:600 13px Inter,system-ui,sans-serif;color:#fff}
+#vvEmo[hidden]{display:none}#vvEmo div{width:78px;text-align:center;padding:8px 4px;border-radius:12px;background:rgba(255,255,255,.08)}#vvEmo i{display:block;font-style:normal;font-size:26px;line-height:32px}#vvEmo b{display:inline-block;min-width:18px;border-radius:5px;background:#ffd23f;color:#241a3d;margin-bottom:3px}#vvEmo small{display:block;opacity:.85;font-size:11px;margin-top:2px}`;
+  document.head.appendChild(css); const d = document.createElement('div'); d.id = 'vvEmo'; d.hidden = true; d.innerHTML = VE.L.map(([, n, ic], i) => `<div><b>${i + 1}</b><i>${ic}</i><small>${n}</small></div>`).join(''); document.body.appendChild(d); VE.el = d; })();
+function vvEmoOk(){ const me = players[0]; return me && me.alive && !twoP && R1.phase !== 'menu' && R1.phase !== 'podium' && !PAUSED && !me.car && !me.glide && !me.swim && !me.down; }
+addEventListener('keydown', e => { if(e.repeat || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return;
+  if(e.code === 'KeyN'){ if(VE.open || vvEmoOk()){ VE.open = !VE.open; VE.el.hidden = !VE.open; } return; }
+  if(VE.open && /^Digit[1-5]$/.test(e.code)){ e.preventDefault(); e.stopImmediatePropagation(); const k = VE.L[+e.code.slice(5) - 1][0]; VE.open = false; VE.el.hidden = true; if(vvEmoOk()) vvEmote(players[0], k); return; }
+  if(VE.open && e.code === 'Escape'){ VE.open = false; VE.el.hidden = true; } }, true);
+// cancela o emote do jogador quando ele anda, pula, atira ou entra em algo
+function vvEmoStep(){ const me = players[0]; if(VE.open && !vvEmoOk()){ VE.open = false; VE.el.hidden = true; }
+  if(me && me.vvE && !me.isBot && (Math.hypot(me.vel.x, me.vel.z) > 1.2 || !me.grounded || me.car || clock - (me.lastShot ?? -9) < 0.1 || !me.alive || me.ads)){ me.vvE.d = Math.min(me.vvE.d, me.vvE.t + 0.15); }
+  // bots com emote de corpo inteiro param de dançar se começarem a correr
+  for(const p of players){ if(p.isBot && p.vvE && p.vvE.k !== 'cheer' && Math.hypot(p.vel.x, p.vel.z) > 2) p.vvE.d = Math.min(p.vvE.d, p.vvE.t + 0.2); } }
+// bots: comemoram depois de eliminar alguém, se assustam com tiro que veio do nada
+{ const _h = hurt; hurt = function(q, by, dmg){ const was = q && q.alive, hp0 = q ? q.hp : 0; const r = _h.apply(this, arguments);
+    try{ if(was && q && !q.alive && by && by.isBot && by.alive && by !== q && Math.random() < 0.4 && vvNearCam(by.pos.x, by.pos.y, by.pos.z, 60)) vvEmote(by, Math.random() < 0.25 ? 'laugh' : 'cheer', 1.6);
+      else if(q && q.isBot && q.alive && dmg > 0 && hp0 >= 99 && !q.vvE && Math.random() < 0.5 && vvNearCam(q.pos.x, q.pos.y, q.pos.z, 50)) vvEmote(q, 'scare', 0.7); }catch(e){} return r; }; }
+
+// ---------- feijões passeando no fundo do menu ----------
+const VE_SPOTS = [['walk'], ['walk'], ['walk'], ['sit'], ['dance'], ['chat'], ['chat'], ['wave']];
+function vvMenuNpc(){ try{ VE.npc.forEach(n => { if(n.m.g.parent) n.m.g.parent.remove(n.m.g); fjFree(n.m.g); }); VE.npc = [];
+    const fx = -Math.sin(Math.PI*0.8), fz = -Math.cos(Math.PI*0.8), sx = -fz, sz = fx, base = [0 + fx*11, 0 + fz*11], cols = [0xff5d73, 0x3ec8ff, 0xffd23f, 0x7de07a, 0xb38cff, 0xff9a3c, 0x46e0c8, 0xff8ad1];
+    const gy = (x, z) => { try{ const S = surfacesAt(x, z); return S.length ? Math.max(0, Math.min(3, Math.max(...S))) : 0; }catch(e){ return 0; } };
+    // lugar no chão do palco do menu (nunca na água), na frente da câmera e longe da fila de feijões
+    const spot = () => { for(let k = 0; k < 400; k++){ const r = 5 + Math.random()*13, a = Math.random()*6.283, x = Math.cos(a)*r, z = Math.sin(a)*r;
+        if(x*fx + z*fz < -2) continue; let S = []; try{ S = surfacesAt(x, z); }catch(e){} const h = S.filter(y => y > -0.3 && y < 2.5); if(!h.length) continue;
+        if(players.some(p => Math.hypot(p.pos.x - x, p.pos.z - z) < 2.2) || VE.npc.some(n => Math.hypot(n.x - x, n.z - z) < 1.8)) continue; return [x, z, Math.max(...h)]; } return null; };
+    VE_SPOTS.forEach(([kind], i) => { let P = spot(); if(!P) return; let [x, z, y] = P;
+      if(kind === 'chat' && VE.npc.length && VE.npc[VE.npc.length - 1].kind === 'chat'){ const o = VE.npc[VE.npc.length - 1]; const S = (() => { try{ return surfacesAt(o.x + sx*1.4, o.z + sz*1.4); }catch(e){ return []; } })(); if(S.some(v => Math.abs(v - o.y) < 0.3)){ x = o.x + sx*1.4; z = o.z + sz*1.4; y = o.y; } }
+      const m = makeBean(cols[i % cols.length], false, world); try{ dress(m, botLook(cols[i % cols.length])); }catch(e){}
+      const n = {m, kind, x, z, ax:x, az:z, face:Math.random()*6.283, t:Math.random()*3, st:'idle', tx:x, tz:z, ph:Math.random()*10, y}; m.g.position.set(x, n.y, z); VE.npc.push(n); });
+    // dupla conversando: um de frente pro outro
+    const ch = VE.npc.filter(n => n.kind === 'chat'); if(ch.length === 2){ ch[0].face = Math.atan2(ch[1].x - ch[0].x, ch[1].z - ch[0].z); ch[1].face = ch[0].face + Math.PI; }
+    VE.npcW = world; }catch(e){ console.warn('menu npc', e); } }
+function vvMenuStep(dt){ if(R1.phase !== 'menu') return; if(VE.npcW !== world){ vvMenuNpc(); return; } const t = clock;
+  for(const n of VE.npc){ const m = n.m; n.ph += dt; let sp = 0;
+    if(n.kind === 'walk'){ n.t -= dt; if(n.t <= 0){ if(n.st === 'walk'){ n.st = 'idle'; n.t = 1.5 + Math.random()*3; if(Math.random() < 0.35){ n.emo = ['wave', 'dance', 'laugh'][Math.floor(Math.random()*3)]; n.emoT = 0; } } else { n.st = 'walk'; n.t = 3 + Math.random()*4; const a = Math.random()*6.283, r = 1.5 + Math.random()*4, tx = n.ax + Math.cos(a)*r, tz = n.az + Math.sin(a)*r; let S = []; try{ S = surfacesAt(tx, tz); }catch(e){} if(S.some(v => Math.abs(v - n.y) < 0.15)){ n.tx = tx; n.tz = tz; } else { n.tx = n.x; n.tz = n.z; } } }
+      if(n.st === 'walk'){ const dx = n.tx - n.x, dz = n.tz - n.z, d = Math.hypot(dx, dz); if(d < 0.3){ n.t = 0; } else { sp = 1.7; n.x += dx/d*sp*dt; n.z += dz/d*sp*dt; const f = Math.atan2(dx, dz); let df = f - n.face; df = Math.atan2(Math.sin(df), Math.cos(df)); n.face += df*Math.min(1, dt*6); } } }
+    m.g.position.set(n.x, n.y, n.z); m.g.rotation.y = n.face;
+    FEIJAO_HD.anim(m, {speed:sp, grounded:true, gun:false, aim:0, t:t + n.ph}, dt);
+    if(n.kind === 'sit') vvPose(m, 'sit', n.ph, 1);
+    else if(n.kind === 'dance') vvPose(m, 'dance', n.ph, 1);
+    else if(n.kind === 'wave') vvPose(m, (n.ph % 9) < 3 ? 'wave' : (n.ph % 9) < 5 ? 'salute' : 'cheer', n.ph, Math.min(1, ((n.ph % 9) % 3 < 2.6 ? 1 : 0.4)));
+    else if(n.kind === 'chat'){ const turn = Math.floor(n.ph/2.5 + (n === VE.npc.find(q => q.kind === 'chat') ? 0 : 0.5)) % 4; if(turn === 1) vvPose(m, 'laugh', n.ph, 1); else { m.arms[1].position.y += Math.max(0, Math.sin(n.ph*4))*0.25; m.arms[1].position.z += 0.2; m.tilt.rotation.z += Math.sin(n.ph*1.3)*0.05; } }
+    if(n.st === 'idle' && n.emo){ n.emoT += dt; vvPose(m, n.emo, n.emoT, Math.min(1, n.emoT*5, Math.max(0, (2.6 - n.emoT)*5))); if(n.emoT > 2.6) n.emo = null; } } }
+{ const _ms = menuScene; menuScene = function(){ const r = _ms.apply(this, arguments); vvMenuNpc(); return r; }; }
+{ const _vt = vvTick; vvTick = function(dt){ _vt(dt); try{ vvEmoStep(); vvMenuStep(dt); }catch(e){ console.warn('emotes', e); } }; }
 
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
