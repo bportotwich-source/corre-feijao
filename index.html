@@ -3916,7 +3916,7 @@ function stripes(x0, x1, z, color, y=0){ const s = mesh(new THREE.BoxGeometry(x1
 function fjFree(o){ const G = new Set(), T = new Set(); o.traverse(x => { if(x.geometry) G.add(x.geometry); const ms = Array.isArray(x.material) ? x.material : x.material ? [x.material] : [];
   ms.forEach(m => { for(const k of ['map', 'aoMap', 'alphaMap', 'emissiveMap', 'normalMap', 'bumpMap', 'lightMap', 'gradientMap']) if(m[k] && m[k].isTexture) T.add(m[k]); }); });
   G.forEach(g => g.dispose()); T.forEach(t => t.dispose()); }
-function clearWorld(){ if(LANE_KEEP) return; EXT_FX = null; extUnhide(); DROP_IM = []; DROP_P = []; TER = null; FJ_LIFE = []; scene.fog.near = 60; scene.fog.far = 160; if(camera.far !== 400){ camera.far = 400; camera.updateProjectionMatrix(); } if(typeof splats !== "undefined"){ splats.length = 0; dmgs.forEach(d => d.el.remove()); dmgs.length = 0; } GRID = null; fjFree(world); scene.remove(world); world = new THREE.Group(); scene.add(world); solids = []; bars = []; hammers = []; robot = null; doors = []; itemBoxes = []; hazards = []; OBS = []; }
+function clearWorld(){ if(LANE_KEEP) return; EXT_FX = null; extUnhide(); DROP_IM = []; DROP_P = []; TER = null; FJ_LIFE = []; scene.fog.near = 60; scene.fog.far = 160; if(camera.far !== 400){ camera.far = 400; camera.updateProjectionMatrix(); } if(typeof splats !== "undefined"){ splats.length = 0; dmgs.forEach(d => d.el.remove()); dmgs.length = 0; } GRID = null; fjFree(world); scene.remove(world); world = new THREE.Group(); scene.add(world); solids = []; bars = []; hammers = []; robot = null; doors = []; itemBoxes = []; hazards = []; OBS = []; PQ = null; }
 
 // ---------- Tamanho das provas (parte 1): pequena, média e grande conforme os feijões vivos ----------
 // NPL = feijões na partida (menu). Cada prova escolhe o tamanho pelo número de vivos: até 18 pequena, até 45 média, mais que isso grande.
@@ -3924,7 +3924,7 @@ function clearWorld(){ if(LANE_KEEP) return; EXT_FX = null; extUnhide(); DROP_IM
 let NPL = 16; try{ const n = parseInt(localStorage.getItem('feijao-npl'), 10); if([16, 40, 100].includes(n)) NPL = n; }catch(e){}
 let SZ = 0, LX = [0], LW = 14, RBIG = false, LANE_KEEP = false;
 const SZ_NAME = ['pequena', 'média', 'grande'], szFor = n => n > 45 ? 2 : n > 18 ? 1 : 0;
-const LANE_W = {1:14, 6:24, 9:14, 10:14, 11:14, 12:24, 21:24};
+const LANE_W = {1:14, 6:24, 9:14, 10:14, 11:14, 12:24, 21:24, 36:40};
 const MAXN = r => 100; // todas as provas aguentam os 100 (parte 2)
 const nPlayers = () => !$('menu').hidden ? 16 : single ? Math.min(NPL, MAXN(single)) : NPL;
 const laneAt = x => LX.reduce((a, c) => Math.abs(c - x) < Math.abs(a - x) ? c : a, LX[0]);
@@ -3944,7 +3944,7 @@ function buildLanes(fn, n, w){
   solids = solids.filter(b => b.mesh || b.max.x - b.min.x > 0.35 || !seams.some(s => Math.abs((b.min.x + b.max.x)/2 - s) < 0.4));
 }
 // sorteia a prova na hora, pelo número de vivos (só as que aguentam essa quantidade)
-const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
+const ROUND_POOL = [1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 36, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
 const ROUND_OFF = [8, 16, 17, 19]; // provas tiradas do jogo (Frutas, Apagão, Cabo de Guerra, Domínio)
 // Sorteio (parte 6): cada partida tem um roteiro de tipos. Começa com corrida (todo mundo junto),
 // depois mistura sobrevivência, times e rodadas do Round 6 (Ponte de Vidro, Salas) sem repetir o tipo seguido.
@@ -3977,7 +3977,7 @@ function pickRound(){
   let pool = ROUND_POOL.filter(id => !FINALS.includes(id) && !plan.includes(id) && MAXN(id) >= n && !ROUND_OFF.includes(id) && !(n < 4 && catOf(id) === 'team'));
   const cat = pool.filter(id => catOf(id) === want); if(cat.length) pool = cat;
   const fresh = pool.filter(id => !PLAN_LAST.includes(id)); if(fresh.length) pool = fresh;
-  if(!pool.length) pool = [1, 6, 9, 10, 11, 12, 21].filter(id => !plan.includes(id));
+  if(!pool.length) pool = [1, 6, 9, 10, 11, 12, 21, 36].filter(id => !plan.includes(id));
   round = plan[stage] = pool[Math.floor(Math.random()*pool.length)] || 1;
   PLAN_CUR.push(round); try{ localStorage.setItem('feijao-last-plan', JSON.stringify(PLAN_CUR)); }catch(e){}
 }
@@ -4614,6 +4614,171 @@ function obSpinK(S){ const o = obSpin(S), L = S.z1 - S.z0, r = Math.min(S.w, L/2
 function obBeltK(S){ const o = obBelt(S), L = S.z1 - S.z0, zc = (S.z0 + S.z1)/2; obkM([['belt_sideT', [-(S.w + 0.05), 0, zc], [1, 1, L/2], 0x6b4fd8], ['belt_sideT', [S.w + 0.05, 0, zc], [1, 1, L/2], 0x6b4fd8]], o.g, false); return o; }
 Object.assign(OB_MAKE, {punch:obPunchK, fan:obFanK, bump:obBumpK, saw:obSawK, cannon:obCannonK, gate:obGateK, spring:obSpringK, log:obLogK, pendulum:obPendulumK, melon:obMelonK, banana:obBananaK, balls:obBallsK, geyser:obGeyserK, spin:obSpinK, belt:obBeltK});
 
+// ---------- Prova 36: Parque Inflável (corrida grande nova, pedido do Bruno 31/10 21:46: "mapas maiores e mais complexos") ----------
+// ~280 m e 3 andares. Largada larga -> rampa inflável gigante com frutas e bolas rolando morro abaixo -> torre 1 -> 3 caminhos
+// (trampolins / ponte de 2 andares / plataformas que andam) que se cruzam na torre 2 -> mais 3 caminhos (tobogã / piso que cai /
+// elevadores) até a torre 3 -> ponte das bolas -> funil com portões -> chegada. Cabe 100 feijões (pistas de 40 m nas áreas largas).
+const PQ_X = [-13, 0, 13];
+let PQ = null;
+const pqRampY = z => z < 30 ? 0 : z > 70 ? 10 : (z - 30)/4;
+// rampa em pedaços curtos (o bot só enxerga piso que fica perto da altura dele)
+function pqRamp(x0, x1, z0, z1, y0, y1, col, n, sup){ const dz = (z1 - z0)/n, dy = (y1 - y0)/n, out = [];
+  for(let k=0; k<n; k++){ const a = z0 + k*dz, ya = y0 + k*dy, b = ramp(x0, x1, a, a + dz + 0.02, ya, ya + dy, true, (k % 2) ? col : shade(col, 0.92)); out.push(b);
+    if(sup){ const lo = Math.min(ya, ya + dy); box(x0, x1, sup, lo - 0.05, a, a + dz, shade(col, 0.75)); } }
+  return out; }
+// boia (tubo inflável) ao longo de uma borda
+function pqTube(x, y, z0, z1, r, col, y1){ const L = z1 - z0, m = mesh(new THREE.CylinderGeometry(r, r, Math.hypot(L, (y1 ?? y) - y), 14, 1), mat(col), world);
+  m.rotation.x = Math.PI/2; if(y1 !== undefined) m.rotation.x -= Math.atan2(y1 - y, L); m.position.set(x, (y + (y1 ?? y))/2 + r*0.6, (z0 + z1)/2); m.castShadow = false;
+  [z0, z1].forEach((z, k) => { const c = mesh(new THREE.SphereGeometry(r, 14, 10), mat(col), world); c.position.set(x, (k ? (y1 ?? y) : y) + r*0.6, z); c.castShadow = false; });
+  for(let z = z0 + 1.6; z < z1 - 0.8; z += 3.2){ const t = (z - z0)/L, yy = y + ((y1 ?? y) - y)*t; const s = mesh(new THREE.TorusGeometry(r*1.01, 0.06, 6, 18), mat(0xffffff), world); s.position.set(x, yy + r*0.6, z); s.castShadow = false; }
+  box(x - r, x + r, Math.min(y, y1 ?? y), Math.max(y, y1 ?? y) + r*1.3, z0, z1, 0, {invisible:true, noClimb:true}); }
+// placa em cima da entrada de um caminho
+function pqSign(txt, sub, x, fy, z, col){ const y = fy + 4.4; const c = document.createElement('canvas'); c.width = 512; c.height = 160; const g = c.getContext('2d');
+  g.fillStyle = col; g.beginPath(); g.roundRect ? g.roundRect(8, 8, 496, 144, 36) : g.rect(8, 8, 496, 144); g.fill(); g.lineWidth = 10; g.strokeStyle = '#ffffff'; g.stroke();
+  g.fillStyle = '#2b1846'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = 'bold 62px "Lilita One", "Arial Black", sans-serif'; g.fillText(txt, 256, sub ? 64 : 82);
+  if(sub){ g.font = 'bold 30px "Arial Black", sans-serif'; g.fillText(sub, 256, 120); }
+  const t = new THREE.CanvasTexture(c); t.anisotropy = 4; const m = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 2), new THREE.MeshBasicMaterial({map:t, transparent:true, side:THREE.DoubleSide}));
+  m.position.set(x, y, z); m.rotation.y = Math.PI; world.add(m);
+  [-2.9, 2.9].forEach(dx => { const p = mesh(new THREE.CylinderGeometry(0.12, 0.12, 3.6, 6), mat(0x2b1846), world); p.position.set(x + dx, fy + 1.8, z + 0.05); p.castShadow = false; });
+  return m; }
+// arco inflável (dois pilares gordos e um tubo em cima)
+function pqArch(x0, x1, y, z, col, col2){ const r = 0.9, H = 6.5;
+  [x0, x1].forEach(x => { const p = mesh(new THREE.CylinderGeometry(r, r*1.15, H, 16), mat(col), world); p.position.set(x, y + H/2, z); p.castShadow = false;
+    for(let k=1; k<4; k++){ const s = mesh(new THREE.TorusGeometry(r*1.05, 0.12, 6, 18), mat(col2), world); s.rotation.x = Math.PI/2; s.position.set(x, y + k*H/4, z); s.castShadow = false; }
+    box(x - r, x + r, y, y + H, z - r, z + r, 0, {invisible:true}); });
+  const top = mesh(new THREE.CylinderGeometry(r*0.9, r*0.9, x1 - x0, 18), mat(col2), world); top.rotation.z = Math.PI/2; top.position.set((x0 + x1)/2, y + H + 0.3, z); top.castShadow = false;
+  for(let x = x0 + 2; x < x1 - 1; x += 2.2){ const b = mesh(new THREE.SphereGeometry(0.55, 12, 9), mat([0xff4fa3, 0xffd23f, 0x3ee0b0, 0x7fd3ff][Math.round(x) & 3]), world); b.position.set(x, y + H + 1.1, z); b.castShadow = false; } }
+// torre inflável de enfeite (castelo pula-pula)
+function pqTower(x, y, z, r, H, col, col2){ const t = mesh(new THREE.CylinderGeometry(r, r*1.08, H, 20), mat(col), world); t.position.set(x, y + H/2, z); t.castShadow = false;
+  for(let k=1; k<5; k++){ const s = mesh(new THREE.TorusGeometry(r*1.04, 0.16, 6, 22), mat(col2), world); s.rotation.x = Math.PI/2; s.position.set(x, y + k*H/5, z); s.castShadow = false; }
+  for(let k=0; k<8; k++){ const a = k/8*Math.PI*2, m = mesh(new THREE.CylinderGeometry(0.5, 0.55, 1.2, 10), mat(col2), world); m.position.set(x + Math.cos(a)*r*0.85, y + H + 0.6, z + Math.sin(a)*r*0.85); m.castShadow = false; }
+  const cone = mesh(new THREE.ConeGeometry(r*0.75, r*1.3, 18), mat(0x6b4fd8), world); cone.position.set(x, y + H + 0.6 + r*0.65, z); cone.castShadow = false;
+  const fl = mesh(new THREE.BoxGeometry(1.6, 0.9, 0.08), mat(0xffd23f), world); fl.position.set(x + 0.85, y + H + 1.6 + r*1.3, z);
+  box(x - r*0.8, x + r*0.8, y, y + H, z - r*0.8, z + r*0.8, 0, {invisible:true}); }
+// piso largo (área de todo mundo), com listras e paredes invisíveis
+function pqHub(z0, z1, y, w, col, st){ box(-w, w, y - 1, y, z0, z1, col); for(let z = z0 + 2; z < z1; z += 4) stripes(-w, w, z, st, y); walls(-w, w, z0, z1, y);
+  pqTube(-w - 0.55, y, z0 + 0.6, z1 - 0.6, 0.55, 0xff4fa3); pqTube(w + 0.55, y, z0 + 0.6, z1 - 0.6, 0.55, 0xff4fa3); }
+// pista de um caminho
+function pqPath(cx, hw, z0, z1, y, col, st){ const b = box(cx - hw, cx + hw, y - 1, y, z0, z1, col); for(let z = z0 + 1.5; z < z1; z += 3) stripes(cx - hw, cx + hw, z, st, y); return b; }
+// armadilha num lugar escolhido (as mesmas do sorteio das corridas)
+function pqOb(t, cx, w, y, z0, z1){ if(!OB_MAKE[t]) return null; const S = {cx, w, y, z0, z1}, o = OB_MAKE[t](S); o.t = t; o.z0 = z0; o.z1 = z1; o.y = y; OBS.push(o); return o; }
+
+function buildParque(){
+  clearWorld();
+  const W = 20;
+  course = {finish:272, cps:[[264, 266, 6, 10], [228, 230, 5, 10], [188, 190, 14, 10], [126, 128, 14, 14], [72, 75, 14, 10], [-99, 0, 14, 0]]};
+  // largada
+  box(-W, W, -1, 0, -6, 30, 0xff8cc6); for(let z = -4; z < 30; z += 4) stripes(-W, W, z, 0xff6fb0);
+  walls(-W, W, -6, 30); box(-W, W, 0, 3, -6.3, -6, 0, {invisible:true});
+  pqTube(-W - 0.6, 0, -5.4, 29.4, 0.6, 0x7fd3ff); pqTube(W + 0.6, 0, -5.4, 29.4, 0.6, 0x7fd3ff);
+  pqArch(-W + 1, W - 1, 0, -2, 0xffd23f, 0xff4fa3);
+  addBar(13, 0.45, 1.25, 0xffd23f, 8.6, 0, -9.5); addBar(13, 0.45, -1.25, 0x3ee0b0, 8.6, 0, 9.5); addBar(22, 1.15, 0.9, 0xff9f1c, 9.4, 0, 0);
+  // rampa inflável gigante (sobe 10 m em 40 m), com bóias nas bordas e montinhos fofos pra se esconder das frutas
+  pqRamp(-14, 14, 30, 70, 0, 10, 0x7fd3ff, 10, null);
+  pqTube(-14.7, 0, 30, 70, 0.75, 0xff4fa3, 10); pqTube(14.7, 0, 30, 70, 0.75, 0xff4fa3, 10);
+  for(let z = 32; z < 70; z += 2.5){ const y = pqRampY(z); stripes(-14, 14, z, 0x5fbde8, y + 0.02); }
+  [[-7, 40], [6, 44], [-2, 52], [9, 58], [-10, 61], [2, 64]].forEach(([x, z], k) => { const y = pqRampY(z), r = 1.25;
+    const m = mesh(new THREE.SphereGeometry(r, 16, 12), mat([0xffd23f, 0x3ee0b0, 0xb38cff][k % 3]), world); m.scale.set(1, 0.75, 1); m.position.set(x, y + 0.5, z); m.castShadow = false;
+    const ring = mesh(new THREE.TorusGeometry(r*0.92, 0.1, 6, 16), mat(0xffffff), world); ring.rotation.x = Math.PI/2; ring.position.set(x, y + 0.75, z); ring.castShadow = false;
+    box(x - 1.05, x + 1.05, y - 0.5, y + 1.3, z - 1.05, z + 1.05, 0, {invisible:true, noClimb:true}); });
+  // torre 1 (y 10): a boca que cospe as frutas e a escolha dos 3 caminhos
+  pqHub(70, 84, 10, W, 0xffd23f, 0xffbf00);
+  pqTower(-17, 10, 71.5, 2.2, 7, 0xff8cc6, 0xffffff); pqTower(17, 10, 71.5, 2.2, 7, 0xff8cc6, 0xffffff);
+  { const mo = mesh(new THREE.CylinderGeometry(3.4, 3.4, 26, 22, 1, true, 0, Math.PI), mat(0x6b4fd8), world); mo.rotation.z = Math.PI/2; mo.position.set(0, 10.2, 72.8); mo.castShadow = false;
+    const lip = mesh(new THREE.TorusGeometry(3.4, 0.35, 8, 26, Math.PI), mat(0xff4fa3), world); lip.position.set(-13, 10.2, 72.8); lip.rotation.y = Math.PI/2; const lip2 = lip.clone(); lip2.position.x = 13; world.add(lip2); }
+  [['TRAMPOLINS', 'pula-pula até o alto', 0x3ee0b0], ['PONTE DUPLA', 'em cima martelos, embaixo barras', 0xffd23f], ['ESTEIRA', 'plataformas que andam', 0xff8cc6]].forEach(([t, s, c], k) => pqSign(t, s, PQ_X[k], 10, 83.5, '#' + c.toString(16).padStart(6, '0')));
+  // --- 3 caminhos até a torre 2 (y 14) ---
+  // esquerda: trampolins em ilhas cada vez mais altas, com ventilador no fim
+  pqPath(-13, 4.5, 84, 90, 10, 0x3ee0b0, 0x2fc79a);
+  [[86, 89.6, 10], [97.5, 101.4, 12]].forEach(([a, b, y]) => { for(let x = -16.6; x < -9; x += 2.4) { const p = box(x - 0.95, x + 0.95, y, y + 0.32, a, b, 0xff4fa3, {bounce:17.2, kind:'pad'}); if(p.mesh && window.OBK){ p.mesh.geometry = obkGeo('spring_padT'); p.mesh.scale.set(1.9/1.7, 1, (b - a)/1.7); p.mesh.material = obkMat(0xff4fa3); } } });
+  pqPath(-13, 4.5, 93.4, 101.6, 12, 0x7fd3ff, 0x5fbde8);
+  pqPath(-13, 4.5, 104, 124, 14, 0xb38cff, 0x9a70f0); pqOb('fan', -13, 4.4, 14, 110, 118);
+  [93.4, 104].forEach((z, k) => pillar(-13, z + 3, [12, 14][k], 0.8)); pillar(-13, 87, 10, 0.8);
+  // meio: ponte de 2 andares. Em cima (y 14): rampa e martelos. Embaixo (y 10): barras; no fim, trampolins pra subir pra torre
+  pqPath(0, 6, 84, 120.5, 10, 0xff9f1c, 0xe07d00);
+  pqRamp(-3.4, 3.4, 87, 99, 10, 14, 0xffd23f, 3, 9.95);
+  box(-3.4, 3.4, 13, 14, 99, 124, 0xffd23f); for(let z = 100.5; z < 124; z += 3) stripes(-3.4, 3.4, z, 0xffbf00, 14);
+  addHammer(106, 1.9, 0.3, 0, 4.2, 14); addHammer(115.5, 2.2, 2.1, 0, 4.2, 14);
+  addBar(104.5, 10.45, 1.35, 0x3ee0b0, 5.8, 10, 0); addBar(111.5, 11.15, -1.1, 0xb38cff, 5.8, 10, 0);
+  [-1, 1].forEach(sd => { for(let z = 116.6; z < 120.4; z += 1.9) { const x = sd*4.9; const p = box(x - 0.85, x + 0.85, 10, 10.32, z - 0.85, z + 0.85, 0x3ee0b0, {bounce:19.5, kind:'pad'}); if(p.mesh && window.OBK){ p.mesh.geometry = obkGeo('spring_padT'); p.mesh.material = obkMat(0x3ee0b0); } }
+    [99.4, 123.4].forEach(z => { const c = mesh(new THREE.CylinderGeometry(0.22, 0.22, 4.6, 8), mat(0x2b1846), world); c.position.set(sd*3.6, 11.7, z); c.castShadow = false; }); });
+  // direita: plataformas que andam e paredes que socam, depois uma escadaria fofa até a torre
+  pqPath(13, 4.5, 84, 91, 10, 0xff8cc6, 0xff6fb0);
+  [[92.8, 96.4, 1.1, 0], [98.6, 102.2, 1.35, 1.6], [104.4, 108, 1.0, 3.3]].forEach(([a, b, spd, ph]) => box(11.1, 14.9, 9.2, 10, a, b, 0x6b4fd8, {kind:'mover', amp:2.6, spd, ph, cx:13}));
+  pqPath(13, 4.5, 110, 119, 10, 0xff8cc6, 0xff6fb0); pqOb('punch', 13, 4.4, 10, 111, 118);
+  for(let k=0; k<5; k++){ const a = 119 + k*1.2, top = 10.8 + k*0.8; box(8.5, 17.5, top - 1, top, a, k === 4 ? 124.5 : a + 1.2, [0x3ee0b0, 0x7fd3ff, 0xff8cc6, 0xffd23f, 0xb38cff][k]); }
+  // torre 2 (y 14): todo mundo se encontra, dá pra trocar de lado
+  pqHub(124, 138, 14, W, 0x9be15d, 0x7fcf45);
+  pqTower(0, 14, 131, 2.6, 9, 0xffd23f, 0xff4fa3);
+  [['TOBOGÃ', 'desce rápido, cuidado c/ troncos', 0x7fd3ff], ['PISO QUE CAI', 'pinball e ladrilhos', 0xffd23f], ['ELEVADORES', 'e canhões de tomate', 0xff8cc6]].forEach(([t, s, c], k) => pqSign(t, s, PQ_X[k], 14, 137.5, '#' + c.toString(16).padStart(6, '0')));
+  // --- mais 3 caminhos até a torre 3 (y 10) ---
+  // esquerda: tobogã inflável descendo, com troncos rolando e pêndulos no fim
+  pqRamp(-17.5, -8.5, 138, 158, 14, 10, 0x7fd3ff, 5, null);
+  pqTube(-18.2, 14, 138, 158, 0.6, 0xff4fa3, 10); pqTube(-7.8, 14, 138, 158, 0.6, 0xff4fa3, 10);
+  pqPath(-13, 4.5, 158, 186, 10, 0x3ee0b0, 0x2fc79a); pqOb('log', -13, 4.4, 10, 160, 168); pqOb('pendulum', -13, 4.4, 10, 172, 182);
+  // meio: pinball e depois piso que cai, e uma rampa descendo
+  pqPath(0, 4.5, 138, 156, 14, 0xffd23f, 0xffbf00); pqOb('bump', 0, 4.4, 14, 140, 154);
+  { const cols = [0x3ee0b0, 0x7fd3ff, 0xff8cc6, 0xffd23f]; for(let i=0; i<5; i++) for(let j=0; j<7; j++){ const x0 = -4.5 + i*1.8 + 0.05, z0 = 156.2 + j*1.9 + 0.05; box(x0, x0 + 1.7, 13.55, 14, z0, z0 + 1.8, cols[(i + j) % 4], {kind:'tile', t:-1, home:13.55}); } }
+  pqPath(0, 4.5, 169.6, 172, 14, 0xffd23f, 0xffbf00);
+  pqRamp(-4.5, 4.5, 172, 182, 14, 10, 0xffd23f, 4, null); pqPath(0, 4.5, 182, 186.2, 10, 0xff9f1c, 0xe07d00);
+  // direita: elevadores que descem e um corredor de canhões
+  pqPath(13, 4.5, 138, 141, 14, 0xff8cc6, 0xff6fb0);
+  [[141.8, 146, 13, 1.25, 0], [147, 151.2, 12, 1.15, 1.7], [152.2, 156.4, 11, 1.2, 3.4]].forEach(([a, b, ly, spd, ph]) => [-1, 1].forEach(sd => box(13 + (sd > 0 ? 0.3 : -4.3), 13 + (sd > 0 ? 4.3 : -0.3), ly - 0.6, ly, a, b, [0xff4fa3, 0x7fd3ff, 0xffd23f][Math.round(ph) % 3], {kind:'lift', ly, amp:1.1, spd, ph:ph + (sd > 0 ? 1.5 : 0)})));
+  pqPath(13, 4.5, 157.4, 186, 10, 0xff8cc6, 0xff6fb0); pqOb('cannon', 13, 4.4, 10, 162, 172); pqOb('saw', 13, 4.4, 10, 176, 183);
+  // torre 3 (y 10)
+  pqHub(186, 200, 10, W, 0xb38cff, 0x9a70f0);
+  pqTower(-17, 10, 198, 2, 6, 0x7fd3ff, 0xffffff); pqTower(17, 10, 198, 2, 6, 0x7fd3ff, 0xffffff);
+  // ponte das bolas: bolas de praia vêm rolando de frente
+  box(-8, 8, 9, 10, 200, 226, 0x7fd3ff); for(let z = 202; z < 226; z += 3) stripes(-8, 8, z, 0x5fbde8, 10); walls(-8, 8, 200, 226, 10);
+  pqTube(-8.6, 10, 200.5, 225.5, 0.55, 0xffd23f); pqTube(8.6, 10, 200.5, 225.5, 0.55, 0xffd23f);
+  pqOb('balls', 0, 7.6, 10, 203, 224);
+  // descanso + funil dos portões + chegada
+  box(-12, 12, 9, 10, 226, 236, 0x9be15d); for(let z = 228; z < 236; z += 4) stripes(-12, 12, z, 0x7fcf45, 10); walls(-12, 12, 226, 236, 10);
+  addBar(231, 10.45, 1.2, 0xff4fa3, 5.4, 10, -5.8); addBar(231, 10.45, -1.2, 0xffd23f, 5.4, 10, 5.8);
+  box(-10, 10, 9, 10, 236, 250, 0xffd23f); walls(-10, 10, 236, 250, 10); pqOb('gate', 0, 9.6, 10, 237, 249);
+  box(-7, 7, 9, 10, 250, 262, 0xff8cc6); walls(-7, 7, 250, 262, 10); pqOb('gate', 0, 6.6, 10, 251, 261);
+  box(-14, 14, 9, 10, 262, 288, 0x5fe0a8); for(let z = 264; z < 288; z += 4) stripes(-14, 14, z, 0x45c98f, 10); walls(-14, 14, 262, 288, 10); box(-14, 14, 10, 13, 288, 288.3, 0, {invisible:true});
+  pqArch(-13, 13, 10, 280, 0xff4fa3, 0xffd23f);
+  EXT_REC = null; finishLine(-14, 14, 272, 10);
+  // frutas e bolas que rolam rampa abaixo (saem da boca da torre 1)
+  PQ = {B:[], t:0};
+  const n = SZ === 2 ? 12 : SZ === 1 ? 9 : 7;
+  for(let k=0; k<n; k++){ const mel = k % 3 === 1, r = mel ? rand(1.0, 1.25) : rand(1.05, 1.4), m = window.OBK ? obk(mel ? 'melon' : 'beachball', world) : mesh(new THREE.SphereGeometry(1, 16, 12), mat(0xff4fa3), world);
+    m.visible = false; PQ.B.push({m, mel, r, x:0, z:0, v:0, on:false, t:k*0.75 + rand(0, 0.4), ax:Math.random()*6}); }
+}
+// as frutas rolando: aceleram na descida, quicam um pouco, derrubam quem está na frente
+function pqUpd(dt){ if(!PQ) return; const S = Math.sin(Math.atan(0.25));
+  for(const b of PQ.B){
+    if(!b.on){ b.t -= dt; if(b.t <= 0 && R1.phase === 'play'){ b.on = true; b.x = rand(-12.5 + b.r, 12.5 - b.r); b.z = 72.4; b.v = rand(1.5, 3); b.m.visible = true; } continue; }
+    const onR = b.z > 30 && b.z < 70; b.v = Math.min(b.mel ? 12 : 13.5, b.v + (onR ? 28*S*0.55 : b.z >= 70 ? 6 : -1.2)*dt); b.z -= b.v*dt;
+    // os montinhos da rampa desviam a fruta pro lado
+    for(const [hx, hz] of PQ_HUMPS){ const dx = b.x - hx, dz = b.z - hz, d = Math.hypot(dx, dz); if(d < b.r + 1.1){ b.x = hx + dx/d*(b.r + 1.1); b.v *= 0.92; } }
+    b.x = clamp(b.x, -13.6 + b.r, 13.6 - b.r);
+    const y = pqRampY(b.z), bo = Math.abs(Math.sin(b.z*0.9 + b.ax))*Math.min(0.5, b.v*0.04);
+    b.m.position.set(b.x, y + b.r + bo, b.z); b.m.rotation.x -= b.v*dt/b.r; const sc = b.mel ? b.r/0.8 : b.r; b.m.scale.set(sc, sc*(1 - (0.5 - bo)*0.08), sc);
+    if(b.z < 15){ b.on = false; b.m.visible = false; b.t = rand(0.3, 1.6); if(obNear(b.x, b.z)) puff(b.x, 0.5, b.z, 10, b.mel ? 0xff6b6b : 0xffffff, 0.15, 3); continue; }
+    for(const p of players){ if(!p.alive || p.done) continue; const dz = p.pos.z - b.z; if(dz > 2 || dz < -2) continue; const dx = p.pos.x - b.x, dy = p.pos.y - (y + 0.1);
+      if(dy > b.r*1.6 || dy < -1) continue; if(dx*dx + dz*dz < (b.r + 0.45)**2 && p.hitCD <= 0){ p.hitCD = 0; knock(p, (Math.sign(dx) || 1)*rand(2, 4.5), 7.5, -Math.max(6, b.v*1.25), 0.9, b.mel ? 'fruit' : 'ball'); if(b.mel && near(p, 30)) puff(p.pos.x, p.pos.y + 0.8, p.pos.z, 8, 0xff6b6b, 0.14, 3); } } } }
+const PQ_HUMPS = [[-7, 40], [6, 44], [-2, 52], [9, 58], [-10, 61], [2, 64]];
+// bots: cada um escolhe um caminho em cada trecho; na rampa foge das frutas
+function pqTx(p, z){ if(!p.route || p.route.length < 2) p.route = [Math.floor(Math.random()*3), Math.floor(Math.random()*3)];
+  if(z < 26) return clamp(p.lane*2.2, -14, 14);
+  if(z < 70){ let tx = clamp(p.lane*1.8 + (p.i % 5 - 2)*1.6, -11, 11);
+    if(PQ) for(const b of PQ.B){ if(!b.on) continue; const dz = b.z - z; if(dz > -0.5 && dz < 9 && Math.abs(b.x - p.pos.x) < b.r + 1.4 && p.skill > 0.35){ tx = p.pos.x + (b.x > p.pos.x ? -3.5 : 3.5); break; } }
+    for(const [hx, hz] of PQ_HUMPS){ if(hz - z > 0 && hz - z < 3.5 && Math.abs(hx - tx) < 1.6) tx = hx + (tx > hx ? 1.9 : -1.9); }
+    return clamp(tx, -12.5, 12.5); }
+  if(z < 82) return PQ_X[p.route[0]];
+  if(z < 124.5){ const r = p.route[0];
+    if(r === 1){ if(!p.up) p.up = Math.random() < 0.55 ? 1 : 2; if(p.pos.y > 12.5 || (p.up === 1 && z < 99)) return z < 88 && p.pos.y < 11 ? 0 : clamp(p.lane*0.12, -0.5, 0.5); return z > 115.5 ? (p.i % 2 ? 4.9 : -4.9) : z < 99.5 ? (p.i % 2 ? 4.7 : -4.7) : clamp(p.lane*0.4, -1.6, 1.6); }
+    return PQ_X[r] + clamp(p.lane*0.25, -1.2, 1.2); }
+  if(z < 136) return PQ_X[p.route[1]];
+  if(z < 186){ const r = p.route[1]; return PQ_X[r] + (r === 1 && z > 155 && z < 170 ? 0 : clamp(p.lane*0.25, -1.2, 1.2)); }
+  if(z < 200) return clamp(p.lane*0.6, -6, 6);
+  if(z < 236) return clamp(p.lane*0.9, -6.5, 6.5);
+  return clamp(p.lane*0.6, -5, 5); }
+// largada: 13 colunas, todo mundo cabe no tapete da largada
+function pqSpawn(alive){ alive.slice().sort(() => Math.random() - 0.5).forEach((p, k) => { p.pos.set(-17.4 + (k % 13)*2.9 + rand(-0.2, 0.2), 0, -4.5 + Math.floor(k/13)*1.7); p.cp.set(0, 0, 0); p.cpX = 14; p.face = 0; p.lx = 0; p.route = null; p.up = 0; }); }
+
 // que armadilha cabe num trecho: ponte estreita, chão largo, gelo ou alto da Escalada. Corrida Maluca sem bolas rolando (pedido do Bruno)
 function obFits(S, r){ const L = S.z1 - S.z0;
   if(S.soft) return ['fan', 'punch', 'cannon', 'geyser', 'pendulum', 'melon'];
@@ -4636,7 +4801,7 @@ function obFind(s0, b0, h0, clip){ const NS = solids.slice(s0), NB = bars.slice(
     if(zEnd - z >= 3.2) out.push(Object.assign({z0:z, z1:zEnd}, S)); }
   return out; }
 // sorteia onde e quais armadilhas vão (2 a 5 por pista, sem repetir)
-function obAuto(r, s0=0, b0=0, h0=0, clip=null){ const free = obFind(s0, b0, h0, clip); if(!free.length) return;
+function obAuto(r, s0=0, b0=0, h0=0, clip=null){ if(r === 36) return; const free = obFind(s0, b0, h0, clip); if(!free.length) return;
   let n = r === 9 ? 1 : r === 11 ? 2 : clamp(Math.round(course.finish/40), 2, 4) + (Math.random() < 0.5 ? 1 : 0); const used = [];
   while(n-- > 0 && free.length){ const tot = free.reduce((a, f) => a + f.z1 - f.z0, 0); let pk = Math.random()*tot, i = 0; while(i < free.length - 1 && (pk -= free[i].z1 - free[i].z0) > 0) i++;
     const f = free.splice(i, 1)[0], len = f.z1 - f.z0, L = rand(Math.min(3.6, len), Math.min(7.5, len)), z0 = f.z0 + Math.random()*(len - L), S = Object.assign({}, f, {z0, z1:z0 + L});
@@ -4754,7 +4919,7 @@ function extStadium(){ EXT_FX = null; extUnhide(); const E = course.ext; if(!E) 
 function updateExt(){ if(!EXT_FX) return; const t = clock; EXT_FX.ims.forEach((im, h) => im.position.y = Math.max(0, Math.sin(t*7 + h*Math.PI))*0.35);
   EXT_FX.bal.forEach((b, k) => b.position.y += Math.sin(t*0.8 + k)*0.01); EXT_FX.prop.forEach((p, k) => p.rotation.y = t*9 + k); }
 
-function updateObs(dt){ if(!OBS.length) return;
+function updateObs(dt){ if(PQ) pqUpd(dt); if(!OBS.length) return;
   for(const o of OBS) o.upd(dt);
   if(R1.phase !== 'play') return;
   for(const p of players){ if(!p.alive || p.dying > 0 || p.done) continue; const z = p.pos.z;
@@ -5116,7 +5281,7 @@ function setupItems(){
   itemBoxes = []; hazards = [];
   if(!ITEM_ROUNDS(round)) return;
   const spots = [];
-  if(RACE(round)){ const xs = round === 12 ? LANES : round === 21 ? TLANES : RBIG ? RTX : [-4, 0, 4]; for(let z=12; z<course.finish - 4; z+=16) xs.forEach(x => LX.forEach(o => spots.push([x + o, z]))); }
+  if(RACE(round)){ const xs = round === 12 ? LANES : round === 21 ? TLANES : round === 36 ? PQ_X : RBIG ? RTX : [-4, 0, 4]; for(let z=12; z<course.finish - 4; z+=16) xs.forEach(x => LX.forEach(o => spots.push([x + o, z]))); }
   else if(round === 2){ for(let z=18; z<120; z+=24) [-10, -3.5, 3.5, 10].forEach(x => spots.push([x, z])); }
   else if(round === 18) spots.push([-10, 0], [10, 0], [0, -10], [0, 10], [0, 0]);
   else if(round === 19) spots.push([0, -12], [0, 12], [-15, 0], [15, 0], [0, 0]);
@@ -5364,7 +5529,7 @@ const LOOKS = {
   manha:{top:0x58b8f5, hor:0xd8f4ff, sun:0xfffbe8, si:0.66, hs:0xf0fbff, hg:0x7fa0c0, hi:0.55, off:[-10, 22, 14], dir:[-0.35, 0.32, 0.88], wc:0xf2fbff},
   tarde:{top:0x4a8ee0, hor:0xffe2b8, sun:0xffdcaa, si:0.7, hs:0xfff2e2, hg:0x9a7a9a, hi:0.54, off:[20, 16, -12], dir:[0.6, 0.16, -0.78], wc:0xfff8f0},
   rosa:{top:0x7a6ae0, hor:0xffc4da, sun:0xffd0dc, si:0.64, hs:0xffeef6, hg:0x9a84cc, hi:0.58, off:[-18, 16, -12], dir:[-0.6, 0.14, -0.78], wc:0xfff4f8}};
-const LOOK_OF = {1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde', 28:'rosa', 29:'tarde', 30:'dia', 31:'manha', 32:'dia', 33:'tarde', 34:'rosa', 35:'dia'};
+const LOOK_OF = {36:'dia', 1:'dia', 2:'manha', 3:'tarde', 4:'rosa', 5:'dia', 6:'tarde', 7:'manha', 8:'dia', 9:'rosa', 10:'manha', 11:'manha', 12:'tarde', 13:'rosa', 14:'dia', 15:'tarde', 16:'dia', 17:'dia', 18:'manha', 19:'rosa', 20:'tarde', 21:'manha', 23:'dia', 24:'tarde', 25:'manha', 26:'rosa', 27:'tarde', 28:'rosa', 29:'tarde', 30:'dia', 31:'manha', 32:'dia', 33:'tarde', 34:'rosa', 35:'dia'};
 let curLook = 'dia'; const sunOff = new V3(12, 25, -8);
 function applyLook(k){ const L = LOOKS[k] || LOOKS.dia; curLook = k; const U = sky.material.uniforms; U.top.value.setHex(L.top); U.hor.value.setHex(L.hor); U.sunDir.value.set(...L.dir).normalize();
   scene.background.setHex(L.hor); scene.fog.color.setHex(L.hor); sun.color.setHex(L.sun); sun.intensity = L.si; hemiL.color.setHex(L.hs); hemiL.groundColor.setHex(L.hg); hemiL.intensity = L.hi; sunOff.set(...L.off); water.material.color.setHex(L.wc); farIsles.visible = !BIG; }
@@ -5443,8 +5608,8 @@ function buildField(color, stripe){
   [[-9, -16], [9, 16], [-16, 9], [16, -9], [0, -19.5], [0, 19.5]].forEach(([x, z]) => box(x - 1.2, x + 1.2, 0, 1.6, z - 1.2, z + 1.2, 0xff4fa3));
   robot = null;
 }
-const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde', 28:'Dança das Cadeiras', 29:'O Chão é Lava', 30:'Estoura-Balão', 31:'Pula-Corda Gigante', 32:'Descida de Paraquedas', 33:'Revezamento', 34:'Labirinto que Muda', 35:'Caça ao Tesouro'};
-const RACE = r => r === 1 || r === 6 || r === 9 || r === 10 || r === 11 || r === 12 || r === 21;
+const ROUND_INFO = {1:'Corrida Maluca', 2:'Sinal Vermelho', 3:'Rei da Colina', 4:'Batata Quente', 5:'Pega-Rabo', 6:'Gangorras', 7:'Ovos no Ninho', 8:'Chuva de Frutas', 9:'Escalada', 10:'Portas Falsas', 11:'Corrida no Gelo', 12:'Três Caminhos', 21:'Torre do Feijão', 36:'Parque Inflável', 13:'Ponte de Vidro', 14:'Salas', 15:'Blocos Caindo', 16:'Apagão', 17:'Cabo de Guerra', 18:'Pinta o Chão', 19:'Domínio', 20:'Guerra de Tomate', 23:'Memória de Frutas', 24:'Chuva de Bombas', 25:'Queimada', 26:'Pega-Bandeira', 27:'Pique-Esconde', 28:'Dança das Cadeiras', 29:'O Chão é Lava', 30:'Estoura-Balão', 31:'Pula-Corda Gigante', 32:'Descida de Paraquedas', 33:'Revezamento', 34:'Labirinto que Muda', 35:'Caça ao Tesouro'};
+const RACE = r => r === 1 || r === 6 || r === 9 || r === 10 || r === 11 || r === 12 || r === 21 || r === 36;
 
 // Gangorras: corrida por gangorras que inclinam com o peso
 const GLANES = [-8, 0, 8];
@@ -11631,7 +11796,7 @@ let earn = null;
 const newEarn = () => ({coins:0, xp:0, done:false, res:null});
 function reward(c, x){ if(!earn || earn.done) return; earn.coins += Math.round(c*[0.7, 1, 1.4][DIFF]); earn.xp += x; }
 function rec(k, t){ const old = SAVE.st[k]; if(!old || t < old){ SAVE.st[k] = Math.round(t*10)/10; if(old) say(`<b>Novo recorde!</b> ${t.toFixed(1)}s`, true); } }
-const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
+const MAP_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 36, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35];
 const ACH = [
   ['a1', 'Primeira coroa', 'Vença uma partida completa', () => st('crowns') >= 1, 50],
   ['a2', 'Tricampeão', 'Ganhe 3 coroas', () => st('crowns') >= 3, 150],
@@ -12036,6 +12201,7 @@ function botInput0(p, dt){
   if(round === 12){ const zz = z + 3, sec = zz < 34 ? 0 : zz < 68 ? 1 : 2; if(!p.route) p.route = [0, 1, 2].map(() => Math.floor(Math.random()*3)); tx = LANES[p.route[sec]] + (p.route[sec] === 2 && sec === 2 ? 0 : clamp(p.lane*0.15, -0.6, 0.6)); }
   if(round === 21){ if(!p.route) p.route = Math.floor(Math.random()*3); tx = z > 37 && z < 80.5 ? TLANES[p.route] + (p.route === 0 ? (Math.floor((z - 47)/4) % 2 ? 1.2 : -1.2) : 0) : z > 88 && z < 117 ? clamp(p.lane*0.4, -2.2, 2.2) : clamp(p.lane*0.5, -2.8, 2.8); }
   if(round === 11) tx = course.cx(z + 2 + Math.max(0, p.vel.z)*0.35) + clamp(p.lane*0.12, -0.4, 0.4);
+  if(round === 36) tx = pqTx(p, z);
   if(course.ext && z > course.ext.z0 - 1) tx = extTx(p, z, bigR ? rc : 0);
   if(!bigR) tx += p.lx || 0;
   if(p.grounded && p.ground && p.ground.kind === 'seesaw') tx = clamp(p.ground.cx + Math.sin(p.ground.ang)*(4 + p.skill*4), p.ground.cx - 2.3, p.ground.cx + 2.3);
@@ -12056,8 +12222,8 @@ function botInput0(p, dt){
       for(const b of solids){ if(!b.active || b.min.z <= z + 0.3 || b.min.z > z + 6 || (b.max.x - b.min.x < 1 && round !== 12)) continue;
         if(bigR && (b.max.x < tx - 5.5 || b.min.x > tx + 5.5)) continue;
         if(LX.length > 1 && Math.abs((b.cx ?? (b.min.x + b.max.x)/2) - (p.lx || 0)) > LW/2) continue;
-        if((round === 12 || round === 6 || round === 21) && (b.max.x < tx - 3.6 || b.min.x > tx + 3.6)) continue;
-        const dy = b.max.y - p.pos.y, tol = b.kind === 'seesaw' || p.ground.kind === 'seesaw' ? 1.4 : round === 9 || round === 12 || round === 6 || round === 21 ? 1.4 : 0.6;
+        if((round === 12 || round === 6 || round === 21 || round === 36) && (b.max.x < tx - 3.6 || b.min.x > tx + 3.6)) continue;
+        const dy = b.max.y - p.pos.y, tol = b.kind === 'seesaw' || p.ground.kind === 'seesaw' ? 1.4 : round === 9 || round === 12 || round === 6 || round === 21 || round === 36 ? 1.4 : 0.6;
         if(dy > tol || dy < -Math.max(tol, 0.6)){ if(b.kind === 'lift' && (!waitFor || b.min.z < waitFor.min.z)) waitFor = b; continue; }
         if(!target || b.min.z < target.min.z) target = b; }
       if(waitFor && (!target || waitFor.min.z < target.min.z)){ target = null; mz = p.ground.max.z - z > 0.9 ? 1 : 0; mx = clamp(((waitFor.min.x + waitFor.max.x)/2 - p.pos.x)*0.6, -1, 1); }
@@ -12218,10 +12384,11 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   players.filter(p => !p.alive).forEach(p => p.m.g.visible = false);
   rev = null; players.forEach(p => { p.rev = false; p.revWait = 0; p.revUsed = false; p.card = false; p.cardUsed = false; p.stT = 0; }); R1.finished = 0; R1.t = 0; curLook = lookFor(round); setDark(false); mingle = null; tug = null; paint = null; zones = []; shots = []; hearts = []; hpBars = []; brZone = null; zoneP = null; plane = null; loot = []; drops = []; cars = []; players.forEach(p => p.car = null);
   if(RACE(round)){
-    if(RBIG){ EXT_REC = []; buildRaceBig(); raceExtBig(); RTX.forEach(cx => obAuto(1, 0, 0, 0, [cx - 7.6, cx + 7.6])); } else buildLanes(obWrap(({1:buildRace, 6:buildSeesaw, 9:buildClimb, 10:buildDoors, 11:buildIce, 12:buildPaths, 21:buildTower})[round]), [1, 2, 4][SZ], LANE_W[round]);
-    obSay(); R1.timeLeft = round === 1 ? 210 : round === 9 ? 220 : round === 6 ? 160 : round === 10 ? 150 : round === 12 ? 160 : round === 21 ? 180 : 120; if(course.ext){ R1.timeLeft += 100; extStadium(); }
+    if(RBIG){ EXT_REC = []; buildRaceBig(); raceExtBig(); RTX.forEach(cx => obAuto(1, 0, 0, 0, [cx - 7.6, cx + 7.6])); } else buildLanes(obWrap(({1:buildRace, 6:buildSeesaw, 9:buildClimb, 10:buildDoors, 11:buildIce, 12:buildPaths, 21:buildTower, 36:buildParque})[round]), round === 36 ? 1 : [1, 2, 4][SZ], LANE_W[round]);
+    obSay(); R1.timeLeft = round === 1 ? 210 : round === 9 ? 220 : round === 6 ? 160 : round === 10 ? 150 : round === 12 ? 160 : round === 21 ? 180 : round === 36 ? 240 : 120; if(course.ext){ R1.timeLeft += 100; extStadium(); }
     if(RBIG){ const sh = alive.slice().sort(() => Math.random() - 0.5); sh.forEach((p, k) => { p.pos.set(-29 + (k%20)*3.05 + rand(-0.2, 0.2), 0, -4.5 + Math.floor(k/20)*1.8); p.cp.set(0, 0, 0); p.cpX = 4; p.face = 0; p.track = p.isBot ? (Math.random() < 0.55 ? 1 + Math.floor(Math.random()*2) : [0, 3][Math.floor(Math.random()*2)]) : undefined; p.swap = false; }); }
     else { const n = LX.length, c = n > 1 ? 5 : 4; (n > 1 ? alive.slice().sort(() => Math.random() - 0.5) : alive).forEach((p, k) => { const L = k % n, j = Math.floor(k/n); p.lx = LX[L]; p.pos.set(LX[L] + (c === 5 ? -6 : -4.5) + (j%c)*3, 0, -3 + Math.floor(j/c)*(n > 1 ? 1.6 : 1.8)); p.cp.set(0, 0, 0); p.cpX = 4; p.face = 0; }); }
+    if(round === 36) pqSpawn(alive);
   } else if(round === 7){
     const sh = alive.slice().sort(() => Math.random() - 0.5), nT = alive.length >= 12 ? 4 : alive.length >= 6 ? 3 : 2;
     R1.teams = ['a', 'b', 'c', 'd'].slice(0, nT); setNests(12.5*AKf()); SPOTF = sp => sp.map(([x, z]) => [x*AKf(), z*AKf()]);
@@ -12339,7 +12506,7 @@ function startRound(){ futPick(); PAL = THEME_OF[round] ? palOf(THEME_OF[round])
   }
   $('hRound').textContent = BIG && single ? `${MAPNAME()} · ${(WAR ? 'Guerra de Times' : ['', 'Solo', 'Dupla', 'Trio', 'Squad'][BR_SQ])}` : single ? ROUND_INFO[round] : isFinal() ? 'Final · ' + ROUND_INFO[round] : `Prova ${stage+1} de ${plan.length - 1} · ${ROUND_INFO[round]}`; if(PTS && !single) $('hRound').textContent += ` · ${you().pts || 0} pts`; if(!BIG && players.length > 16) $('hRound').textContent += ` · ${SZ_NAME[SZ]}`;
   if(LX.length > 1){ const r0 = round, s0 = stage; setTimeout(() => { if(round === r0 && stage === s0) say(`Prova ${SZ_NAME[SZ]}: ${LX.length} pistas lado a lado. Nas áreas largas dá pra trocar de pista`, true); }, 3200); }
-  if(RACE(round)){ R1.quota = Math.max(2, Math.ceil(alive.length*(BIG ? 0.6 : 0.65))); if(!single && !PTS && !BIG && stage === plan.length - 2) R1.quota = Math.min(R1.quota, 12); banner(ROUND_INFO[round], ({6:'Equilibre-se nas gangorras e', 9:'Suba até o topo e', 10:'Algumas portas quebram, outras não. Ache o caminho e', 11:'O chão escorrega! Faça as curvas com calma e', 12:'Cada trecho tem 3 caminhos. Escolha o seu e', 21:'Suba a torre! No meio tem 3 caminhos até o alto. Escolha o seu e'}[round] || '') + ` chegue entre os ${R1.quota} primeiros`, 2800); }
+  if(RACE(round)){ R1.quota = Math.max(2, Math.ceil(alive.length*(BIG ? 0.6 : 0.65))); if(!single && !PTS && !BIG && stage === plan.length - 2) R1.quota = Math.min(R1.quota, 12); banner(ROUND_INFO[round], ({6:'Equilibre-se nas gangorras e', 9:'Suba até o topo e', 10:'Algumas portas quebram, outras não. Ache o caminho e', 11:'O chão escorrega! Faça as curvas com calma e', 12:'Cada trecho tem 3 caminhos. Escolha o seu e', 21:'Suba a torre! No meio tem 3 caminhos até o alto. Escolha o seu e', 36:'Suba a rampa fugindo das frutas. Em cada torre escolha um dos 3 caminhos e'}[round] || '') + ` chegue entre os ${R1.quota} primeiros`, 2800); }
   const yawOf = p => round === 22 || round === 25 || round === 26 ? (p.team === 'a' ? -Math.PI/2 : Math.PI/2) : round === 20 || round === 34 ? Math.atan2(p.pos.x, p.pos.z) : round === 17 ? (p.team === 'a' ? Math.PI : 0) : [7, 18, 19].includes(round) && TEAMS[p.team] ? Math.atan2(TEAMS[p.team].nest[0], TEAMS[p.team].nest[1]) : (round <= 2 || RACE(round) || round === 13 || round === 33) ? Math.PI : 0;
   yaw = yawOf(you()); if(round === 20) pitch = 0.2; else if(round === 32) pitch = 1.05; else if(pitch > 0.95) pitch = 0.38; if(players[1]) cam2.yaw = yawOf(players[1]); cam2.pitch = pitch; R1.phase = 'intro'; $('light').hidden = true;
   PAL = null; themeDeco();
@@ -12454,6 +12621,7 @@ function showResult(won){
     : round === 24 ? 'Uma bomba te jogou pra fora. Dica: fique longe da borda e dos pisos rachados, e corra assim que o anel vermelho aparecer.'
     : round === 23 ? 'Você caiu na Memória de Frutas. Dica: decore as frutas perto de você e corra assim que o telão mostrar qual é.'
     : round === 16 ? 'Te derrubaram no Apagão. Dica: fique longe da borda amarela e empurre (F) quem chegar perto. Os olhos brilham no escuro.'
+    : round === 36 ? 'Não deu pra atravessar o Parque Inflável a tempo. Dica: na rampa, se esconda atrás dos montinhos quando vier fruta; nos trampolins chegue correndo; na ponte dupla, embaixo é mais seguro e em cima é mais rápido.'
     : round === 21 ? 'Não deu pra chegar no topo da Torre do Feijão a tempo. Dica: a escadaria é a mais segura, o parkour é o mais rápido se você acertar os pulos, e nas plataformas que andam espere ela chegar perto antes de pular.'
     : round === 12 ? 'Não deu pra passar dos Três Caminhos a tempo. Dica: no último trecho a viga fininha é o caminho mais rápido, mas o martelo derruba. Se estiver lotado, troque de caminho.'
     : round === 11 ? 'O gelo te levou. Dica: no gelo você demora pra frear. Solte a tecla antes da curva e vire cedo.'
@@ -12665,7 +12833,7 @@ const SONGS = {
   menu:{bpm:96, bass:[131,0,0,0,110,0,0,0,87,0,0,0,98,0,0,0], lead:[659,0,784,0,659,0,523,0,587,0,523,0,494,0,392,0], wave:'triangle', kick:[0,10], snare:[], soft:true},
   battle:{bpm:124, bass:[110,0,110,131,0,110,0,98,87,0,87,104,0,87,98,0], lead:[440,0,523,587,0,523,440,0,349,0,440,523,0,659,587,0], wave:'sawtooth', kick:[0,3,8,10], snare:[4,12], minor:true},
 };
-const SONG_OF = {1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky', 28:'bounce', 29:'epic', 30:'hyper', 31:'bounce', 32:'epic', 33:'hyper', 34:'sneaky', 35:'bounce'};
+const SONG_OF = {36:'bounce', 1:'bounce', 2:'sneaky', 3:'epic', 4:'hyper', 5:'hyper', 6:'sunny', 7:'bounce', 8:'sunny', 9:'epic', 10:'hyper', 11:'sunny', 12:'bounce', 13:'sneaky', 14:'bounce', 15:'hyper', 16:'epic', 17:'epic', 18:'bounce', 19:'hyper', 20:'epic', 21:'epic', 23:'hyper', 24:'epic', 25:'bounce', 26:'hyper', 27:'sneaky', 28:'bounce', 29:'epic', 30:'hyper', 31:'bounce', 32:'epic', 33:'hyper', 34:'sneaky', 35:'bounce'};
 let mStep = 0, mNext = 0, mTimer = null;
 const mKick = (w, d) => { tone(150, 0.16, 'sine', 0.5, 0.3, w, d); noise(0.02, 0.08, 3000, 0, 'highpass', 1, w, d); };
 const mSnare = (w, d) => { noise(0.14, 0.22, 1900, 1200, 'bandpass', 0.8, w, d); tone(190, 0.08, 'triangle', 0.12, 0.7, w, d); };
@@ -13142,6 +13310,7 @@ const MAPS = [
   [10, 'Paredes de portas: umas quebram, outras não', '#ff8cc6'],
   [11, 'Pista em zigue-zague que escorrega', '#9fe3ff'],
   [12, 'Cada trecho tem 3 rotas diferentes: escolha a sua', '#9be15d'],
+  [36, 'Parque gigante: rampa com frutas rolando, 3 caminhos que se cruzam em 3 torres, ponte de 2 andares e funil de portões', '#7fd3ff'],
   [21, 'Subida longa até o topo de uma torre, com 3 caminhos no meio: parkour, plataformas que andam ou escadaria', '#ff8cc6'],
   [13, 'Estilo Crab Game: um vidro aguenta, o outro quebra', '#9fe8ff'],
   [14, 'Estilo Crab Game: entre numa sala com o número certo de feijões', '#ffb86b'],
@@ -13167,9 +13336,9 @@ const MAPS = [
   [20, 'Battle royale: jogue tomates, a zona fecha e quem zerar a vida sai', '#ff3b4e'],
   [3, 'A final: seja o último em cima da arena', '#ffd23f'],
 ];
-const MAP_CAT = {1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 28:'surv', 29:'surv', 30:'surv', 31:'surv', 32:'surv', 33:'team', 34:'surv', 35:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
+const MAP_CAT = {36:'race', 1:'race', 6:'race', 9:'race', 10:'race', 11:'race', 12:'race', 21:'race', 2:'surv', 4:'surv', 5:'surv', 8:'surv', 20:'surv', 7:'team', 17:'team', 18:'team', 19:'team', 22:'team', 23:'surv', 24:'surv', 25:'team', 26:'team', 27:'surv', 28:'surv', 29:'surv', 30:'surv', 31:'surv', 32:'surv', 33:'team', 34:'surv', 35:'surv', 13:'crab', 14:'crab', 15:'crab', 16:'crab', 3:'final'};
 const CAT_NAME = {race:'Corrida', surv:'Sobrevivência', team:'Equipe', crab:'Crab Game', final:'Final'};
-const MAP_ICON = {1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈', 28:'🪑', 29:'🌋', 30:'🎈', 31:'🪢', 32:'🪂', 33:'🏃', 34:'🌀', 35:'💰'};
+const MAP_ICON = {36:'🎪', 1:'🏃', 2:'🚦', 3:'👑', 4:'💣', 5:'🎀', 6:'⚖️', 7:'🥚', 8:'🍉', 9:'🧗', 10:'🚪', 11:'🧊', 12:'🔀', 13:'🪟', 14:'🎠', 15:'🧱', 16:'🌑', 17:'🪢', 18:'🎨', 19:'🚩', 20:'🍅', 21:'🗼', 22:'⚽', 23:'🍓', 24:'🧨', 25:'🏐', 26:'🚩', 27:'🙈', 28:'🪑', 29:'🌋', 30:'🎈', 31:'🪢', 32:'🪂', 33:'🏃', 34:'🌀', 35:'💰'};
 function renderMaps(cat='all'){
   $('maps').innerHTML = '';
   MAPS.filter(([id]) => !ROUND_OFF.includes(id)).filter(([id]) => cat === 'all' || (cat === 'final' ? FINALS.includes(id) : MAP_CAT[id] === cat)).forEach(([id, desc, col]) => { const b = document.createElement('button'); b.className = 'map' + (cat === 'final' || id === 3 ? ' final' : ''); b.id = 'map-' + id;
