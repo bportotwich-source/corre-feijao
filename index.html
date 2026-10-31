@@ -13255,7 +13255,7 @@ function cpBuild(){
   // garagem: chão de concreto, marcas de pouso e uma rampa de pulo
   flat(58, 120, -64, 10, 0xb7b9bd, 0.02); [[94, -46], [94, -16]].forEach(([x, z]) => { const r = mesh(new THREE.TorusGeometry(5, 0.25, 6, 32), mat(0xffd23f), world); r.rotation.x = Math.PI/2; r.position.set(x, 0.06, z); r.castShadow = false; flat(x - 0.4, x + 0.4, z - 2.2, z + 2.2, 0xffffff, 0.05); flat(x - 2, x + 2, z - 0.4, z + 0.4, 0xffffff, 0.05); });
   ramp(102, 112, 2, 8, 0, 2.2, false, wood); box(112, 115, 0, 2.2, 2, 8, wood);
-  CP.pads = [{k:'trator', x:68, z:-50, f:Math.PI/2}, {k:'trator', x:68, z:-40, f:Math.PI/2}, {k:'jipe', x:68, z:-28, f:Math.PI/2}, {k:'jipe', x:68, z:-18, f:Math.PI/2}, {k:'heli4', x:94, z:-46, f:-Math.PI/2}, {k:'heli10', x:94, z:-16, f:-Math.PI/2}].map(P => Object.assign(P, {c:null, wait:0, idle:0}));
+  CP.pads = [{k:'trator', x:68, z:-50, f:Math.PI/2}, {k:'trator', x:68, z:-40, f:Math.PI/2}, {k:'jipe', x:68, z:-28, f:Math.PI/2}, {k:'jipe', x:68, z:-18, f:Math.PI/2}, {k:'caminhao', x:70, z:-5, f:Math.PI/2}, {k:'heli4', x:94, z:-46, f:-Math.PI/2}, {k:'heli10', x:94, z:-16, f:-Math.PI/2}].map(P => Object.assign(P, {c:null, wait:0, idle:0}));
   // árvores na borda (posição fixa)
   for(let i = 0; i < 26; i++){ const a = i/26*Math.PI*2, R = 112 + (i % 3)*3, x = Math.sin(a)*R, z = Math.cos(a)*R; if(z > 15 && Math.abs(x) < 80) continue; if(x > 56 && z < 14 && z > -66) continue; roundTree(x, z, 0, 1.1 + (i % 4)*0.15); }
   // zona escondida (o BR precisa dela) e barras de vida
@@ -13270,7 +13270,7 @@ function cpBuild(){
 }
 function cpRefill(s){ const L = addLoot(s.k, s.x, s.y, s.z, undefined, s.k === 'ammo' ? s.c : s.r >= 0 ? s.r : undefined); L.cpS = s; L.s.rotation.y = 0; s.L = L; s.t = 0; }
 function cpVeh(P){ let c; if(P.k === 'trator'){ const m = BRE.tractor(0xffd23f); m.position.set(P.x, 0, P.z); m.rotation.y = P.f; world.add(m); c = {m, x:P.x, y:0, z:P.z, face:P.f, driver:null, steer:0}; }
-  else { const I = WDV.info[P.k], m = wdvModel(P.k, P.k === 'jipe' ? 0x3fae4a : 0x3e7bd8); m.position.set(P.x, 0, P.z); m.rotation.y = P.f; m.userData.keep = true; world.add(m);
+  else { const I = WDV.info[P.k], m = wdvModel(P.k, P.k === 'jipe' ? 0x3fae4a : P.k === 'caminhao' ? 0x7a7f52 : 0x3e7bd8); m.position.set(P.x, 0, P.z); m.rotation.y = P.f; m.userData.keep = true; world.add(m);
     c = {m, x:P.x, y:0, z:P.z, face:P.f, driver:null, steer:0, kind:P.k, team:-1, owner:null, hp:I.hp, hp0:I.hp, pass:new Array(I.seats).fill(null), rad:I.rad, vx:0, vy:0, vz:0, pitch:0, roll:0, rs:0, air:false};
     if(WDV.info[P.k].ground){ c.jeep = true; c.spdK = WDV.info[P.k].spd || 1.4; c.sx = I.seat[0][0]; c.sb = -I.seat[0][2]; } else c.heli = true; }
   cars.push(c); P.c = c; P.wait = 0; P.idle = 0; }
