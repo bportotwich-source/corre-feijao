@@ -6988,13 +6988,42 @@ function cvAt(px, pz, tx, tz){ const a = Math.atan2(tx - px, tz - pz), rot = ((M
 function cvLot(g, x, z, used, tx, tz){ const p = fjLot(g, x, z, 20, 20, used); return p ? cvAt(p[0], p[1], tx, tz) : null; }
 // prédios novos do Blender (corre-feijao/predios-novos): 1 malha com textura + vidro por prédio; colisão = caixas invisíveis do .json
 const PNV = {ok:false, M:{}, n:0, done:0};
+function pnBrick(m){ m.onBeforeCompile = sh => {
+    sh.vertexShader = 'varying vec3 vFjWP; varying vec3 vFjWN;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      vec4 fjw = vec4(transformed, 1.0);
+      #ifdef USE_INSTANCING
+        fjw = instanceMatrix*fjw;
+      #endif
+      fjw = modelMatrix*fjw; vFjWP = fjw.xyz; vFjWN = normalize(mat3(modelMatrix)*objectNormal);`);
+    sh.fragmentShader = 'varying vec3 vFjWP; varying vec3 vFjWN;\nfloat fjH(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)))*43758.5453); }\n' + sh.fragmentShader.replace('#include <map_fragment>', `#include <map_fragment>
+      {
+        vec3 c = diffuseColor.rgb; float mx = max(c.r, max(c.g, c.b)), mn = min(c.r, min(c.g, c.b)), lum = dot(c, vec3(0.3, 0.59, 0.11));
+        float vert = 1.0 - smoothstep(0.3, 0.55, abs(vFjWN.y)), fade = 1.0 - smoothstep(18.0, 45.0, length(vFjWP - cameraPosition));
+        if(vert*fade > 0.01){
+          vec2 uv = vec2(abs(vFjWN.x) > abs(vFjWN.z) ? vFjWP.z : vFjWP.x, vFjWP.y);
+          float red = smoothstep(0.10, 0.22, (c.r - max(c.g, c.b))/(mx + 0.001))*smoothstep(0.06, 0.12, lum)*(1.0 - smoothstep(0.6, 0.75, lum));
+          float sat = (mx - mn)/(mx + 0.001), stone = (1.0 - smoothstep(0.22, 0.34, sat))*smoothstep(0.12, 0.2, lum)*(1.0 - smoothstep(0.62, 0.72, lum))*(1.0 - red);
+          // tijolo: fiada de 8 cm, tijolo de 25 cm, meia peça de deslocamento
+          float row = floor(uv.y/0.08); vec2 b = vec2(uv.x/0.25 + 0.5*mod(row, 2.0), uv.y/0.08); vec2 f = fract(b);
+          float jt = 1.0 - smoothstep(0.0, 0.045, f.x)*smoothstep(1.0, 0.955, f.x)*smoothstep(0.0, 0.13, f.y)*smoothstep(1.0, 0.87, f.y);
+          float h = fjH(vec2(floor(b.x), row)), sp = fjH(floor(uv*24.0));
+          vec3 tij = c*(0.82 + 0.3*h)*(0.95 + 0.08*sp), arg = vec3(0.66, 0.63, 0.58)*clamp(lum*2.2, 0.5, 1.2);
+          vec3 cb = mix(tij, arg, jt*0.75);
+          // pedra: fiada de 45 cm, bloco de 90 cm
+          float rs = floor(uv.y/0.45); vec2 q = vec2(uv.x/0.9 + 0.5*mod(rs, 2.0), uv.y/0.45); vec2 g = fract(q);
+          float js = 1.0 - smoothstep(0.0, 0.012, g.x)*smoothstep(1.0, 0.988, g.x)*smoothstep(0.0, 0.025, g.y)*smoothstep(1.0, 0.975, g.y);
+          vec3 cs = c*(0.93 + 0.12*fjH(vec2(floor(q.x), rs)))*(0.97 + 0.05*sp)*(1.0 - 0.28*js);
+          diffuseColor.rgb = mix(c, cb, red*vert*fade); diffuseColor.rgb = mix(diffuseColor.rgb, cs, stone*vert*fade*0.85);
+        }
+      }`); };
+  m.customProgramCacheKey = () => 'pnBrick'; return m; }
 function pnLoad(){ const D = window.PN_D; if(!D || !THREE.GLTFLoader || typeof MeshoptDecoder === 'undefined'){ PNV.fail = true; return; }
   const keys = Object.keys(D); PNV.n = keys.length; PNV.vmat = new THREE.MeshLambertMaterial({color:0xcfe6f2, transparent:true, opacity:0.22, depthWrite:false}); PNV.vfar = new THREE.MeshLambertMaterial({color:0x7d97a8});
   const fin = () => { if(++PNV.done === PNV.n) PNV.ok = true; };
   MeshoptDecoder.ready.then(() => { const L = new THREE.GLTFLoader(); L.setMeshoptDecoder(MeshoptDecoder);
     keys.forEach(k => L.parse(fjB64(D[k].glb).buffer, '', gl => { gl.scene.updateMatrixWorld(true); const M = {col:D[k].col, lot:D[k].lot, bb:D[k].bb, c:D[k].c, doors:D[k].doors};
       gl.scene.traverse(o => { if(!o.isMesh) return; if(o.name === 'cd_far'){ M.fgeo = o.geometry; M.fm = o.matrixWorld.clone(); return; } if(!o.material.map){ M.vgeo = o.geometry; M.vm = o.matrixWorld.clone(); }
-        else if(!M.geo){ const t = o.material.map; t.encoding = THREE.LinearEncoding; t.anisotropy = 4; M.geo = o.geometry; M.m = o.matrixWorld.clone(); M.mat = new THREE.MeshLambertMaterial({map:t}); } });
+        else if(!M.geo){ const t = o.material.map; t.encoding = THREE.LinearEncoding; t.anisotropy = 4; M.geo = o.geometry; M.m = o.matrixWorld.clone(); M.mat = pnBrick(new THREE.MeshLambertMaterial({map:t})); } });
       if(M.geo) PNV.M[k] = M; D[k].glb = null; fin(); }, e => { console.warn('prédio novo', k, e); fin(); })); }).catch(() => { PNV.fail = true; }); }
 addEventListener('load', () => setTimeout(pnLoad, 400));
 // gira (a, b) do modelo (porta pra +z) em rot*90 graus em volta de (x, z)
@@ -7209,7 +7238,7 @@ function cdGrid(o){ let s = o.seed || 9191; const sr = () => (s = s*16807 % 2147
       const q = alongX ? [x0 + a, x0 + a + m.w, row ? z1 - m.d : z0, row ? z1 : z0 + m.d] : [row ? x1 - m.d : x0, row ? x1 : x0 + m.d, z0 + a, z0 + a + m.w];
       if(!flatAt(...q)) return; const R0 = pnRot(0, 0, rot), [l0, , l2] = R0(...PNV.M[m.k].lot);
       const mesh = pnPlace(m.k, cx + q[0] - l0, cz + q[2] - l2, Y, rot); if(!mesh) return; CDV.n++;
-      const ti = Math.floor(sr()*TINT.length); if(ti){ const kk = m.k + ti; mesh.material = CDV.tm[kk] || (CDV.tm[kk] = (() => { const mt = mesh.material.clone(); mt.color.setRGB(...TINT[ti]); return mt; })()); if(mesh.userData.far) mesh.userData.far.material = mesh.material; } })); }));
+      const ti = Math.floor(sr()*TINT.length); if(ti){ const kk = m.k + ti; mesh.material = CDV.tm[kk] || (CDV.tm[kk] = (() => { const mt = pnBrick(mesh.material.clone()); mt.color.setRGB(...TINT[ti]); return mt; })()); if(mesh.userData.far) mesh.userData.far.material = mesh.material; } })); }));
   side.forEach(r => cdMark(...r)); cdQuads(side, Y + 0.035, 0xcfc4b0); }
 // Grão Capital: 4 x 4 quarteirões, os 4 do meio com os mais altos; chafariz na rotatória das avenidas
 function cdCidade(cx, cz, Y){ const E = 68*CD_S, EW = 68, L = [[-71.5, 7], [-38, 7], [0, 14], [38, 7], [71.5, 7]], LZ = L.map(([c, w]) => [c*CD_S, w]), LX = L.map(([c, w]) => [c > 0 ? c*CD_S : c, w]);
