@@ -15827,6 +15827,95 @@ function vvMenuStep(dt){ if(R1.phase !== 'menu') return; if(VE.npcW !== world){ 
 { const _ms = menuScene; menuScene = function(){ const r = _ms.apply(this, arguments); vvMenuNpc(); return r; }; }
 { const _vt = vvTick; vvTick = function(dt){ _vt(dt); try{ vvEmoStep(); vvMenuStep(dt); }catch(e){ console.warn('emotes', e); } }; }
 
+// ---------- Sons reais (31/10, pedido do Bruno): gravações CC0 (OpenGameArt + Kenney) tocando junto com os sons sintetizados ----------
+// Os arquivos ficam fora do HTML (dados/sons/*.mp3) e carregam depois que o áudio liga. Enquanto não chegam (ou se não abrirem,
+// como no arquivo local), tudo continua com o som sintetizado de antes. Créditos em dados/sons/CREDITOS.txt.
+// Tiros: 11 armas de fogo gravadas de perto e de longe (de longe usa a gravação distante). Explosões em camadas, trovão,
+// passos por piso, água, e ambiente por mapa (pássaros, mar com ondas e gaivotas, vento, cidade, grilos no pôr do sol, rio, chuva).
+// Motores: helicóptero, lancha e carro gravados, com a rotação mudando a velocidade do som.
+const FJR_MAN = {"w_pistol":3,"wf_pistol":2,"w_smg":3,"wf_smg":2,"w_shotgun":2,"wf_shotgun":2,"w_rifle":3,"wf_rifle":2,"w_sniper":3,"wf_sniper":2,"w_lmg":2,"wf_lmg":2,"w_revolver":2,"wf_revolver":2,"w_deagle":2,"wf_deagle":2,"w_caju":3,"wf_caju":2,"w_grao":2,"wf_grao":2,"w_limao":3,"wf_limao":2,"boom":4,"boomF":2,"trovao":1,"st_g":5,"st_h":5,"st_s":5,"st_wd":5,"st_a":5,"splashW":6,"a_passaros":1,"a_passaros2":1,"a_vento":1,"a_cidade":1,"a_grilos":1,"a_chuva":1,"a_rio":1,"e_heli":1,"e_lancha":1,"e_carro":1,"a_onda":8,"a_gaivota":7};
+if(CFG.somReal === undefined) CFG.somReal = true;
+if(typeof SET_UI !== 'undefined' && SET_UI.audio && !SET_UI.audio.some(r => r[0] === 'somReal')) SET_UI.audio.push(['somReal', 'Sons gravados (tiros, explosões, passos, ambiente e motores)', 'tog']);
+// ganho de cada som real (calibrado contra o volume do sintetizado) e quanto do sintetizado continua tocando junto
+const FJR_G = {"w_pistol":0.576,"w_smg":0.412,"wf_pistol":0.62,"w_shotgun":1.101,"wf_smg":0.398,"w_rifle":0.751,"wf_shotgun":1.238,"wf_rifle":0.995,"w_sniper":1.047,"wf_sniper":1.269,"w_lmg":0.743,"wf_lmg":0.771,"w_revolver":0.754,"wf_revolver":0.97,"w_deagle":1.053,"wf_deagle":1.026,"w_caju":1.052,"wf_caju":1.187,"w_grao":1.191,"wf_grao":1.384,"w_limao":0.401,"wf_limao":0.459,"st_g":0.119,"st_h":0.125,"st_s":0.071,"st_a":0.12,"st_wd":0.125,"boom":0.996,"boomF":0.696,"trovao":0.345,"splashW":0.374,"a_passaros":0.457,"a_passaros2":0.295,"a_vento":0.354,"a_cidade":0.295,"a_grilos":0.233,"a_chuva":0.524,"a_rio":0.35,"a_onda":0.556,"a_gaivota":0.312,"e_heli":1.254,"e_lancha":1.087,"e_carro":1.338};
+const FJR_SYN = {w_:0.22, wf_:0.15, boom:0.3, boomF:0.2, trovao:0, st_:0, splashW:0};
+// arma de fruta -> tom do tiro (as maiores um pouco mais graves)
+const FJR_RATE = {w_lmg:0.93, w_limao:1.06, w_smg:1.03, w_deagle:0.94, w_grao:0.97, w_sniper:0.96};
+const FJR = {buf:{}, go:false, n:0, loops:{}, t:0, sea:0, city:0, scanT:0, rain:0, wet:null, swT:0, gullT:4, waveT:2};
+function fjrLoad(){ if(FJR.go || !ac || location.protocol === 'file:') return; FJR.go = true;
+  // os curtos primeiro (tiros, passos), depois os loops de ambiente que são maiores
+  const ks = Object.keys(FJR_MAN).sort((a, b) => (/^[ae]_/.test(a) ? 1 : 0) - (/^[ae]_/.test(b) ? 1 : 0));
+  let q = []; for(const k of ks) for(let i = 1; i <= FJR_MAN[k]; i++) q.push([k, i]);
+  const next = () => { const it = q.shift(); if(!it) return; const [k, i] = it;
+    fetch('dados/sons/' + k + '_' + i + '.mp3').then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status)).then(a => ac.decodeAudioData(a))
+      .then(b => { (FJR.buf[k] = FJR.buf[k] || []).push(b); FJR.n++; }).catch(() => { if(i === 1 && k === ks[0]) q = []; }).finally(next); };
+  for(let j = 0; j < 6; j++) next(); }
+// toca um som real; devolve false se ainda não tem arquivo pra essa chave
+function fjrPlay(k, o){ const L = FJR.buf[k]; if(!L || !L.length) return false;
+  let b = L[(Math.random()*L.length)|0]; if(L.length > 1 && b === FJR['last_' + k]) b = L[(L.indexOf(b) + 1) % L.length]; FJR['last_' + k] = b;
+  const s = ac.createBufferSource(); s.buffer = b; s.playbackRate.value = (o.rate || 1)*(FJR_RATE[k] || 1)*(0.97 + Math.random()*0.06);
+  s.connect(vOut({vol:(o.vol ?? 1)*(FJR_G[k] ?? 1), pan:o.pan || 0, verb:o.verb, lp:o.lp, delay:o.delay})); s.start(); return true; }
+const fjrSyn = k => FJR_SYN[k] ?? FJR_SYN[(k.match(/^(wf_|w_|st_)/) || [])[1]] ?? 0;
+{ const _ps = playSnd; playSnd = function(k, o={}){
+    if(!ac || PAUSED && !o.ui || !FJR.n || CFG.somReal === false || !Number.isFinite(o.vol ?? 1)) return _ps(k, o);
+    let r = k; if(k === 'vvTrovao') r = 'trovao';
+    if(/^w_/.test(k) && FJS.gun && FJS.gun.sil) return _ps(k, o);  // com silenciador fica o "pff" sintetizado
+    if(/^w_/.test(k) && o.lp && o.lp < 5000 && FJR.buf['wf_' + k.slice(2)]) r = 'wf_' + k.slice(2);  // de longe: gravação distante
+    if(k === 'boom' && o.lp && o.lp < 3500 && FJR.buf.boomF) r = 'boomF';
+    if(!FJR.buf[r] || /^w_/.test(r) && !GUN_S[r.slice(2)]) return _ps(k, o);
+    const now = ac.currentTime; voices = voices.filter(t => t > now); if(voices.length >= VOICE_CAP && !o.must) return; voices.push(now + (o.delay || 0) + 0.4);
+    const big = /^w|boom|trovao/.test(r);
+    fjrPlay(r, {vol:o.vol, pan:o.pan, verb:o.verb ?? (big ? 0.35 : 0.08), lp:o.lp, delay:o.delay});
+    const m = fjrSyn(r); if(m > 0.01) _ps(k, Object.assign({}, o, {vol:(o.vol ?? 1)*m})); }; }
+// ---------- ambiente: loops que sobem e descem conforme onde a câmera está ----------
+function fjrLoop(k){ let L = FJR.loops[k]; if(L) return L; const B = FJR.buf[k]; if(!B || !B.length) return null;
+  const s = ac.createBufferSource(); s.buffer = B[0]; s.loop = true; const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 18000; const g = ac.createGain(); g.gain.value = 0;
+  s.connect(lp); lp.connect(g); g.connect(sfxGain); s.start(0, Math.random()*B[0].duration*0.9); return FJR.loops[k] = {s, g, lp, v:0}; }
+function fjrSet(k, v, lp){ const L = v > 0.001 ? fjrLoop(k) : FJR.loops[k]; if(!L) return; const t = ac.currentTime; v *= FJR_G[k] ?? 1;
+  if(Math.abs(L.v - v) > 0.002){ L.g.gain.setTargetAtTime(v, t, 0.6); L.v = v; } L.lp.frequency.setTargetAtTime(lp || 18000, t, 0.3); }
+// procura em volta: quanto de água (mar/rio) e quanto de prédio tem perto da câmera
+function fjrScan(L){ let w = 0, c = 0; const R = [22, 45];
+  for(const r of R) for(let i = 0; i < 8; i++){ const a = i*Math.PI/4 + r, x = L.x + Math.cos(a)*r, z = L.z + Math.sin(a)*r;
+    if(TER && TER.h){ try{ if(TER.h(x, z) < FJ_WL - 0.2) w++; }catch(e){} }
+    if(typeof GRID !== 'undefined' && GRID && typeof solidsAt === 'function'){ for(const b of solidsAt(x, z)) if(b.max && b.min && b.max.y - b.min.y > 6){ c++; break; } } }
+  FJR.sea += (w/16 - FJR.sea)*0.5; FJR.city += (Math.min(1, c/7) - FJR.city)*0.5; }
+function fjrAmb(){ if(!ac || !sfxGain || !FJR.n) return; const now = ac.currentTime; if(now - FJR.t < 0.25) return; const dt = Math.min(1, now - FJR.t); FJR.t = now;
+  const me = players[0], live = BIG && !PAUSED && R1.phase !== 'menu' && R1.phase !== 'podium' && me && !twoP && CFG.somReal !== false;
+  if(!live){ for(const k in FJR.loops) fjrSet(k, 0); return; }
+  const L = cam1.look, gy = typeof gY === 'function' ? gY(L.x, L.z) : 0, alt = Math.max(0, L.y - gy), inside = typeof vvRoof === 'function' && vvRoof();
+  FJR.scanT -= dt; if(FJR.scanT <= 0){ FJR.scanT = 0.5; fjrScan(L); }
+  const M = BIGMAP, snow = M === 'serra', town = M === 'metro' || M === 'lego', clima = typeof VW !== 'undefined' && BIG && round === 20 ? VW.k : 'sol';
+  const rain = clima === 'chuva', dusk = curLook === 'porsol', hi = Math.min(1, alt/40), ground = 1 - hi;
+  const city = Math.max(town ? 0.7 : 0, FJR.city), nat = (1 - city*0.85)*ground, mute = inside ? 0.35 : 1, lp = inside ? 900 : 0;
+  const birds = snow ? 0 : nat*(rain ? 0.15 : dusk ? 0.35 : 1);
+  fjrSet('a_passaros', birds*0.6*mute, lp); fjrSet('a_passaros2', birds*(M === 'vale' || M === 'mata' ? 0.7 : 0.35)*mute, lp);
+  fjrSet('a_grilos', snow ? 0 : nat*(dusk ? 0.8 : 0.05)*mute, lp);
+  fjrSet('a_vento', (snow ? 0.9 : 0.25 + hi*0.6)*(inside ? 0.25 : 1), inside ? 600 : snow ? 2500 : 0);
+  fjrSet('a_cidade', city*0.7*mute*ground, inside ? 600 : 2200);
+  const sea = FJR.sea*ground*mute, river = M === 'vale';
+  fjrSet('a_rio', river ? sea*1.2 : 0, lp); fjrSet('a_chuva', rain ? (inside ? 0.55 : 1) : 0, inside ? 1400 : 0);
+  if(!river && sea > 0.08 && !snow){ FJR.waveT -= dt; FJR.gullT -= dt;
+    if(FJR.waveT <= 0){ FJR.waveT = 2.5 + Math.random()*3.5; fjrPlay('a_onda', {vol:sea*0.9, pan:(Math.random() - 0.5)*0.8, verb:0.15, lp:inside ? 900 : 0}); }
+    if(FJR.gullT <= 0){ FJR.gullT = 5 + Math.random()*9; if(!rain && !dusk) fjrPlay('a_gaivota', {vol:sea*0.5, pan:(Math.random() - 0.5)*1.4, verb:0.3, lp:inside ? 900 : 0}); } }
+  // água: tchibum ao cair e braçada nadando
+  if(me.swim && !FJR.wet && me.alive) playSnd('splashW', {vol:Math.min(1, 0.5 + Math.abs(me.vel.y)/14)});
+  FJR.wet = !!me.swim; if(me.swim && me.alive){ FJR.swT -= dt*Math.hypot(me.vel.x, me.vel.z)/3; if(FJR.swT <= 0){ FJR.swT = 1; playSnd('splashW', {vol:0.22}); } } }
+// chuva: no lugar do chiado sintetizado entra a gravação (o sintetizado fica só se o arquivo não carregou)
+if(typeof vvRainSnd === 'function'){ const _vr = vvRainSnd; vvRainSnd = function(on, k){ return _vr(on && !(FJR.buf.a_chuva && CFG.somReal !== false), k); }; }
+// motores: a gravação toca junto com o motor sintetizado, que fica mais baixo
+{ const _es = fjEngSet; fjEngSet = function(V, c, d, inside){ _es(V, c, d, inside); if(!FJR.n) return; if(CFG.somReal === false){ if(V.rg) V.rg.gain.setTargetAtTime(0, ac.currentTime, 0.1); return; }
+    const k = c.heli ? 'e_heli' : c.boat ? 'e_lancha' : 'e_carro', B = FJR.buf[k]; if(!B) return; const t = ac.currentTime;
+    if(V.rk !== k){ if(V.rs){ try{ V.rs.stop(); }catch(e){} } const s = ac.createBufferSource(); s.buffer = B[0]; s.loop = true;
+      if(!V.rg){ V.rg = ac.createGain(); V.rlp = ac.createBiquadFilter(); V.rlp.type = 'lowpass'; V.rlp.connect(V.rg); V.rg.connect(V.pan || sfxGain); }
+      s.connect(V.rlp); s.start(0, Math.random()*B[0].duration); V.rs = s; V.rk = k; }
+    const sp = Number.isFinite(c._sp) ? Math.min(c._sp, 60) : 0, R = c.heli ? 170 : 80, u = Number.isFinite(d) ? Math.min(1, d/R) : 1, dv = Math.pow(1 - u, 1.8)*(inside ? 0.75 : 1);
+    let rate, v; if(c.heli){ rate = c.kind === 'heli10' ? 0.82 : 1; v = 0.5; } else if(c.boat){ rate = 0.75 + Math.min(1, sp/20)*0.5; v = 0.35; }
+    else if(c.jeep){ const gr = Math.min(3, Math.floor(sp/8)), r = sp >= 32 ? 1 : (sp - gr*8)/8; rate = 0.55 + r*0.55 + gr*0.06; v = 0.3; } else { rate = 0.42 + Math.min(1, sp/14)*0.3; v = 0.32; }
+    V.rs.playbackRate.setTargetAtTime(rate, t, 0.1); V.rlp.frequency.setTargetAtTime(inside ? 1800 : 9000*(1 - u*0.8), t, 0.1); V.rg.gain.setTargetAtTime(v*dv*(FJR_G[k] ?? 1), t, 0.12);
+    const sv = c.heli ? 0.4 : c.boat || c.jeep ? 0.26 : 0.32; V.g.gain.setTargetAtTime(sv*dv*0.35, t, 0.12); }; }
+{ const _ft = fjEngTick; fjEngTick = function(){ _ft(); if(FJR.n) for(const V of FJE.v) if(!V.c && V.rg) V.rg.gain.setTargetAtTime(0, ac.currentTime, 0.1); }; }
+{ const _ua = updateAmb; updateAmb = function(){ _ua(); if(ac){ fjrLoad(); try{ fjrAmb(); }catch(e){} } }; }
+
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
