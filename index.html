@@ -13867,6 +13867,8 @@ const SHOP = {
 const SLOTS = {color:'Cores', hat:'Chapéus', glasses:'Óculos', outfit:'Roupas', skin:'Skins'};
 const SAVE = (() => { let s = null; try{ s = JSON.parse(localStorage.getItem('feijao-save')); }catch(e){} s = s && typeof s === 'object' ? s : {};
   return {coins:s.coins|0, xp:s.xp|0, owned:Array.isArray(s.owned) ? s.owned : [], eq:Object.assign({color:'c0', hat:'h0', glasses:'g0', outfit:'o0', skin:'s0'}, s.eq), ach:s.ach || {}, st:s.st || {}, px:s.px|0, pt:s.pt|0, season:s.season|0, ch:s.ch && typeof s.ch === 'object' ? s.ch : null}; })();
+// save: mantém as chaves que o SAVE não lista (ex.: wdBank, os grãos guardados da Guerra); antes sumiam toda vez que o jogo recarregava
+(() => { try{ const s = JSON.parse(localStorage.getItem('feijao-save')); if(s && typeof s === 'object') for(const k in s) if(!(k in SAVE)) SAVE[k] = s[k]; }catch(e){} })();
 function persist(){ try{ localStorage.setItem('feijao-save', JSON.stringify(SAVE)); }catch(e){} }
 // troca de temporada: o passe volta pro nível 0 uma vez (o que já ganhou continua seu); item equipado que não é mais seu volta pro padrão
 (() => { let s = null; try{ s = JSON.parse(localStorage.getItem('feijao-save')); }catch(e){}
@@ -17896,6 +17898,18 @@ addEventListener('keydown', e => { if(e.code !== 'KeyF' || e.repeat || !WAR || !
     el.hidden = !h; if(el._h !== h){ el._h = h; el.innerHTML = h; } }; }
 { const st = document.createElement('style'); st.textContent = `#fmH{position:absolute;left:50%;bottom:calc(236px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:rgba(43,24,70,.85);color:#fff;border-radius:12px;padding:6px 14px;font-weight:800;font-size:15px;pointer-events:none;white-space:nowrap}#fmH b{color:#ffe9a8}`; document.head.appendChild(st); }
 
+// ===================== MOEDAS NO BR E NA GUERRA (pedido do Bruno 01/11 14:48) =====================
+// Antes: BR e Guerra só davam moedas da loja pra quem vencia. Agora todo mundo ganha pelo que fez.
+// BR: 4 por eliminação + colocação (top 3: 30, top 10: 20, top 25: 10) + 2 por minuto vivo (até 40).
+// Guerra: 3 por eliminação + posição da tropa (1º 40, 2º 25, 3º 15, 4º 10) + 2 por minuto jogado (até 60). A vitória continua dando o bônus de antes.
+{ const _s = settle; settle = function(won){ try{ if(earn && !earn.done && BIG && round === 20 && !BR_TEST){ const me = you();
+      if(WAR && WD && WD.pts){ const rk = [0, 1, 2, 3].sort((a, b) => WD.pts[b] - WD.pts[a]).indexOf(me.squad); earn.mdK = (me.wdK || 0)*3; earn.mdP = [40, 25, 15, 10][rk] || 10; earn.mdT = Math.min(60, Math.floor((WD.t || 0)/60)*2); }
+      else { const alive = players.filter(p => p.alive && p !== me).length, place = me.alive ? 1 : alive + 1; earn.mdK = (me.kills || 0)*4; earn.mdP = place <= 3 ? 30 : place <= 10 ? 20 : place <= 25 ? 10 : 0; earn.mdT = Math.min(40, Math.floor((R1.t || 0)/60)*2); }
+      reward(earn.mdK + earn.mdP + earn.mdT, Math.round((earn.mdK + earn.mdP)*1.5)); } }catch(e){ console.warn('moedas', e); }
+    return _s(won); }; }
+// sair da Guerra pelo menu também paga o que você fez até ali
+{ const _tm = toMenu; toMenu = function(...a){ try{ if(WAR && BIG && round === 20 && earn && !earn.done && WD && WD.hq && WD.hq.length && !WD.over){ settle(false); persist(); } }catch(e){} return _tm(...a); }; }
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
@@ -19516,7 +19530,7 @@ NET.voice = VOICE;
 // ---------- Lobby 3D: quem está na sala anda junto numa praça, com mini-games, esperando o líder começar ----------
 // A praça é uma "partida" especial (rodada LB) sem bots e sem fim. Esc abre o painel da sala por cima (modo, mapa, voz, chat, Começar).
 const LB_OFF = false;   // p_online.py --sem-lobby desliga a praça (volta pro painel 2D)
-const LB = 30; ROUND_INFO[LB] = 'Praça da sala';
+const LB = -1; ROUND_INFO[LB] = 'Praça da sala';   // número fora das provas (a 30 virou o Estoura-Balão e a praça acabava na hora)
 const LBY = {panel:false, ball:null, net:null, score:[0, 0], reset:0, sendT:0, board:null, bell:null, ring:0, climb0:null, best:{}, flag:null, flagT:0};
 const LB_F = {x:0, z:-13, hx:9, hz:6, mz:2};   // campo de futebol: centro, meia largura, meia altura e meia boca do gol
 const LB_T = {x:-14, z:3};   // torre do sino
