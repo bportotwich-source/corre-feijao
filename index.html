@@ -12479,7 +12479,7 @@ function hurt(q, by, dmg, why, noShield, head){
   q.useT = 0; q.rvT = 0; q.stT = 0; if(q.climb) q.stam = Math.max(0, (q.stam ?? 100) - 20);
   if(by && q.arm){ const cut = head ? HELM_CUT[q.arm.helm] : VEST_CUT[q.arm.vest]; if(cut) dmg = Math.max(1, Math.round(dmg*(1 - cut))); }
   let ab = 0; if(q.sh > 0 && !noShield){ ab = Math.min(q.sh, dmg); q.sh -= ab; dmg -= ab; }
-  const hp0 = q.hp ?? 100; q.hp = Math.max(0, hp0 - dmg); q.hurtT = 0.35; if(!q.isBot){ shake = Math.max(shake, 0.25); hurtFlash((ab + dmg)/40); sfx('hurt'); if(q.i === 0 && by && by !== q) dirHit(by); }
+  const hp0 = q.hp ?? 100; q.hp = Math.max(0, hp0 - dmg); q.hurtT = 0.35; if(!q.isBot){ if(!by || by === q) shake = Math.max(shake, 0.25); hurtFlash((ab + dmg)/40); sfx('hurt'); if(q.i === 0 && by && by !== q) dirHit(by); }
   if(by && !by.isBot && q !== by){ if(ab) dmgNum(q, Math.round(ab), 'sh'); if(dmg) dmgNum(q, Math.round(Math.min(dmg, hp0)), q.hp <= 0 ? 'big' : head ? 'hs' : ''); if(by.i === 0) hitMark(q.hp <= 0); if(q.hp > 0) sfx('hitm'); }
   if(q.down){ q.hp = 0; q.dhp -= ab + dmg; if(q.dhp > 0) return; q.down = false; by = by || q.downBy; }
   else if(q.hp <= 0 && q.alive && canDown(q)){ q.down = true; q.dhp = 100; q.hp = 0; q.sh = 0; q.stance = 0; q.relT = 0; q.climb = null; q.vault = null; q.rvT = 0; q.downBy = by && by !== q ? by : null; if(q.car) leaveCar(q, true);
@@ -18562,10 +18562,12 @@ if(typeof SND !== 'undefined' && typeof noise === 'function') SND.vvFlap = d => 
 // vento forte do helicóptero perto. Tudo junto com a opção que já existia (Configurações > Vídeo > Tremer a câmera).
 // Cidade (Capital, Metrópole e toda cidade em grade): carros estacionados na beira da rua (dá pra se esconder atrás), lixeiras, hidrantes,
 // bancos e placas de rua nas calçadas, pombos nas praças. 6 chamadas de desenho pra cidade toda.
-const VC = {tr:0, amp:0, ph:0, dip:0, dipV:0, t:0};
+const VC = {tr:0, amp:0, ph:0, dip:0, dipV:0, t:0, fk:0, fv:0, fs:0};
 function vvTrauma(k){ VC.tr = Math.min(1, VC.tr + k); }
 function vvCamFx(c, me, dt){
   const ads = !!(me.ads || c.scK > 0), fp = ads || (c.fpK || 0) > 0.5; VC.t += dt; const P = camera.position;
+  VC.fv += (-VC.fk*260 - VC.fv*24)*Math.min(dt, 0.05); VC.fk += VC.fv*Math.min(dt, 0.05);   // tranco do tiro (mola)
+  if(Math.abs(VC.fk) > 0.0005){ const k = VC.fk*(ads ? 0.45 : 1); camera.rotateZ(VC.fs*0.05*k); camera.rotateX(0.03*k); camera.rotateY(-VC.fs*0.018*k); }
   if(VC.tr > 0.001){ const s = VC.tr*VC.tr*(ads ? 0.5 : 1), t = VC.t*22;
     P.x += (Math.sin(t*1.13) + Math.sin(t*2.71 + 1.3)*0.6)*0.2*s; P.y += (Math.sin(t*1.37 + 2) + Math.sin(t*3.1)*0.5)*0.2*s; P.z += (Math.sin(t*0.97 + 4) + Math.sin(t*2.3 + 0.7)*0.6)*0.2*s;
     camera.rotateZ((Math.sin(t*0.83 + 0.5) + Math.sin(t*1.9)*0.5)*0.035*s); camera.rotateX(Math.sin(t*1.21 + 3)*0.012*s); VC.tr = Math.max(0, VC.tr - dt*1.3); }
@@ -18580,7 +18582,7 @@ function vvCamFx(c, me, dt){
 // explosão: treme mais perto, um pouco até 50 m
 { const _ex = explode; explode = function(s){ const r = _ex.apply(this, arguments); try{ const me = players[0]; if(me && me.alive && s && s.pos){ const d = me.pos.distanceTo(s.pos); if(d < 50) vvTrauma(0.75*Math.pow(1 - d/50, 1.4)); } }catch(e){} return r; }; }
 // levar tiro: tranco proporcional ao dano
-{ const _h = hurt; hurt = function(q, by, dmg){ const r = _h.apply(this, arguments); try{ if(q === players[0] && dmg > 0 && by && by !== q) vvTrauma(Math.min(0.35, 0.06 + dmg*0.006)); }catch(e){} return r; }; }
+{ const _h = hurt; hurt = function(q, by, dmg){ const r = _h.apply(this, arguments); try{ if(q === players[0] && dmg > 0 && by && by !== q) { vvTrauma(Math.min(0.2, 0.03 + dmg*0.003)); const k = Math.min(1, 0.3 + dmg/45), cd = camera.getWorldDirection(new THREE.Vector3()), fx = cd.x, fz = cd.z, ax = by.pos.x - q.pos.x, az = by.pos.z - q.pos.z, cr = fz*ax - fx*az; VC.fs = cr > 0.01 ? 1 : cr < -0.01 ? -1 : (Math.random() < 0.5 ? 1 : -1); VC.fv += k*9; } }catch(e){} return r; }; }
 // pouso forte: câmera afunda e volta
 { const _vp = vvPlayers; vvPlayers = function(dt){ const me = players[0]; const g0 = me && me.vvG, vy = me ? (me.vvVy || 0) : 0; _vp(dt);
     if(me && me.alive && g0 === false && me.grounded && vy < -8 && !me.car){ const k = Math.min(1, (-vy - 8)/14); VC.dipV -= 2.2 + k*3.5; vvTrauma(0.12 + k*0.3); } }; }
