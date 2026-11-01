@@ -15523,7 +15523,7 @@ function aim(c, me, dt){
         const E = new V3(me.pos.x, look.y + 0.32, me.pos.z), v = c.adsP.clone().sub(E).normalize(); let dy = yo(v) - c.yaw; dy = Math.atan2(Math.sin(dy), Math.cos(dy)); c.adsC = c.adsP.distanceTo(E) < 4 ? [0, 0] : [clamp(dy, -0.15, 0.15), clamp(po(v) - (c.pitch - a0), -0.15, 0.15)]; }
       if(!ad && sK === 0) c.adsP = c.adsC = null;
       if(c.adsC){ c.yE = c.yaw + c.adsC[0]*sK; c.pe += c.adsC[1]*sK; } else c.yE = c.yaw;
-      const hide = sK > 0.6 && me.alive; if(hide !== !!c.hid){ c.hid = hide; if(me.alive || me.dying > 0) me.m.g.visible = !hide; } }
+      const hide = sK > 0.6 && me.alive; if(hide !== !!c.hid || (hide && me.m.g.visible)){ c.hid = hide; if(me.alive || me.dying > 0) me.m.g.visible = !hide; } }
     else if(c === cam1){ AIMY1 = AIM_Y; scopeOn = false; c.adsK = c.scK = 0; c.hid = false; }
     const fpq = br && fpOn(me), aE = fpq ? Math.max(c.adsK, c.scK) : c.adsK, dist = br ? camDist + (3.3 - camDist)*aE + ((fpq ? 0.02 : 0.22) - 3.3)*c.scK : camDist;
     const pe = br ? c.pe : c.pitch, yE = br ? c.yE : c.yaw, tgt = new V3(lk.x + Math.sin(yE)*Math.cos(pe)*dist, lk.y + Math.sin(pe)*dist, lk.z + Math.cos(yE)*Math.cos(pe)*dist);
