@@ -14596,7 +14596,7 @@ canvas.addEventListener('mousedown', e => {
   else if(document.pointerLockElement === canvas && e.button === 0) Q[0].push = true;
 });
 addEventListener('mouseup', () => dragging = false);
-addEventListener('mousemove', e => { if(WH.on){ whMove(e); return; } if(document.pointerLockElement === canvas || dragging){ const me = players[0], ads = BIG && me && me.ads, k = CFG.sens/100*(ads ? (VM.on && VM.zs ? 1/VM.zs : camera.fov/CFG.fov)*CFG.adsSens/100 : 1); yaw -= e.movementX*0.0024*k; pitch = clamp(pitch + e.movementY*0.0024*k*(CFG.invY ? -1 : 1), fpOn(me) ? -1.2 : ads ? -0.55 : 0.05, 1.1); } });
+addEventListener('mousemove', e => { if(WH.on){ whMove(e); return; } if(document.pointerLockElement === canvas || dragging || (typeof FJML !== 'undefined' && FJML.free)){ const me = players[0], ads = BIG && me && me.ads, k = CFG.sens/100*(ads ? (VM.on && VM.zs ? 1/VM.zs : camera.fov/CFG.fov)*CFG.adsSens/100 : 1); yaw -= e.movementX*0.0024*k; pitch = clamp(pitch + e.movementY*0.0024*k*(CFG.invY ? -1 : 1), fpOn(me) ? -1.2 : ads ? -0.55 : 0.05, 1.1); } });
 canvas.addEventListener('wheel', e => { e.preventDefault(); const me = players[0]; if(me && me.ads && Math.abs(e.deltaY) > 2){ const a = me.inv && me.inv[me.sel] && me.inv[me.sel].att; if(a && (a.lpvo || a.rd3x)){ zoomFlip(me); return; } } camDist = clamp(camDist + e.deltaY*0.01, 5, 14); }, {passive:false});
 // controle: no modo 2 jogadores o primeiro controle é do J2 (o J1 fica no teclado e mouse)
 function padOf(i){ let ps = []; try{ ps = [...(navigator.getGamepads ? navigator.getGamepads() : [])].filter(g => g && g.connected); }catch(e){} return (twoP ? (i === 1 ? ps[0] : ps[1]) : i === 0 ? ps[0] : null) || null; }
@@ -15770,12 +15770,23 @@ function pause(on){ if(on && !inMatch()) return; PAUSED = on; $('pause').hidden 
 // ---------- mouse preso de volta: ao fechar um painel o jogo pede o mouse; se o navegador recusar, a próxima tecla ou clique prende (o clique não atira) ----------
 const FJML = {want:false};
 function fjPanelOpen(){ return PAUSED || bagOn || (typeof AQM !== 'undefined' && AQM.on) || (typeof WD !== 'undefined' && WD.shop) || !$('result').hidden; }
-function fjLockNow(){ if(document.pointerLockElement === canvas) return; lockT = Date.now(); try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} }
+function fjLockNow(){ if(document.pointerLockElement === canvas) return; lockT = Date.now(); try{ const r = canvas.requestPointerLock(); if(r && r.catch) r.catch(() => {}); }catch(err){} fjFreeUpd(); }
 function fjRelock(){ if(twoP || !inMatch()) return; FJML.want = true; mouseHeld = false; mouseR = false; dragging = false; fjLockNow(); }
 document.addEventListener('pointerlockchange', () => { if(document.pointerLockElement === canvas) FJML.want = false; });
 addEventListener('keydown', e => { if(!FJML.want || e.code === 'Escape' || document.pointerLockElement === canvas) return; if(twoP || !inMatch() || fjPanelOpen()){ FJML.want = false; return; } fjLockNow(); }, true);
 addEventListener('mousedown', e => { if(!FJML.want || document.pointerLockElement === canvas) return; if(twoP || !inMatch() || fjPanelOpen()){ FJML.want = false; return; } if(e.target !== canvas) return; fjLockNow(); e.preventDefault(); e.stopImmediatePropagation(); }, true);
-document.addEventListener('pointerlockchange', () => { if(document.pointerLockElement) lockT = Date.now(); else if(inMatch() && !fjPanelOpen() && Date.now() - lockT > 250) pause(true); });
+// mouse solto esperando prender: esconde a setinha e deixa mirar; tenta prender em qualquer tecla/clique/soltar
+FJML.free = false;
+function fjFreeUpd(){ const on = !!(FJML.want && document.pointerLockElement !== canvas && !twoP && inMatch() && !fjPanelOpen()); if(!on && FJML.want && (twoP || !inMatch() || fjPanelOpen())) FJML.want = false; FJML.free = on; document.body.classList.toggle('fjFree', on); }
+document.addEventListener('pointerlockchange', fjFreeUpd);
+document.addEventListener('pointerlockerror', fjFreeUpd);
+setInterval(fjFreeUpd, 150);
+const fjUiHit = e => e.target && e.target.closest && e.target.closest('button, input, select, a, label, #nhBag, #aq, #wdShop, #pause, #settings, #ctrls, #result, #confirm');
+addEventListener('keyup', e => { if(FJML.want && e.code !== 'Escape' && document.pointerLockElement !== canvas && !twoP && inMatch() && !fjPanelOpen()) fjLockNow(); }, true);
+addEventListener('mousedown', e => { if(!FJML.want || document.pointerLockElement === canvas || e.target === canvas || fjUiHit(e)) return; if(twoP || !inMatch() || fjPanelOpen()) return; fjLockNow(); e.preventDefault(); e.stopImmediatePropagation(); }, true);
+addEventListener('mouseup', e => { if(FJML.want && document.pointerLockElement !== canvas && !fjUiHit(e) && !twoP && inMatch() && !fjPanelOpen()) fjLockNow(); }, true);
+{ const st = document.createElement('style'); st.textContent = 'body.fjFree, body.fjFree canvas, body.fjFree #nh, body.fjFree #nh *{cursor:none !important}'; document.head.appendChild(st); }
+{ let had = false; document.addEventListener('pointerlockchange', () => { const on = document.pointerLockElement === canvas; if(on) lockT = Date.now(); else if(had && inMatch() && !fjPanelOpen() && Date.now() - lockT > 250) pause(true); had = on; }); }
 $('pResume').onclick = () => pause(false);
 $('pSettings').onclick = () => { $('pause').hidden = true; openSettings('pause'); };
 $('pKeys').onclick = () => { $('pause').hidden = true; returnTo = 'pause'; $('ctrls').hidden = false; setTimeout(() => $('ctrls').querySelector('.back').focus(), 30); };
@@ -18399,6 +18410,8 @@ function mobShots(dt){ if(!MOB.on || !MOB.sd.length || !mobOn()) return;
 { const _sr = startRound; startRound = function(...a){ if(MOB.on) mobClear(); return _sr(...a); }; }
 { const _us = updateShoot; updateShoot = function(dt){ if(MOB.on && mobOn()) mobShots(dt); _us(dt); if(MOB.on) mobStep(dt); }; }
 
+// HUD da Guerra alinhado (cartões na mesma largura, sem faixa lateral)
+{ const st = document.createElement('style'); st.id = 'wdHudAlinhado'; st.textContent = "#wdHud.hlSide > *{box-sizing:border-box;margin:0;width:100%}\n#wdHud.hlSide .wdT{display:grid;grid-template-columns:1fr 1fr;gap:4px}\n#wdHud.hlSide .wdS{box-sizing:border-box;display:flex;align-items:center;gap:6px;min-width:0;width:100%;border-width:2px;border-radius:8px;padding:2px 8px}\n#wdHud.hlSide .wdS i{display:block;flex:1;height:6px}\n#wdHud.hlSide .wdS b{min-width:22px}\n#wdHud.hlSide .wdS.own{box-shadow:inset 0 0 0 2px var(--c)!important}\n#wdHud.hlSide .wdZ,#wdHud.hlSide .wdOb,#wdHud.hlSide .wdMat{border-radius:8px}\n#wdHud .wdOb,#wdHud.hlSide .wdOb{border-left:1px solid var(--zline,transparent)!important}"; document.head.appendChild(st); }
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
