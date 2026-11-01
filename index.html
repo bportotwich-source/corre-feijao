@@ -4772,11 +4772,11 @@ function fjLodInit(){
   world.traverse(o => { if(!o.isInstancedMesh || o === (typeof FJG !== 'undefined' && FJG.m) || !o.userData.keep || (o.count < 200 && !o.userData.lodGeo) || !o.instanceColor || !o.geometry.attributes.color) return;
     const g = o.geometry, tri = (g.index ? g.index.count : g.attributes.position.count)/3; if(tri < 150) return;
     const lg = o.userData.lodGeo || fjLodGeo(g); if(!lg || (!o.userData.lodGeo && lg.attributes.position.count/3 > tri*0.5)) return;
-    const n = o.count, M = o.instanceMatrix.array.slice(0, n*16), C = o.instanceColor.array.slice(0, n*3), X = new Float32Array(n*2);
+    const n = o.count, M = o.instanceMatrix.array.slice(0, n*16), ML = o.userData.lodK ? M.map((v, j) => (j % 16) < 11 && (j % 4) < 3 ? v*o.userData.lodK : v) : M, C = o.instanceColor.array.slice(0, n*3), X = new Float32Array(n*2);
     for(let i = 0; i < n; i++){ X[i*2] = M[i*16 + 12]; X[i*2 + 1] = M[i*16 + 14]; }
     const lo = new THREE.InstancedMesh(lg, o.userData.lodMat || o.material, n); lo.castShadow = false; lo.receiveShadow = o.receiveShadow; lo.frustumCulled = false; lo.userData.keep = true;
     lo.setColorAt(0, new THREE.Color()); lo.count = 0; o.parent.add(lo); o.instanceMatrix.setUsage(THREE.DynamicDrawUsage); lo.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-    FJL.list.push({hi:o, lo, n, M, C, X, near:o.userData.lodNear}); });
+    FJL.list.push({hi:o, lo, n, M, ML, C, X, near:o.userData.lodNear}); });
 }
 function fjLod(cam){
   pnLod(cam); if(!TER){ return; } if(FJL.w !== world) fjLodInit(); if(!FJL.list.length) return;
@@ -4786,7 +4786,7 @@ function fjLod(cam){
   for(const e of FJL.list){ const hm = e.hi.instanceMatrix.array, hc = e.hi.instanceColor.array, lm = e.lo.instanceMatrix.array, lc = e.lo.instanceColor.array; let a = 0, b = 0;
     for(let i = 0; i < e.n; i++){ let d2 = 1e12; for(const h of hs){ const dx = e.X[i*2] - h.x, dz = e.X[i*2 + 1] - h.z, q = dx*dx + dz*dz; if(q < d2) d2 = q; }
       if(d2 < (e.near ? e.near*e.near : R2)){ hm.set(e.M.subarray(i*16, i*16 + 16), a*16); hc.set(e.C.subarray(i*3, i*3 + 3), a*3); a++; }
-      else if(d2 < F2){ lm.set(e.M.subarray(i*16, i*16 + 16), b*16); lc.set(e.C.subarray(i*3, i*3 + 3), b*3); b++; } }
+      else if(d2 < F2){ lm.set((e.ML || e.M).subarray(i*16, i*16 + 16), b*16); lc.set(e.C.subarray(i*3, i*3 + 3), b*3); b++; } }
     e.hi.count = a; e.lo.count = b; e.hi.instanceMatrix.needsUpdate = e.hi.instanceColor.needsUpdate = e.lo.instanceMatrix.needsUpdate = e.lo.instanceColor.needsUpdate = true; }
 }
 // loot numa grade de 8 m: os bots procuram item perto sem varrer o mapa inteiro a cada quadro
@@ -9523,14 +9523,16 @@ function mkLoad(n){ if(typeof MK_DATA === 'undefined' || typeof THREE === 'undef
 addEventListener('load', () => { if(CFG.flora === undefined) CFG.flora = 1; setTimeout(mkLoad, 300); });
 
 // árvores do pacote (Vídeo > Árvores: Alta): cada tipo do jogo ganha 1-2 modelos do pacote na mesma altura; de longe continua o modelo leve
-const MK_ARV = {pinheiro:['Pine_4', 'Pine_1'], pinheiro_jovem:['Pine_3', 'Pine_2'], copa:['CommonTree_3', 'CommonTree_1'], carvalho:['TwistedTree_1'], moita:['Bush_Large', 'Bush_Large_Flowers', 'Bush_Common_Flowers']};
-function mkTrees(kind, list, scale, sh, o, c){ const V = MK.ok && CFG.trees && MK_ARV[kind]; if(!V || !ARV2[kind]) return null;
+const MK_ARV = {pinheiro:['Pine_4', 'Pine_1'], pinheiro_jovem:['Pine_3', 'Pine_2'], copa:['CommonTree_3', 'CommonTree_1'], chorao:['CommonTree_1', 'TwistedTree_1'], carvalho:['TwistedTree_1'], moita:['Bush_Large', 'Bush_Large_Flowers', 'Bush_Common_Flowers']};
+// tamanho variado: árvores 1,2-1,7x e ~1 em 6 gigante (2-2,6x); moita fica igual
+function mkG(kind, t){ if(kind === 'moita') return 1; const u = (t[4]*7919.73) % 1; return u < 0.17 ? 2 + u*3.5 : 1.2 + ((t[4]*313.7) % 1)*0.5; }
+function mkTrees(kind, list, scale, sh, o, c){ const V = MK.ok && MK_ARV[kind]; if(!V || !ARV2[kind]) return null;
   if(!ARV2[kind].boundingBox) ARV2[kind].computeBoundingBox(); const H0 = ARV2[kind].boundingBox.max.y - ARV2[kind].boundingBox.min.y; let first = null;
   V.forEach((nome, vi) => { const M = MK.g[nome]; if(!M) return; const sub = list.filter(t => Math.floor(((t[4]*977.31) % 1)*V.length) === vi), k = H0/MK.h[nome]*(kind === 'moita' ? 0.95 : 1);
     const im = new THREE.InstancedMesh(M.g, M.m, Math.max(1, sub.length)); im.count = sub.length;
-    sub.forEach((t, i) => { o.position.set(t[0], t[2] - 0.15, t[1]); o.scale.setScalar(scale(t)*k); o.rotation.set(0, t[4]*6.283*7, 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); c.setRGB(1, 1, 1).multiplyScalar(0.88 + t[4]*0.22); im.setColorAt(i, c); });
+    sub.forEach((t, i) => { o.position.set(t[0], t[2] - 0.15, t[1]); o.scale.setScalar(scale(t)*k*mkG(kind, t)); o.rotation.set(0, t[4]*6.283*7, 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); c.setRGB(1, 1, 1).multiplyScalar(0.88 + t[4]*0.22); im.setColorAt(i, c); });
     if(!sub.length) im.setColorAt(0, c.setRGB(1, 1, 1));
-    im.castShadow = sh; im.receiveShadow = true; im.userData.keep = true; im.userData.lodGeo = ARV2[kind + '_longe']; im.userData.lodMat = ARV2.mat; im.userData.lodNear = kind === 'carvalho' ? 50 : 40; im.visible = sub.length > 0; world.add(im); first = first || im; });
+    im.castShadow = sh; im.receiveShadow = true; im.userData.keep = true; const LG = MK.g[nome + '_longe']; im.userData.lodGeo = LG ? LG.g : ARV2[kind + '_longe']; im.userData.lodMat = LG ? LG.m : ARV2.mat; if(!LG) im.userData.lodK = 1/k; im.userData.lodNear = [40, 70, 110, 170][CFG.quality | 0] + (kind === 'carvalho' ? 10 : 0); im.visible = sub.length > 0; world.add(im); first = first || im; });
   return first; }
 
 // pedregulhos do pacote no lugar dos do Blender (mesma posição, tamanho e colisão)
@@ -15600,7 +15602,7 @@ addEventListener('blur', applyAudio); addEventListener('focus', applyAudio);
 const SET_UI = {
   video:[['full', 'Modo de tela', 'seg', [[false, 'Janela'], [true, 'Tela cheia']]], ['quality', 'Qualidade gráfica', 'seg', [[0, 'Baixa'], [1, 'Média'], [2, 'Alta'], [3, 'Ultra']]],
     ['scale', 'Escala de renderização', 'range', [50, 100, 5, '%']], ['autoRes', 'Resolução automática (baixa um pouco quando o FPS cai)', 'tog'], ['shadows', 'Sombras', 'tog'], ['toon', 'Visual de desenho (contorno e luz em faixas)', 'tog'], ['fov', 'Campo de visão', 'range', [50, 90, 1, '°']],
-    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['occ', 'Deixar transparente o que cobre o feijão', 'tog'], ['clima', 'Hora do dia e clima sorteados (chuva, neblina, neve)', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['trees', 'Árvores (vale na próxima partida)', 'seg', [[0, 'Normal'], [1, 'Alta (PC bom)']]], ['flora', 'Plantas no chão (capim alto, flores, cogumelos)', 'seg', [[0, 'Desligado'], [1, 'Normal'], [2, 'Muito']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
+    ['fps', 'Limite de FPS', 'seg', [[30, '30'], [60, '60'], [144, '144'], [0, 'Sem limite']]], ['showFps', 'Mostrar FPS na tela', 'tog'], ['occ', 'Deixar transparente o que cobre o feijão', 'tog'], ['clima', 'Hora do dia e clima sorteados (chuva, neblina, neve)', 'tog'], ['grass', 'Grama 3D (Ilha Feijoada)', 'seg', [[0, 'Desligada'], [1, 'Perto'], [2, 'Longe']]], ['flora', 'Plantas no chão (capim alto, flores, cogumelos)', 'seg', [[0, 'Desligado'], [1, 'Normal'], [2, 'Muito']]], ['shake', 'Tremer a câmera nos impactos', 'tog']],
   audio:[['vol', 'Volume geral', 'range', [0, 100, 1, '%']], ['music', 'Música', 'range', [0, 100, 1, '%']], ['sfx', 'Efeitos', 'range', [0, 100, 1, '%']], ['muteBlur', 'Silenciar quando a janela perde o foco', 'tog']],
   ctrl:[['sens', 'Sensibilidade do mouse', 'range', [20, 300, 5, '%']], ['adsSens', 'Sensibilidade mirando (botão direito)', 'range', [30, 200, 5, '%']], ['invY', 'Inverter eixo Y', 'tog'], ['camDist', 'Distância da câmera', 'range', [50, 140, 5, '']], ['fpp', 'Modo 100 em primeira pessoa (tecla P troca na partida)', 'tog'], ['keys']],
   game:[['name', 'Nome do jogador', 'text'], ['cross', 'Mira (Modo 100 e Guerra de Tomate)', 'seg', [['cruz', 'Cruz'], ['ponto', 'Ponto'], ['circulo', 'Círculo']]], ['hudTheme', 'Cor da HUD do Modo 100', 'seg', [['tatico', 'Tático'], ['creme', 'Creme'], ['roxo', 'Roxo']]], ['autoQ', 'Tecla 5 escolhe a melhor cura quando o marcado acaba', 'tog'], ['tips', 'Mensagens no canto (quem caiu, quem pegou o quê)', 'tog'], ['lang', 'Idioma', 'seg', [['pt', 'Português (Brasil)']]], ['wipe']],
