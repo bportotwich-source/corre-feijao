@@ -1012,6 +1012,89 @@ body.wdOn #brTop .bp.mode{display:none}
 @media (max-width:1100px){#menu .mpl{grid-template-columns:1fr 1fr}}
 @media (max-width:760px){#menu .mpick{left:16px;right:16px;top:150px;bottom:16px}#menu .mpl{grid-template-columns:1fr;overflow:auto}#menu .mpcol{overflow:visible}}
 </style>
+<style id="menuB">/* ---------- Menu B (01/11, Bruno): barra azul de cima (layout A) + corpo estilo Fall Guys (layout B), feijão de frente ---------- */
+@media (min-width:761px){
+#menu.screen.pc{background:linear-gradient(180deg,rgba(0,0,0,0) 70%,rgba(42,18,80,.28))!important;--mbI:#2a1250;--mbB:#2f8cff;--mbP:#ff4fa3}
+#menu .mtop{height:84px;padding:0 24px!important;gap:20px;background:linear-gradient(180deg,rgba(47,140,255,.95),rgba(47,140,255,.78));box-shadow:0 4px 0 rgba(42,18,80,.35)}
+#menu .mtop .logo h1{font-size:38px!important;line-height:.9;margin:0;color:var(--sun);-webkit-text-stroke:2px var(--mbI)!important;text-shadow:0 4px 0 var(--mbI)!important}
+#menu .mtop .logo span{display:none}
+#menu .mtabs{position:absolute;left:50%;transform:translateX(-50%);margin:0;background:none;border:0;box-shadow:none;padding:0;gap:6px}
+#menu .mtab{font-size:24px;color:#e8f2ff;padding:10px 22px;border-radius:14px;letter-spacing:.03em}
+#menu .mtab .mi{display:none}
+#menu .mtab:hover,#menu .mtab:focus-visible{background:rgba(255,255,255,.18);color:#fff}
+#menu .mtab.on{background:#fff;color:var(--mbB);box-shadow:0 4px 0 rgba(42,18,80,.35)}
+#menu .mtop .ptop{background:none;border:0;box-shadow:none;padding:0;margin-left:auto;color:#fff}
+#menu .ptop .prof{gap:10px}
+#menu .ptop .lvl,#menu .ptop .coins{display:flex;align-items:center;gap:8px;background:rgba(42,18,80,.35)!important;border:0!important;color:#fff!important;border-radius:14px!important;padding:7px 14px!important;font-size:20px}
+#menu .ptop .xpwrap{display:none}
+#menu .mico{width:46px;height:46px;border-radius:14px;background:rgba(42,18,80,.35);border:0;box-shadow:none;color:#fff}
+#menu .mico .mi{color:#fff!important}
+#menu .mico:hover,#menu .mico:focus-visible{background:rgba(42,18,80,.55);transform:translateY(-2px)}
+#menu .pcmain{position:static;width:auto;padding:0;overflow:visible}
+#menu .mnav{display:block}
+#menu #btnMode,#menu #btnParty{display:none}
+/* cartões dos modos (direita) */
+#mbCards{position:absolute;right:24px;top:110px;width:380px;display:grid;gap:12px;z-index:1}
+.mbc{all:unset;box-sizing:border-box;display:flex;gap:12px;align-items:center;border:4px solid var(--mbI);border-radius:22px;padding:9px 12px 9px 9px;box-shadow:0 6px 0 var(--mbI);color:var(--mbI);cursor:pointer;font-family:var(--body);transition:transform .14s,box-shadow .14s;position:relative;min-width:0}
+.mbc .art{flex:none;width:76px;height:62px;border-radius:14px;border:3px solid var(--mbI);display:grid;place-items:center;font-size:32px;background:#fff}
+.mbc .tx{min-width:0;display:grid}
+.mbc b{font-family:var(--display);font-weight:400;font-size:22px;line-height:1.05;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mbc small{font-weight:800;font-size:13px;line-height:1.25;opacity:.85;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mbc em{position:absolute;right:12px;top:-13px;font:900 11px/1 var(--body);font-style:normal;letter-spacing:.08em;text-transform:uppercase;background:var(--mbI);color:#fff;padding:5px 8px;border-radius:8px;display:none}
+.mbc.on em{display:block}
+.mbc.c1{background:#ffe56a}.mbc.c2{background:#9fe7ff}.mbc.c3{background:#ffb3d9}.mbc.c4{background:#d9c8ff}
+.mbc:hover,.mbc:focus-visible{transform:translateX(-6px)}
+.mbc:focus-visible{outline:4px solid #fff;outline-offset:3px}
+.mbc.on{transform:translateX(-16px) rotate(-1.5deg);box-shadow:0 6px 0 var(--mbI),0 0 0 6px #fff}
+/* escolhas da partida embaixo dos cartões */
+#menu .mset{right:24px!important;left:auto;bottom:150px!important;top:auto;width:380px!important;box-sizing:border-box;border:4px solid var(--mbI)!important;border-radius:22px!important;box-shadow:0 6px 0 var(--mbI)!important;padding:10px 12px;gap:6px}
+#menu .mset .srow>span{color:var(--mbI)!important;font-size:13px!important}
+#menu .mset .seg{background:#f3ecff;border:2px solid var(--mbI);border-radius:12px}
+#menu .mset .seg button{color:var(--mbI);font-weight:800}
+#menu .mset .seg button.on{background:var(--mbP);color:#fff;box-shadow:none}
+#menu .mset .small{display:none}
+/* JOGAR rosa */
+#menu #btnPlay{position:absolute;right:24px;bottom:28px;width:380px;height:108px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;border-radius:30px;background:linear-gradient(180deg,#ff8cc6,var(--mbP) 55%,#e02f86);border:5px solid var(--mbI);box-shadow:0 9px 0 var(--mbI);transform:none}
+#menu #btnPlay .mi{display:none}
+#menu #btnPlay>b{text-align:center;font-size:60px!important;color:#fff!important;line-height:1;-webkit-text-stroke:2px var(--mbI);text-shadow:0 5px 0 var(--mbI)}
+#menu #btnPlay>small{display:none}
+#menu #btnPlay kbd{position:absolute;right:16px;top:12px;font:900 12px var(--body);background:#fff;color:var(--mbI);border-radius:7px;padding:3px 7px}
+#menu #btnPlay:hover,#menu #btnPlay:focus-visible{transform:translateY(-3px);background:linear-gradient(180deg,#ffa3d3,#ff63ae 55%,#ea3a90);box-shadow:0 12px 0 var(--mbI);outline:none}
+#menu #btnPlay:active{transform:translateY(5px);box-shadow:0 4px 0 var(--mbI)}
+/* passe (esquerda em cima) */
+#mbPass{all:unset;box-sizing:border-box;position:absolute;left:24px;top:110px;width:310px;background:#fff;color:var(--mbI);border:4px solid var(--mbI);border-radius:22px;box-shadow:0 6px 0 var(--mbI);padding:12px 14px;cursor:pointer;font-family:var(--body);transition:transform .14s}
+#mbPass:hover,#mbPass:focus-visible{transform:translateY(-3px)}
+#mbPass:focus-visible{outline:4px solid #fff;outline-offset:3px}
+#mbPass small{display:block;font:900 11px var(--body);letter-spacing:.1em;text-transform:uppercase;color:#7a6a96}
+#mbPass b{display:block;font-family:var(--display);font-weight:400;font-size:21px;text-transform:uppercase;color:#7b3fe4;line-height:1.1}
+#mbPass span{display:block;font-weight:800;font-size:14px;margin-top:2px}
+#mbPass .st{display:flex;gap:5px;margin-top:8px}
+#mbPass .st i{flex:1;height:14px;border-radius:6px;border:2px solid var(--mbI);background:#f3ecff;overflow:hidden;position:relative}
+#mbPass .st i.on{background:#3ddc84}
+#mbPass .st i.half::after{content:"";position:absolute;inset:0;width:var(--w);background:#3ddc84}
+/* amigos (esquerda embaixo) */
+#mbParty{position:absolute;left:24px;bottom:28px;display:flex;align-items:flex-end;gap:12px}
+#mbParty .pp{all:unset;box-sizing:border-box;width:74px;height:74px;border-radius:50%;border:4px solid var(--mbI);box-shadow:0 5px 0 var(--mbI);display:grid;place-items:center;font-family:var(--display);font-size:38px;color:var(--mbI);background:#fff;cursor:pointer;overflow:hidden;transition:transform .14s}
+#mbParty .pp.me{background:radial-gradient(circle at 50% 35%,#fff,#ffd6ea)}
+#mbParty .pp.me img{width:96%;margin-top:-8%}
+#mbParty .pp:hover,#mbParty .pp:focus-visible{transform:translateY(-3px);background:#ffe56a}
+#mbParty .pp:focus-visible{outline:4px solid #fff;outline-offset:3px}
+#mbParty .pl{display:grid;margin-left:10px;align-self:center}
+#mbParty .pl>span{position:absolute;left:4px;top:-30px;font:900 13px var(--body);letter-spacing:.08em;text-transform:uppercase;color:#fff;text-shadow:0 2px 0 var(--mbI),1px 0 0 var(--mbI),-1px 0 0 var(--mbI)}
+#menu #btnCampoM{all:unset;box-sizing:border-box;display:flex;align-items:center;gap:8px;background:#fff;color:var(--mbI);border:4px solid var(--mbI);border-radius:16px;box-shadow:0 5px 0 var(--mbI);padding:7px 14px;cursor:pointer;font-family:var(--display);font-size:19px;text-transform:uppercase;transition:transform .14s}
+#menu #btnCampoM .mi,#menu #btnCampoM small{display:none}
+#menu #btnCampoM>b{font-family:var(--display);font-weight:400;font-size:19px;color:var(--mbI)}
+#menu #btnCampoM:hover,#menu #btnCampoM:focus-visible{transform:translateY(-3px);background:#9fe7ff}
+/* nome embaixo do feijão */
+#mbTag{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none}
+#mbTag b{font-family:var(--display);font-weight:400;font-size:30px;line-height:1;color:#fff;-webkit-text-stroke:1.5px var(--mbI);text-shadow:0 4px 0 var(--mbI)}
+#mbTag small{font:900 12px var(--body);letter-spacing:.1em;text-transform:uppercase;background:var(--sun);color:var(--mbI);padding:3px 9px;border-radius:8px;border:2px solid var(--mbI)}
+#menu .pfoot{left:50%;right:auto;transform:translateX(-50%);background:none!important;padding:0 0 6px;color:rgba(255,255,255,.8);text-shadow:0 1px 2px rgba(0,0,0,.5)}
+#menu .pfoot .fkeys{display:none}
+#menu .mpick{top:104px}
+}
+@media (max-width:760px){#mbCards,#mbPass,#mbParty,#mbTag{display:none}}
+</style>
 <div class="screen pc" id="menu" hidden>
   <header class="mtop">
     <div class="logo"><h1>Corre,<br>Feijão!</h1></div>
@@ -15142,7 +15225,8 @@ function vmRender(W, H){ if(!VM.on) return; vmCam.aspect = W/H; vmCam.fov = (VM.
 const VM_FLIP = new THREE.Quaternion().setFromAxisAngle(new V3(0, 1, 0), Math.PI);
 function aim(c, me, dt){
   c.lk = null; const follow = me.alive || me.dying || me.rev ? me : (players.find(p => p.alive && mates(p, me)) || players.find(p => p.alive) || me), look = c.look, camPos = c.pos;
-  if(R1.phase === 'podium'){ look.set(0, 0.6, 0); camPos.lerp(new V3(Math.sin(R1.t*0.3)*2.5, 4.6, -11), Math.min(1, dt*3)); }
+  if(R1.phase === 'menu' && mbCam(c, look, camPos)){}
+  else if(R1.phase === 'podium'){ look.set(0, 0.6, 0); camPos.lerp(new V3(Math.sin(R1.t*0.3)*2.5, 4.6, -11), Math.min(1, dt*3)); }
   else if(R1.phase === 'intro' && round === 1){ look.set(0, 0, 60 - R1.t*20); camPos.lerp(new V3(Math.sin(R1.t*0.5)*18, 16, look.z - 22), Math.min(1, dt*2)); }
   else {
     look.lerp(new V3(follow.pos.x, follow.pos.y + 1.2 - (follow.stance === 2 ? 0.75 : follow.stance === 1 ? 0.4 : 0), follow.pos.z), Math.min(1, dt*10));
@@ -15354,7 +15438,7 @@ $('pSettings').onclick = () => { $('pause').hidden = true; openSettings('pause')
 $('pKeys').onclick = () => { $('pause').hidden = true; returnTo = 'pause'; $('ctrls').hidden = false; setTimeout(() => $('ctrls').querySelector('.back').focus(), 30); };
 $('pQuit').onclick = () => ask('Voltar ao menu?', 'Você sai da partida e perde o progresso dela.', 'Sair da partida', toMenu);
 function toMenu(){ PAUSED = false; BIG = false; ['pause', 'result'].forEach(x => $(x).hidden = true); if(document.pointerLockElement) document.exitPointerLock(); openScreen('menu'); $('top').hidden = true; menuScene(); playMusic(true); try{ brHUD(); }catch(e){} clearTimeout(banner.t); $('bText').classList.remove('show'); }
-function menuScene(){ confs.forEach(c => scene.remove(c)); confs.length = 0; loot = []; drops = []; buildRace(); createPlayers(); players.forEach((p, k) => p.pos.set(-4.5 + (k%4)*3, 0, -3 + Math.floor(k/4)*1.8)); R1.phase = 'menu'; yaw = Math.PI*0.8; }
+function menuScene(){ confs.forEach(c => scene.remove(c)); confs.length = 0; loot = []; drops = []; buildRace(); createPlayers(); mbPlace(); R1.phase = 'menu'; yaw = Math.PI*0.8; }
 $('btnMenu').onclick = toMenu;
 function setDiff(d){ DIFF = d; try{ localStorage.setItem('feijao-diff', d); }catch(e){} document.querySelectorAll('#diff button').forEach(b => { const on = +b.dataset.d === d; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); }); }
 document.querySelectorAll('#diff button').forEach(b => b.onclick = () => setDiff(+b.dataset.d)); setDiff(DIFF);
@@ -18491,6 +18575,59 @@ if(typeof vvRainSnd === 'function'){ const _vr = vvRainSnd; vvRainSnd = function
     const sv = c.heli ? 0.4 : c.boat || c.jeep ? 0.26 : 0.32; V.g.gain.setTargetAtTime(sv*dv*0.35, t, 0.12); }; }
 { const _ft = fjEngTick; fjEngTick = function(){ _ft(); if(FJR.n) for(const V of FJE.v) if(!V.c && V.rg) V.rg.gain.setTargetAtTime(0, ac.currentTime, 0.1); }; }
 { const _ua = updateAmb; updateAmb = function(){ _ua(); if(ac){ fjrLoad(); try{ fjrAmb(); }catch(e){} } }; }
+
+// ---------- Menu B (01/11, pedido do Bruno): barra azul do layout A + cartões de modo, JOGAR rosa e amigos do layout B ----------
+// Câmera de frente pro seu feijão no menu, 3 amigos do lado; o resto dos feijões some só no menu.
+var mbOn = false;
+function mbY(){ return Math.PI*0.8; }
+function mbD(){ return [Math.sin(mbY()), Math.cos(mbY())]; }
+function mbRight(){ const fx = -mbD()[0], fz = -mbD()[1]; return [-fz, fx]; } // direita da tela, no chão
+function mbPlace(){ const r = mbRight(), fx = -mbD()[0], fz = -mbD()[1], c = [-1.5, -0.9];
+  const spots = [[0, 0], [-2.5, 0.9], [2.4, 0.9], [1.25, 2.1]];
+  players.forEach((p, k) => { const s = spots[k]; if(s) p.pos.set(c[0] + r[0]*s[0] + fx*s[1], 0, c[1] + r[1]*s[0] + fz*s[1]); else p.pos.set(-4.5 + (k%4)*3, 0, -3 + Math.floor(k/4)*1.8); p.face = mbY(); }); }
+function mbCam(c, look, camPos){ const me = players[0]; if(!me || !me.m || innerWidth <= 760) return false; const r = mbRight();
+  mbOn = true; players.forEach((p, k) => { if(!p.m) return; if(k < 4){ p.face = mbY(); if(p.vel) p.vel.x = p.vel.z = 0; } else p.m.g.visible = false; });
+  if(me.m.g.userData.marker) me.m.g.userData.marker.visible = false;
+  if(typeof VE !== 'undefined' && VE.npc) VE.npc.forEach(n => { if(n.m && n.m.g) n.m.g.visible = Math.hypot(n.x - me.pos.x, n.z - me.pos.z) > 9; });
+  look.set(me.pos.x + r[0]*0.85, me.pos.y + 1.25, me.pos.z + r[1]*0.85);
+  camPos.set(look.x + mbD()[0]*7.4, look.y + 0.75, look.z + mbD()[1]*7.4);
+  if(camera.fov !== 34){ camera.fov = 34; camera.updateProjectionMatrix(); }
+  return true; }
+function mbOff(){ if(!mbOn) return; mbOn = false; players.forEach(p => { if(p.m && p.alive !== false && !(p.dying > 0)) p.m.g.visible = true; }); const me = players[0]; if(me && me.m && me.m.g.userData.marker) me.m.g.userData.marker.visible = true; camera.fov = CFG.fov; camera.updateProjectionMatrix(); const t = $('mbTag'); if(t) t.hidden = true; }
+const MB_CARDS = [
+  {c:'c1', keys:['full', 'pts', 'map'], ic:'🏁', nm:'Provas', sub:() => `Partida completa · ${NPL} feijões`, pick:() => mmSave({k:'full'})},
+  {c:'c2', keys:['br', 'big'], ic:'🎯', nm:'Battle Royale', sub:() => 'Solo, dupla ou squad · 100 feijões', pick:() => { if(BIGMAP === 'front'){ const x = document.querySelector('#bigMap [data-m="feijoada"]'); if(x) x.click(); } mmSave({k:'br', sq:MM.sq || mmSq()}); }},
+  {c:'c3', keys:['war'], ic:'⚔️', nm:'Guerra de Times', sub:() => '4 tropas de 25 · zonas e loja da base', pick:() => mmSave({k:'war'})},
+  {c:'c4', keys:['campo', 'test'], ic:'🎲', nm:'Todos os modos', sub:() => 'Escolher prova, mapa e equipe', pick:null}];
+function mbBuild(){ if($('mbCards')) return; const M = $('menu');
+  M.insertAdjacentHTML('beforeend', `<div id="mbCards" role="group" aria-label="Modos">${MB_CARDS.map((d, i) => `<button class="mbc ${d.c}" data-i="${i}"><span class="art" aria-hidden="true"></span><span class="tx"><b></b><small></small></span><em>Opções ›</em></button>`).join('')}</div>`
+    + `<button id="mbPass" aria-label="Abrir o passe"><small></small><b></b><span></span><div class="st"></div></button>`
+    + `<div id="mbParty"><button class="pp me" title="Seu feijão" aria-label="Perfil"></button><button class="pp" data-f aria-label="Chamar amigo">+</button><button class="pp" data-f aria-label="Chamar amigo">+</button><button class="pp" data-f aria-label="Chamar amigo">+</button><div class="pl"><span>Jogar com amigos</span></div></div>`
+    + `<div id="mbTag" hidden><b>Você</b><small></small></div>`);
+  $('mbParty').querySelector('.pl').appendChild($('btnCampoM')); // Campo de Tiro vira botão pequeno ao lado dos amigos
+  const pb = $('btnPlay'); pb.querySelector('b').textContent = 'Jogar!';
+  $('mbCards').addEventListener('click', e => { const b = e.target.closest('.mbc'); if(!b) return; sfx('beep'); const d = MB_CARDS[+b.dataset.i];
+    if(!d.pick || b.classList.contains('on')) return mmPick(true); mmPick(false); d.pick(); });
+  $('mbPass').onclick = () => $('btnPass').click();
+  $('mbParty').addEventListener('click', e => { const b = e.target.closest('.pp'); if(!b) return; if(b.classList.contains('me')) $('btnRec').click(); else $('btnParty').click(); });
+  mbCardsR(); mbPassR(); }
+function mbCardsR(){ const box = $('mbCards'); if(!box) return; const [ic, nm, sub] = mmInfo(MM);
+  MB_CARDS.forEach((d, i) => { const b = box.children[i], on = d.keys.includes(MM.k); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on);
+    b.querySelector('.art').textContent = on ? ic : d.ic; b.querySelector('b').textContent = on ? nm : d.nm; b.querySelector('small').textContent = on ? sub : d.sub(); }); }
+function mbPassR(){ const b = $('mbPass'); if(!b) return; const L = passLv(), cur = L >= PASS_N ? PASS_XP : SAVE.px % PASS_XP;
+  b.querySelector('small').textContent = 'Passe · ' + SEASON.split('·').pop().trim(); b.querySelector('b').textContent = 'Nível ' + L + ' de ' + PASS_N;
+  b.querySelector('span').textContent = L >= PASS_N ? 'Passe completo!' : `faltam ${PASS_XP - cur} XP pro próximo prêmio`;
+  const n = 5, st = (L % n), w = cur/PASS_XP; b.querySelector('.st').innerHTML = Array.from({length:n}, (_, k) => k < st ? '<i class="on"></i>' : k === st ? `<i class="half" style="--w:${Math.round(w*100)}%"></i>` : '<i></i>').join('');
+  const me = document.querySelector('#mbParty .pp.me'); if(me && !me.firstChild){ try{ const src = nhBean(myLook().color, null, true); if(src) me.innerHTML = `<img src="${src}" alt="">`; }catch(e){} }
+  const t = document.querySelector('#mbTag small'); if(t) t.textContent = 'Nv ' + levelOf(SAVE.xp).L; }
+function mbTagR(){ const t = $('mbTag'); if(!t) return; const me = players[0], show = mbOn && R1.phase === 'menu' && !$('menu').hidden && $('mPick').hidden && me && me.m;
+  if(!show){ if(!t.hidden) t.hidden = true; return; }
+  camera.updateMatrixWorld(); const v = new V3(me.pos.x, me.pos.y - 0.05, me.pos.z).project(camera);
+  t.hidden = false; t.style.left = ((v.x + 1)/2*innerWidth).toFixed(0) + 'px'; t.style.top = ((1 - v.y)/2*innerHeight + 6).toFixed(0) + 'px'; }
+{ const _mr = mmRender; mmRender = function(){ const r = _mr.apply(this, arguments); try{ mbCardsR(); }catch(e){} return r; }; }
+{ const _rp = renderProf; renderProf = function(){ const r = _rp.apply(this, arguments); try{ mbPassR(); }catch(e){} return r; }; }
+{ const _aim = aim; aim = function(c, me, dt){ const r = _aim.apply(this, arguments); if(c === cam1){ if(R1.phase !== 'menu') mbOff(); try{ mbTagR(); }catch(e){} } return r; }; }
+try{ mbBuild(); mmRender(); }catch(e){ console.warn('menu B', e); }
 
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
