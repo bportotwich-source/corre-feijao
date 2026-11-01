@@ -10906,8 +10906,8 @@ const FR_HQ = [[-372, -226], [372, 238], [372, -226], [-372, 238]];
 // nome, x, z, raio da área plana, altura (-1 = a do relevo), cor do chão, quente
 let FR_REG0 = [['Forte da Colina', 0, 0, 30, 19, 0xa89a7a, 1], ['Represa', 176, -137, 0, 0, 0x9a9890, 1], ['Aeródromo', -98, -215, 34, -1, 0xb0a890, 1],
   ['Usina Velha', -183, 143, 30, -1, 0x9a958a, 1], ['Vila da Ponte', 122, 222, 0, 0, 0xc9b48e, 1], ['Radar', 320, 0, 22, -1, 0xa8a8a0, 1], ['Farol', -330, 0, 20, -1, 0xd8c8a0, 1],
-  ['Moinho', -268, -191, 8, -1, 0xb8b08a, 0], ['Casamata', -124, -124, 8, -1, 0xa8a08a, 0], ['Mirante', 7, -124, 7, -1, 0xa8987a, 0], ["Torre d'Água", 272, -207, 8, -1, 0xa8a08a, 0],
-  ['Pedreira', -238, -55, 10, -1, 0x9a958a, 0], ['Ninho', 118, -52, 7, -1, 0xa8987a, 0], ['Posto', -124, 65, 9, -1, 0xa9a8a2, 0], ['Paiol', 7, 117, 8, -1, 0xa8a08a, 0],
+  ['Moinho', -268, -191, 8, -1, 0xb8b08a, 0], ['Casamata', -124, -124, 8, -1, 0xa8a08a, 0], ['Mirante', 322, -86, 7, -1, 0xa8987a, 0], ["Torre d'Água", 272, -207, 8, -1, 0xa8a08a, 0],
+  ['Pedreira', -238, -55, 10, -1, 0x9a958a, 0], ['Ninho', 118, -52, 7, -1, 0xa8987a, 0], ['Posto', -124, 65, 9, -1, 0xa9a8a2, 0], ['Paiol', -281, 136, 8, -1, 0xa8a08a, 0],
   ['Bunker', 160, 76, 8, -1, 0xa8a08a, 0], ['Galpão', 238, 44, 9, -1, 0xa9a8a2, 0], ['Celeiro', -291, 217, 9, -1, 0xc0a882, 0], ['Silo', 280, 202, 8, -1, 0xb8b08a, 0],
   ['Base Pimenta', -372, -226, 24, -1, 0x9aa06a, 0], ['Base Mirtilo', 372, 238, 24, -1, 0x9aa06a, 0], ['Base Ervilha', 372, -226, 24, -1, 0x9aa06a, 0], ['Base Milho', -372, 238, 24, -1, 0x9aa06a, 0]];
 const FR_RIV0 = [[147, -360], [158, -268], [166, -205], [176, -137], [189, -68], [172, -4], [138, 50], [123, 117], [133, 183], [140, 250], [146, 360]];
@@ -15934,8 +15934,8 @@ function wdShopRender(){ const el = $('wdShop'); if(!el || el.hidden) return; co
 { const _er = endRound; endRound = function(){ if(WAR && BIG && round === 20){ if(!WD.over){ const b = Math.max(...WD.pts); wdFinish(WD.pts.indexOf(b)); } return; } return _er(); }; }
 // botão do modo e tecla B
 { const g = document.querySelector('#bigsel .bigmodes'), t = $('btnBigTest'); if(g && t){ const b = document.createElement('button'); b.className = 'map'; b.id = 'btnWar';
-    b.innerHTML = '<span class="mart" style="--mc:#ff9f1c">⚔️<em>Guerra</em></span><span class="mtxt"><b>Guerra de Times</b><span>4 tropas de 25. Segure a zona de controle, compre itens na loja da base e volte sempre que cair. 100 pontos vence.</span><small>novo · estilo Wardogs</small></span>';
-    g.insertBefore(b, t); b.onclick = () => { if(!['feijoada', 'front', 'metro'].includes(BIGMAP)){ BIGMAP = 'feijoada'; document.querySelectorAll('#bigMap button').forEach(x => x.classList.toggle('on', x.dataset.m === BIGMAP)); } BR_SQ = 25; BR_TEST = false; WAR = true; play(20, true); }; } }
+    b.innerHTML = '<span class="mart" style="--mc:#ff9f1c">⚔️<em>Guerra</em></span><span class="mtxt"><b>Guerra de Times</b><span>4 tropas de 25 no Front do Feijão: 6 rotas com ondas de soldadinhos, zonas de controle e loja da base. Volte sempre que cair.</span><small>novo · estilo MOBA</small></span>';
+    g.insertBefore(b, t); b.onclick = () => { if(BIGMAP !== 'front'){ BIGMAP = 'front'; document.querySelectorAll('#bigMap button').forEach(x => x.classList.toggle('on', x.dataset.m === BIGMAP)); } BR_SQ = 25; BR_TEST = false; WAR = true; play(20, true); }; } }
 document.addEventListener('click', e => { if(e.target.closest('#bigsel [data-sq], #btnBigParty, #btnBigTest, #btnRoomStart, #btnPlay, #btnPts')) WAR = false; }, true);
 addEventListener('keydown', e => { if(!WAR || !BIG || round !== 20 || !inMatch()) return;
   if(e.code === 'KeyB' && !e.repeat && !PAUSED){ wdShopOpen(!WD.shop); e.preventDefault(); e.stopImmediatePropagation(); }
@@ -18113,6 +18113,220 @@ function fr2Arc(x, z, r0, r1, u0, u1){ let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -
       [0.4, 0.4 + Math.PI/2, 0.4 + Math.PI, 0.4 + 1.5*Math.PI].forEach(a => { const px = x + Math.sin(a)*2, pz = z + Math.cos(a)*2; box(px - 0.13, px + 0.13, T + 0.3, T + 2.9, pz - 0.13, pz + 0.13, 0x6f4f30); }); });
     FJ_BLD.push([x - 4, x + 4, z - 4, z + 4, 0xf4ead8]); bonusLoot.push(['sniper', x + 1.0, T + 0.3, z - 1.0]); }; }
 
+// ---------- Guerra MOBA no Front do Feijão (lote 1): 6 rotas e ondas de soldadinhos ----------
+// cada tropa sai por 3 rotas; a cada 30 s sai uma onda de soldadinhos (NPC leve, não ocupa vaga de jogador) por rota
+// o líder da partida simula; os outros PCs só desenham (posição na rota + tiros) e mandam os acertos deles pro líder
+const MOB = {WAVE:30, W0:20, HP:34, SPD:4.2, SIGHT:28, RNG:22, DMG:6, DMGS:12, BV:70, MAX:96, VIS:230,
+  lanes:[], sd:[], bul:[], wt:0, nid:1, im:null, job:null, tk:0, nt:0, ft:[], pay:new Map(), payT:0, wave:0, on:false};
+const MOB_LANES = [
+  {n:'Rota Norte', a:0, b:2, c:['Moinho', 'Aeródromo', "Torre d'Água"]},
+  {n:'Rota Sul', a:3, b:1, c:['Celeiro', 'Vila da Ponte', 'Silo']},
+  {n:'Rota Oeste', a:0, b:3, c:['Pedreira', 'Farol', 'Paiol']},
+  {n:'Rota Leste', a:2, b:1, c:['Mirante', 'Radar', 'Galpão']},
+  {n:'Rota do Meio', a:0, b:1, c:['Casamata', 'Forte da Colina', 'Bunker']},
+  {n:'Rota do Meio', a:3, b:2, c:['Posto', 'Forte da Colina', 'Ninho']}];
+const mobOn = () => WAR && BIG && round === 20 && BIGMAP === 'front' && R1.phase === 'play' && WD.hq.length === 4;
+const mobLead = () => typeof wdLead !== 'function' || wdLead();
+const mobNet = () => typeof wdNet === 'function' && wdNet();
+const mobAuth = p => !mobNet() || (p && typeof own === 'function' && own(p));
+// escala pelos jogadores de verdade (1-20: 4 por onda, vida normal; 21-60: 5, vida 1,5x; 61-100: 6, vida 2x)
+const mobHumans = () => players.filter(p => !p.isBot && !p.dummy).length;
+const mobN = () => { const h = mobHumans(); return h <= 20 ? 4 : h <= 60 ? 5 : 6; };
+const mobHPk = () => { const h = mobHumans(); return h <= 20 ? 1 : h <= 60 ? 1.5 : 2; };
+
+// ---------- caminho das rotas: A* na grade de 6 m (igual ao do comboio), preferindo a estrada ----------
+function mobGrid(){ const X = (TER ? TER.X : BIG_W) - 24, Z = (TER ? TER.Z : BIG_W) - 24, C = 6, nx = Math.floor(2*X/C), nz = Math.floor(2*Z/C), wl = typeof FJ_WL === 'number' ? FJ_WL : -99;
+  const cx = i => -X + (i + 0.5)*C, cz = j => -Z + (j + 0.5)*C, N = nx*nz, H = new Float32Array(N), ok = new Uint8Array(N), road = new Uint8Array(N), PX = new Float32Array(N), PZ = new Float32Array(N);
+  const blk = (x, z, h, m, bm) => solidsAt(x, z).some(b => { if(!b.active || b.max.y <= h + 0.7 || b.min.y > h + 5) return false; const big = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) >= 3, M = big ? bm ?? 2.6 : m;
+    return x > b.min.x - M && x < b.max.x + M && z > b.min.z - M && z < b.max.z + M; });
+  if(typeof FJ_RP !== 'undefined' && Array.isArray(FJ_RP)) for(const P of FJ_RP) for(let q=1;q<P.length;q++){ const [x0, z0] = P[q - 1], [x1, z1] = P[q], n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)/2);
+    for(let t=0;t<=n;t++){ const x = x0 + (x1 - x0)*t/n, z = z0 + (z1 - z0)*t/n, i = Math.floor((x + X)/C), j = Math.floor((z + Z)/C); if(i < 0 || j < 0 || i >= nx || j >= nz) continue; const k = i*nz + j;
+      if(!road[k] || Math.hypot(x - cx(i), z - cz(j)) < Math.hypot(PX[k] - cx(i), PZ[k] - cz(j))){ road[k] = 1; PX[k] = x; PZ[k] = z; } } }
+  for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){ const k = i*nz + j, x = road[k] ? PX[k] : cx(i), z = road[k] ? PZ[k] : cz(j), g0 = gY(x, z), h = road[k] ? gobH(x, z, g0 <= wl + 0.9 ? wl + 7 : g0 + 1) : g0; H[k] = h;
+    const hq = WD.hq.some(Q => Math.hypot(Q.x - x, Q.z - z) < WD.HQR + 16);
+    ok[k] = !hq && (road[k] ? h > wl + 0.3 && !blk(x, z, h, -99, 0.3) : h > wl + 0.9 && ![[0, 0], [1.6, 0], [-1.6, 0], [0, 1.6], [0, -1.6]].some(([u, v], q) => blk(x + u, z + v, h, q ? 0 : 1.0, q ? 0.2 : 1.4))) ? 1 : 0; }
+  return {X, Z, C, nx, nz, N, H, ok, road, PX, PZ, cx, cz}; }
+function mobCell(G, x, z){ const {X, Z, C, nx, nz, ok} = G, i = clamp(Math.floor((x + X)/C), 0, nx - 1), j = clamp(Math.floor((z + Z)/C), 0, nz - 1);
+  for(let r=0;r<16;r++) for(let a=-r;a<=r;a++) for(let b=-r;b<=r;b++){ if(Math.max(Math.abs(a), Math.abs(b)) !== r) continue; const u = i + a, v = j + b; if(u >= 0 && v >= 0 && u < nx && v < nz && ok[u*nz + v]) return u*nz + v; } return -1; }
+function mobAstar(G, s, g){ const {N, nx, nz, C, ok, H, road, PX, PZ, cx, cz} = G, D = new Float32Array(N).fill(1e9), P = new Int32Array(N).fill(-1), done = new Uint8Array(N), hp = [], gi = Math.floor(g/nz), gj = g % nz;
+  const push = (k, f) => { hp.push([f, k]); let i = hp.length - 1; while(i){ const p = (i - 1) >> 1; if(hp[p][0] <= hp[i][0]) break; [hp[p], hp[i]] = [hp[i], hp[p]]; i = p; } };
+  const pop = () => { const t = hp[0], l = hp.pop(); if(hp.length){ hp[0] = l; let i = 0; for(;;){ const a = 2*i + 1, b = a + 1; let m = i; if(a < hp.length && hp[a][0] < hp[m][0]) m = a; if(b < hp.length && hp[b][0] < hp[m][0]) m = b; if(m === i) break; [hp[m], hp[i]] = [hp[i], hp[m]]; i = m; } } return t; };
+  D[s] = 0; push(s, 0); let it = 0;
+  while(hp.length && it++ < 250000){ const [, k] = pop(); if(done[k]) continue; done[k] = 1; if(k === g) break; const i = Math.floor(k/nz), j = k % nz;
+    for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ if(!a && !b) continue; const u = i + a, v = j + b; if(u < 0 || v < 0 || u >= nx || v >= nz) continue; const q = u*nz + v; if(!ok[q] || done[q]) continue;
+      const d = (a && b ? 1.414 : 1)*C, dh = Math.abs(H[q] - H[k]); if(dh > d*0.6) continue; const c = D[k] + d*(1 + dh/d*4)*(road[q] ? 0.3 : 1);
+      if(c < D[q]){ D[q] = c; P[q] = k; push(q, c + Math.hypot(u - gi, v - gj)*C*0.3); } } }
+  if(s !== g && P[g] < 0) return null; const L = []; for(let k=g; k>=0; k=P[k]){ L.push(road[k] ? [PX[k], PZ[k], H[k]] : [cx(Math.floor(k/nz)), cz(k % nz), H[k]]); if(k === s) break; } return L.reverse(); }
+// suaviza os degraus da grade (mantém as pontas)
+function mobSmooth(L){ for(let n=0;n<2;n++){ const M = L.map(p => p.slice()); for(let i=1;i<L.length - 1;i++){ M[i][0] = (L[i - 1][0] + 2*L[i][0] + L[i + 1][0])/4; M[i][1] = (L[i - 1][1] + 2*L[i][1] + L[i + 1][1])/4; } L = M; } return L; }
+// pontos da rota: saída da base A > 3 postos/zonas > saída da base B (fora do anel da base)
+function mobLaneEnds(D){ const A = WD.hq[D.a], B = WD.hq[D.b], C = D.c.map(n => frR(n)).filter(Boolean).map(g => [g[1], g[2]]); if(!A || !B || C.length < 2) return null;
+  const ex = (H, P) => { const dx = P[0] - H.x, dz = P[1] - H.z, d = Math.hypot(dx, dz) || 1; return [H.x + dx/d*(WD.HQR + 20), H.z + dz/d*(WD.HQR + 20)]; };
+  return [ex(A, C[0])].concat(C, [ex(B, C[C.length - 1])]); }
+// o cálculo é repartido pelos quadros (um trecho por quadro) pra não travar o começo da partida
+function* mobJob(){ const G = mobGrid(); yield;
+  for(let li=0; li<MOB_LANES.length; li++){ const D = MOB_LANES[li], W = mobLaneEnds(D); if(!W) continue; let pts = [];
+    for(let q=1;q<W.length;q++){ const s = mobCell(G, W[q - 1][0], W[q - 1][1]), g = mobCell(G, W[q][0], W[q][1]); let seg = s >= 0 && g >= 0 ? mobAstar(G, s, g) : null;
+      if(!seg){ const n = Math.max(2, Math.ceil(Math.hypot(W[q][0] - W[q - 1][0], W[q][1] - W[q - 1][1])/6)); seg = []; for(let t=0;t<=n;t++){ const x = W[q - 1][0] + (W[q][0] - W[q - 1][0])*t/n, z = W[q - 1][1] + (W[q][1] - W[q - 1][1])*t/n; seg.push([x, z, gY(x, z)]); } }
+      if(pts.length) seg.shift(); pts = pts.concat(seg); yield; }
+    pts = mobSmooth(pts); const len = [0]; for(let i=1;i<pts.length;i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    MOB.lanes[li] = {i:li, n:D.n, a:D.a, b:D.b, p:pts, len, L:len[len.length - 1]}; }
+  MOB.job = null; }
+// ponto da rota na distância u (com deslocamento lateral off)
+function mobAt(R, u, off, out){ const L = R.len, P = R.p; u = clamp(u, 0, R.L); let lo = 0, hi = L.length - 1; while(hi - lo > 1){ const m = (lo + hi) >> 1; if(L[m] <= u) lo = m; else hi = m; }
+  const a = P[lo], b = P[hi], k = L[hi] > L[lo] ? (u - L[lo])/(L[hi] - L[lo]) : 0, dx = b[0] - a[0], dz = b[1] - a[1], d = Math.hypot(dx, dz) || 1;
+  const x = a[0] + dx*k - dz/d*off, z = a[1] + dz*k + dx/d*off, py = a[2] + (b[2] - a[2])*k, g = gY(x, z);
+  out.x = x; out.z = z; out.y = py - g > 1.5 ? py : g; out.f = Math.atan2(dx, dz); return out; }
+
+// ---------- desenho: InstancedMesh (corpo na cor da tropa, capacete, olhos e fuzil) ----------
+function mobMeshes(){ if(MOB.im) return MOB.im; const N = MOB.MAX, I = (g, m, n) => { const o = new THREE.InstancedMesh(g, m, n || N); o.frustumCulled = false; o.userData.keep = true; o.count = 0; o.castShadow = false; o.receiveShadow = false; return o; };
+  const body = I(new THREE.SphereGeometry(0.4, 12, 10), new THREE.MeshLambertMaterial({color:0xffffff}));
+  const helm = I(new THREE.SphereGeometry(0.44, 12, 6, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshLambertMaterial({color:0x5b6a3a}));
+  const brim = I(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 14), new THREE.MeshLambertMaterial({color:0x4a5730}));
+  const eye = I(new THREE.SphereGeometry(0.085, 8, 6), new THREE.MeshBasicMaterial({color:0xffffff}), N*2);
+  const pup = I(new THREE.SphereGeometry(0.045, 6, 4), new THREE.MeshBasicMaterial({color:0x1d1426}), N*2);
+  const gun = I(new THREE.BoxGeometry(0.09, 0.11, 0.62), new THREE.MeshLambertMaterial({color:0x3a3530}));
+  const bul = I(new THREE.BoxGeometry(0.06, 0.06, 0.8), new THREE.MeshBasicMaterial({color:0xffe066, fog:false}), 200);
+  // (r128: setColorAt cria a cor com o tamanho de count; count aqui já é 0, então a cor é criada à mão com espaço pra todos)
+  body.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N*3).fill(1), 3); body.instanceColor.setUsage(THREE.DynamicDrawUsage);
+  [body, helm, brim, eye, pup, gun, bul].forEach(o => o.instanceMatrix.setUsage(THREE.DynamicDrawUsage));
+  MOB.im = {body, helm, brim, eye, pup, gun, bul, all:[body, helm, brim, eye, pup, gun, bul], o:new THREE.Object3D(), c:new THREE.Color()}; return MOB.im; }
+function mobShow(on){ const M = mobMeshes(); M.all.forEach(o => { if(on && o.parent !== world) world.add(o); if(!on && o.parent) o.parent.remove(o); o.count = 0; }); }
+function mobDraw(){ const M = mobMeshes(), o = M.o, cam = camera.position, V2 = MOB.VIS*MOB.VIS; let n = 0;
+  const put = (mesh, i, x, y, z, ry, sx, sy, sz, rx) => { o.position.set(x, y, z); o.rotation.set(rx || 0, ry, 0); o.scale.set(sx, sy, sz); o.updateMatrix(); mesh.setMatrixAt(i, o.matrix); };
+  for(const s of MOB.sd){ if(!s.alive) continue; const dx = s.pos.x - cam.x, dz = s.pos.z - cam.z; if(dx*dx + dz*dz > V2) continue;
+    const f = s.face, sf = Math.sin(f), cf = Math.cos(f), walk = s.mv ? Math.abs(Math.sin(s.wt*9))*0.09 : 0, y = s.pos.y + walk, hit = s.ht > 0 ? 1 + s.ht*0.6 : 1;
+    put(M.body, n, s.pos.x, y + 0.62, s.pos.z, f, 1.02*hit, 1.55, 0.95*hit); M.c.setHex(WD_T[s.t].c); if(s.ht > 0) M.c.lerp(new THREE.Color(0xffffff), s.ht*1.6); M.body.setColorAt(n, M.c);
+    put(M.helm, n, s.pos.x, y + 1.08, s.pos.z, f, 1, 0.8, 1); put(M.brim, n, s.pos.x + sf*0.04, y + 1.09, s.pos.z + cf*0.04, f, 1, 1, 1);
+    for(const k of [0, 1]){ const lx = (k ? 0.15 : -0.15), ex = s.pos.x + sf*0.34 + cf*lx, ez = s.pos.z + cf*0.34 - sf*lx; put(M.eye, n*2 + k, ex, y + 0.86, ez, f, 1, 1.2, 1); put(M.pup, n*2 + k, ex + sf*0.06, y + 0.86, ez + cf*0.06, f, 1, 1.2, 1); }
+    const gx = s.pos.x + sf*0.32 + cf*-0.3, gz = s.pos.z + cf*0.32 - sf*-0.3; put(M.gun, n, gx, y + 0.6, gz, f + (s.aim ? 0 : 0.5), 1, 1, 1, s.aim ? 0 : 0.35);
+    if(++n >= MOB.MAX) break; }
+  M.body.count = M.helm.count = M.brim.count = M.gun.count = n; M.eye.count = M.pup.count = n*2;
+  let b = 0; const T = new THREE.Vector3(); for(const B of MOB.bul){ if(b >= 200) break; o.position.set(B.x, B.y, B.z); T.set(B.x + B.vx, B.y + B.vy, B.z + B.vz); o.scale.set(1, 1, 1); o.rotation.set(0, 0, 0); o.lookAt(T); o.updateMatrix(); M.bul.setMatrixAt(b++, o.matrix); }
+  M.bul.count = b; M.all.forEach(m => { m.instanceMatrix.needsUpdate = true; }); if(M.body.instanceColor) M.body.instanceColor.needsUpdate = true; }
+
+// ---------- soldadinhos ----------
+function mobMake(R, t, u, id, hp){ const d = t === R.a ? 1 : -1, off = ((id*37) % 7 - 3)*0.55 + rand(-0.25, 0.25), s = {id, t, li:R.i, d, u, off, tu:u, pos:new THREE.Vector3(), hp, mhp:hp, face:0, cd:rand(0.4, 1.2), tg:null, rt:0, wt:rand(0, 6), mv:true, aim:false, ht:0, age:0, alive:true, isMob:true};
+  const P = mobAt(R, u, off, {}); s.pos.set(P.x, P.y, P.z); s.face = d > 0 ? P.f : P.f + Math.PI; MOB.sd.push(s); return s; }
+function mobWave(){ const n = mobN(), hp = Math.round(MOB.HP*mobHPk()); MOB.wave++;
+  for(const R of MOB.lanes){ if(!R) continue; for(const t of [R.a, R.b]){ for(let k=0;k<n;k++){ if(MOB.sd.length >= MOB.MAX) return; mobMake(R, t, t === R.a ? 2 + k*3.2 : R.L - 2 - k*3.2, MOB.nid++, hp); } } }
+  if(MOB.wave === 1) say('🪖 A primeira onda de <b>soldadinhos</b> saiu das bases! Eles andam pelas 6 rotas e atiram em quem for de outra tropa', true); }
+// alvo: soldadinho de outra tropa ou jogador inimigo à vista (prefere soldadinho, como num MOBA)
+function mobFind(s){ let best = null, bd = MOB.SIGHT;
+  for(const o of MOB.sd){ if(!o.alive || o.t === s.t) continue; const d = Math.abs(o.pos.x - s.pos.x) + Math.abs(o.pos.z - s.pos.z); if(d > bd*1.42) continue; const e = Math.hypot(o.pos.x - s.pos.x, o.pos.z - s.pos.z); if(e < bd){ bd = e; best = o; } }
+  let bp = null, bpd = (best ? bd : MOB.SIGHT) - 4; for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === s.t || q.glide || Math.abs(q.pos.y - s.pos.y) > 14) continue; const e = Math.hypot(q.pos.x - s.pos.x, q.pos.z - s.pos.z); if(e < bpd){ bpd = e; bp = q; } }
+  if(bp && mobLos(s, bp)) return bp; return best; }
+function mobLos(s, q){ const o = new THREE.Vector3(s.pos.x, s.pos.y + 0.95, s.pos.z), t = new THREE.Vector3(q.pos.x, q.pos.y + 0.9, q.pos.z), d = t.clone().sub(o), L = d.length(); if(L < 1) return true; d.normalize(); return rayHit(o, d, L, null).distanceTo(o) > L - 0.9; }
+function mobAimPt(tg){ return tg.isMob ? [tg.pos.x, tg.pos.y + 0.65, tg.pos.z] : [tg.pos.x, tg.pos.y + (tg.stance === 2 ? 0.3 : tg.stance === 1 ? 0.6 : 0.9), tg.pos.z]; }
+function mobFire(s, ax, ay, az, send){ const ox = s.pos.x + Math.sin(s.face)*0.55, oy = s.pos.y + 0.75, oz = s.pos.z + Math.cos(s.face)*0.55, dx = ax - ox, dy = ay - oy, dz = az - oz, d = Math.hypot(dx, dy, dz) || 1, sp = 0.035*d/MOB.RNG + 0.02;
+  const vx = (dx/d + rand(-sp, sp))*MOB.BV, vy = (dy/d + rand(-sp, sp)*0.6)*MOB.BV, vz = (dz/d + rand(-sp, sp))*MOB.BV;
+  MOB.bul.push({x:ox, y:oy, z:oz, vx, vy, vz, t:0, team:s.t, life:(MOB.RNG + 8)/MOB.BV}); s.aim = true; s.ft = 0.25;
+  if(MOB.bul.length > 200) MOB.bul.shift(); if(Math.random() < 0.6) sfxAt(s.pos, 'w_pistol', 40);
+  if(send) MOB.ft.push([s.id, Math.round(ax*10), Math.round(ay*10), Math.round(az*10)]); }
+function mobStepSd(s, dt){ const R = MOB.lanes[s.li]; if(!R) return; s.age += dt; s.ht = Math.max(0, s.ht - dt); s.ft = (s.ft || 0) - dt; if(s.ft <= 0) s.aim = false;
+  s.rt -= dt; if(s.rt <= 0 || (s.tg && (!s.tg.alive || s.tg.dying > 0))){ s.rt = rand(0.3, 0.45); s.tg = mobFind(s); }
+  const tg = s.tg, td = tg ? Math.hypot(tg.pos.x - s.pos.x, tg.pos.z - s.pos.z) : 99;
+  if(tg && td < MOB.RNG){ s.mv = false; s.face = Math.atan2(tg.pos.x - s.pos.x, tg.pos.z - s.pos.z); s.cd -= dt;
+    if(s.cd <= 0){ s.cd = rand(1.0, 1.4); const [ax, ay, az] = mobAimPt(tg); mobFire(s, ax, ay, az, mobNet()); } }
+  else { s.mv = true; s.wt += dt; s.u += s.d*MOB.SPD*dt; s.cd = Math.max(s.cd - dt, 0.3); }
+  const P = mobAt(R, s.u, s.off, MOB._p || (MOB._p = {})); s.pos.set(P.x, P.y, P.z); if(s.mv) s.face = s.d > 0 ? P.f : P.f + Math.PI;
+  // chegou na base inimiga: entra no anel e queima (no lote 2 a guarita cuida deles)
+  if((s.d > 0 && s.u >= R.L - 0.5) || (s.d < 0 && s.u <= 0.5) || s.age > 300) mobKill(s, null, true); }
+function mobKill(s, by, quiet){ if(!s.alive) return; s.alive = false; s.hp = 0; puff(s.pos.x, s.pos.y + 0.6, s.pos.z, quiet ? 6 : 12, WD_T[s.t].c, 0.12, 3); if(!quiet) sfxAt(s.pos, 'splat', 30);
+  if(by && !quiet && mobLead()){ const m = MOB.pay.get(by) || [0, 0]; m[0] += 15; m[1]++; MOB.pay.set(by, m); } }
+// dano num soldadinho: o líder aplica; os outros PCs mandam pro líder e mostram o número na hora
+function mobDmg(s, dmg, by){ if(!s || !s.alive || dmg <= 0) return; dmg = Math.round(dmg);
+  if(by && !by.isBot && by === you()){ dmgNum(s, Math.min(dmg, Math.max(1, s.hp)), dmg >= s.hp ? 'big' : ''); hitMark(dmg >= s.hp); }
+  s.ht = 0.18; if(!mobLead()){ netEv({t:'wmh', i:s.id, d:dmg, n:by ? by.nid : -1}); s.hp = Math.max(1, s.hp - dmg); return; }
+  s.hp -= dmg; if(s.hp <= 0) mobKill(s, by); }
+// tiros dos soldadinhos: acertam jogador (cada PC cuida dos seus feijões) e, no líder, soldadinho de outra tropa
+function mobStepBul(dt){ const lead = mobLead(), wl = typeof FJ_WL === 'number' ? FJ_WL : -99;
+  for(let i=MOB.bul.length - 1;i>=0;i--){ const B = MOB.bul[i]; let gone = false; const n = Math.max(1, Math.ceil(Math.hypot(B.vx, B.vy, B.vz)*dt/0.6)), h = dt/n;
+    for(let st=0; st<n && !gone; st++){ B.x += B.vx*h; B.y += B.vy*h; B.z += B.vz*h; B.t += h; if(B.t > B.life || B.y < Math.max(wl, gY(B.x, B.z))){ gone = true; break; }
+      for(const b of solidsAt(B.x, B.z)){ if(b.active && b.mesh && b.kind !== 'ramp' && B.x > b.min.x && B.x < b.max.x && B.y > b.min.y && B.y < b.max.y && B.z > b.min.z && B.z < b.max.z){ gone = true; break; } } if(gone) break;
+      for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === B.team || q.iframe > 0) continue; const dx = q.pos.x - B.x, dz = q.pos.z - B.z; if(dx*dx + dz*dz > 0.36 || B.y < q.pos.y || B.y > q.pos.y + bodyH(q)) continue;
+        gone = true; if(mobAuth(q)) mobHurt(q, B.team); break; }
+      if(gone) break;
+      for(const o of MOB.sd){ if(!o.alive || o.t === B.team) continue; const dx = o.pos.x - B.x, dy = o.pos.y + 0.62 - B.y, dz = o.pos.z - B.z; if(dx*dx + dy*dy + dz*dz > 0.36) continue; gone = true; if(lead){ o.hp -= MOB.DMGS; o.ht = 0.12; if(o.hp <= 0) mobKill(o, null); } break; } }
+    if(gone){ puff(B.x, B.y, B.z, 2, 0xffe066, 0.06, 1.2); MOB.bul.splice(i, 1); } } }
+function mobHurt(q, team){ let d = MOB.DMG; if(q.arm){ const c = VEST_CUT[q.arm.vest]; if(c) d = Math.max(1, Math.round(d*(1 - c))); } const T = WD_T[team], _s = say;
+  say = (h, f) => _s(/ficou fora da zona/.test(h) ? `${nm(q)} caiu pra um soldadinho da <b style="color:${T.s}">${T.n}</b>` : h, f);
+  try{ hurt(q, null, d, `Um soldadinho da ${T.n} te pegou`); } finally { say = _s; } }
+// grãos por soldadinho derrubado (junta 2 s pra não encher a tela de aviso)
+function mobPayStep(dt){ if((MOB.payT -= dt) > 0) return; MOB.payT = 2; for(const [p, m] of MOB.pay) if(p && m[0]) wdsPay(p, m[0], `${m[1]} soldadinho${m[1] > 1 ? 's' : ''}`); MOB.pay.clear(); }
+
+// ---------- passo da partida ----------
+function mobStart(){ mobClear(); if(!(WAR && BIG && round === 20 && BIGMAP === 'front')) return; MOB.on = true; MOB.job = mobJob(); MOB.wt = MOB.WAVE - MOB.W0; mobShow(true); mobNetHook(); }
+function mobClear(){ MOB.on = false; MOB.lanes = []; MOB.sd = []; MOB.bul = []; MOB.ft = []; MOB.job = null; MOB.wave = 0; MOB.nid = 1; MOB.pay.clear(); if(MOB.im) mobShow(false); }
+function mobStep(dt){ if(!MOB.on) return; if(!mobOn() || WD.over){ if(MOB.im) mobDraw(); return; }
+  if(MOB.job){ const t0 = performance.now(); while(MOB.job && performance.now() - t0 < 12) MOB.job.next(); }
+  const lead = mobLead();
+  if(lead){ if(!MOB.job){ MOB.wt += dt; if(MOB.wt >= MOB.WAVE){ MOB.wt -= MOB.WAVE; mobWave(); } }
+    for(const s of MOB.sd) if(s.alive) mobStepSd(s, dt);
+    mobPayStep(dt);
+    if(mobNet() && (MOB.nt -= dt) <= 0){ MOB.nt = 0.25; mobOut(); } }
+  else { MOB.wt += dt; for(const s of MOB.sd) if(s.alive) mobPuppet(s, dt); }
+  MOB.sd = MOB.sd.filter(s => s.alive); mobStepBul(dt); mobDraw(); }
+
+// ---------- rede: o líder manda 'wmb' (4 por segundo) e os tiros 'wmf'; quem acerta manda 'wmh' ----------
+function mobOut(){ const a = []; for(const s of MOB.sd) if(s.alive) a.push(s.id, s.t, s.li*2 + (s.d > 0 ? 1 : 0), Math.round(s.u*10), Math.max(1, Math.round(s.hp)), s.mv ? 1 : 0, s.mhp);
+  netEv({t:'wmb', s:a, w:Math.round(MOB.wt*10), v:MOB.wave}); if(MOB.ft.length){ netEv({t:'wmf', f:MOB.ft.flat()}); MOB.ft = []; } }
+function mobPuppet(s, dt){ const R = MOB.lanes[s.li]; if(!R) return; s.ht = Math.max(0, s.ht - dt); s.ft = (s.ft || 0) - dt; if(s.ft <= 0) s.aim = false;
+  if(s.mv){ s.tu += s.d*MOB.SPD*dt; s.wt += dt; } s.u += (s.tu - s.u)*Math.min(1, dt*6);
+  const P = mobAt(R, s.u, s.off, MOB._q || (MOB._q = {})); s.pos.set(P.x, P.y, P.z); if(s.mv) s.face = s.d > 0 ? P.f : P.f + Math.PI;
+  else { const q = players.filter(p => p.alive && p.squad !== s.t).sort((a, b) => a.pos.distanceToSquared(s.pos) - b.pos.distanceToSquared(s.pos))[0]; if(q && q.pos.distanceTo(s.pos) < MOB.RNG) s.face = Math.atan2(q.pos.x - s.pos.x, q.pos.z - s.pos.z); } }
+function mobNetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wmb) return;
+  WN_EV.wmb = e => { if(NET.host || !MOB.on || !Array.isArray(e.s)) return; const seen = new Set(), by = new Map(MOB.sd.map(s => [s.id, s]));
+    for(let i=0; i + 6 < e.s.length; i += 7){ const id = e.s[i] | 0, t = clamp(e.s[i + 1] | 0, 0, 3), li = (e.s[i + 2] | 0) >> 1, R = MOB.lanes[li]; if(!R) continue; seen.add(id); let s = by.get(id);
+      const u = (+e.s[i + 3] || 0)/10; if(!s){ s = mobMake(R, t, u, id, e.s[i + 6] | 0 || MOB.HP); s.d = (e.s[i + 2] & 1) ? 1 : -1; }
+      s.tu = u; if(Math.abs(s.u - u) > 12) s.u = u; s.hp = e.s[i + 4] | 0; s.mhp = e.s[i + 6] | 0 || s.mhp; s.mv = !!e.s[i + 5]; }
+    for(const s of MOB.sd) if(!seen.has(s.id) && s.alive) mobKill(s, null, s.hp > 8); MOB.wt = (+e.w || 0)/10; if((e.v | 0) === 1 && MOB.wave < 1) say('🪖 A primeira onda de <b>soldadinhos</b> saiu das bases!', true); MOB.wave = e.v | 0; };
+  WN_EV.wmf = e => { if(NET.host || !MOB.on || !Array.isArray(e.f)) return; const by = new Map(MOB.sd.map(s => [s.id, s]));
+    for(let i=0; i + 3 < e.f.length; i += 4){ const s = by.get(e.f[i] | 0); if(s && s.alive) mobFire(s, e.f[i + 1]/10, e.f[i + 2]/10, e.f[i + 3]/10, false); } };
+  WN_EV.wmh = e => { if(!NET.host || !MOB.on) return; const s = MOB.sd.find(x => x.id === (e.i | 0)); if(!s || !s.alive) return; const p = NET.byNid[e.n] || null; s.hp -= clamp(+e.d || 0, 0, 300); s.ht = 0.18; if(s.hp <= 0) mobKill(s, p); }; }
+
+// ---------- tiros dos jogadores e dos bots acertam soldadinho ----------
+const _mobA = new THREE.Vector3();
+function mobShots(dt){ if(!MOB.on || !MOB.sd.length || !mobOn()) return;
+  for(let i=shots.length - 1;i>=0;i--){ const s = shots[i], w = s.w; if(!s.owner || (w && (w.smoke || w.util))) continue; const own = s.owner.squad;
+    if(w && w.boom){ s._mh = s._mh || new Set(); for(const o of MOB.sd){ if(!o.alive || o.t === own || s._mh.has(o.id)) continue; if(Math.hypot(o.pos.x - s.pos.x, o.pos.y + 0.6 - s.pos.y, o.pos.z - s.pos.z) < 1.1){ s._mh.add(o.id); if(mobAuth(s.owner)) mobDmg(o, w.dmg, s.owner); } } continue; }
+    // segmento do tiro neste quadro contra a esfera de cada soldadinho
+    const vx = s.vel.x*dt, vy = s.vel.y*dt, vz = s.vel.z*dt, L2 = vx*vx + vy*vy + vz*vz || 1e-6, mx = s.pos.x + vx/2, mz = s.pos.z + vz/2, rr = Math.sqrt(L2)/2 + 1.2; let hit = null, ht = 2;
+    for(const o of MOB.sd){ if(!o.alive || o.t === own || Math.abs(o.pos.x - mx) > rr || Math.abs(o.pos.z - mz) > rr) continue; const cx = o.pos.x - s.pos.x, cy = o.pos.y + 0.62 - s.pos.y, cz = o.pos.z - s.pos.z;
+      const t = clamp((cx*vx + cy*vy + cz*vz)/L2, 0, 1), ex = cx - vx*t, ey = cy - vy*t, ez = cz - vz*t; if(ex*ex + ey*ey*0.45 + ez*ez < 0.36 && t < ht){ ht = t; hit = o; } }
+    if(!hit) continue; const auth = mobAuth(s.owner);
+    if(w && w.splash){ if(auth){ s.pos.set(s.pos.x + vx*ht, s.pos.y + vy*ht, s.pos.z + vz*ht); s.vel.set(0, 0.001, 0); s.t = (w.life || 3) + 0.01; } continue; }
+    if(auth) mobDmg(hit, w ? w.dmg : 7, s.owner); if(w && w.flame){ hit.burn = 1; }
+    puff(s.pos.x + vx*ht, s.pos.y + vy*ht, s.pos.z + vz*ht, 4, WD_T[hit.t].c, 0.08, 2); world.remove(s.m); shots.splice(i, 1); } }
+{ const _ex = explode; explode = function(s){ const r = _ex(s); if(MOB.on && MOB.sd.length && s && s.w && s.w.splash && s.owner && mobAuth(s.owner)){ const w = s.w;
+    for(const o of MOB.sd){ if(!o.alive || o.t === s.owner.squad) continue; _mobA.set(o.pos.x, o.pos.y + 0.6, o.pos.z); const d = _mobA.distanceTo(s.pos); if(d > w.splash) continue; mobDmg(o, w.dmg*(0.35 + 0.65*(1 - d/w.splash)), s.owner); } }
+  return r; }; }
+// bot sem inimigo por perto atira no soldadinho de outra tropa
+{ const _bs = botShoot; botShoot = function(p, dt, inp){ const r = _bs(p, dt, inp); if(!MOB.on || !MOB.sd.length || !mobOn() || p.foe || p.glide || p.down || p.car || !p.alive) return r;
+    p.mobT = (p.mobT || 0) - dt; p.mobA = (p.mobA || 0) - dt;
+    if(p.mobT <= 0){ p.mobT = rand(0.4, 0.8); let b = null, bd = 24; for(const o of MOB.sd){ if(!o.alive || o.t === p.squad) continue; const d = Math.hypot(o.pos.x - p.pos.x, o.pos.z - p.pos.z); if(d < bd){ bd = d; b = o; } } p.mobTg = b; }
+    const o = p.mobTg; if(o && o.alive && p.mobA <= 0 && (p.shotCD || 0) <= 0 && Math.hypot(o.pos.x - p.pos.x, o.pos.z - p.pos.z) < 24){ p.mobA = rand(0.45, 1.0);
+      const e = (1.5 - (p.skill || 0.8))*1.2; p.aimPt = new THREE.Vector3(o.pos.x + rand(-e, e)*0.5, o.pos.y + 0.6 + rand(-e, e)*0.3, o.pos.z + rand(-e, e)*0.5); p.face = Math.atan2(o.pos.x - p.pos.x, o.pos.z - p.pos.z); inp.push = true; }
+    return r; }; }
+
+// ---------- HUD (linha da próxima onda) e minimapa (rotas e soldadinhos) ----------
+{ const _h = wdHud; wdHud = function(){ _h(); const el = $('wdHud'); if(!el) return; let L = el.querySelector('.wdMob'); if(!L){ L = document.createElement('div'); L.className = 'wdZ wdMob'; el.appendChild(L); }
+    L.hidden = !MOB.on; if(L.hidden) return; const n = MOB.sd.length, h = MOB.job ? '🪖 Traçando as 6 rotas…' : `🪖 Onda ${MOB.wave + 1} em <b>${Math.max(0, Math.ceil(MOB.WAVE - MOB.wt))}</b> s · ${n} soldadinho${n === 1 ? '' : 's'} nas rotas`;
+    if(L._h !== h){ L._h = h; L.innerHTML = h; } }; }
+{ const _dm = fjDrawMap; fjDrawMap = function(cv, big){ _dm(cv, big); if(!MOB.on || !WAR || !WD.cz) return; const g = cv.getContext('2d'), S = cv.width, me = players[0], W = BIG_W, span = big ? 2*W : Math.min(150, 2*W*0.75);
+    const cx = big ? 0 : clamp(me.pos.x, -W + span/2, W - span/2), cz = big ? 0 : clamp(me.pos.z, -W + span/2, W - span/2), k = S/span, X = x => (x - cx)*k + S/2, Z = z => (z - cz)*k + S/2;
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+    for(const R of MOB.lanes){ if(!R) continue; g.beginPath(); R.p.forEach((p, i) => i ? g.lineTo(X(p[0]), Z(p[1])) : g.moveTo(X(p[0]), Z(p[1]))); g.strokeStyle = 'rgba(43,24,70,.45)'; g.lineWidth = big ? 6 : 4; g.stroke(); g.strokeStyle = 'rgba(255,247,232,.8)'; g.lineWidth = big ? 2.5 : 1.6; g.stroke();
+      if(big){ const m = R.p[Math.floor(R.p.length/2)]; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(43,24,70,.85)'; g.strokeText(R.n, X(m[0]), Z(m[1]) + 16); g.fillStyle = '#fff7e8'; g.fillText(R.n, X(m[0]), Z(m[1]) + 16); } }
+    const r = big ? 2.6 : 1.8; for(const s of MOB.sd){ if(!s.alive) continue; const x = X(s.pos.x), z = Z(s.pos.z); if(x < -4 || z < -4 || x > S + 4 || z > S + 4) continue; g.fillStyle = WD_T[s.t].s; g.fillRect(x - r, z - r, r*2, r*2); }
+    g.restore(); }; }
+
+// ---------- ganchos no jogo ----------
+// wdStartX roda no começo da Guerra no líder (depois do wdStart) e no cliente online (depois de montar as bases)
+{ const _wx = wdStartX; wdStartX = function(...a){ const r = _wx(...a); mobStart(); return r; }; }
+{ const _sr = startRound; startRound = function(...a){ if(MOB.on) mobClear(); return _sr(...a); }; }
+{ const _us = updateShoot; updateShoot = function(dt){ if(MOB.on && mobOn()) mobShots(dt); _us(dt); if(MOB.on) mobStep(dt); }; }
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
@@ -18133,7 +18347,7 @@ const mmMapName = m => m === 'feijoada' ? 'Ilha Feijoada' : (BMN[m] || 'Ilha Fei
 function mmInfo(m){
   if(m.k === 'map' && ROUND_INFO[m.r]) return ['🎲', ROUND_INFO[m.r], `Uma prova só · ${NPL} feijões`];
   if(m.k === 'br') return ['🎯', 'Battle Royale · ' + (['', 'Solo', 'Dupla', 'Trio', 'Squad'][m.sq] || 'Solo'), mmMapName(BIGMAP) + ' · 100 feijões'];
-  if(m.k === 'war') return ['⚔️', 'Guerra de Times', mmMapName(['feijoada', 'front', 'metro'].includes(BIGMAP) ? BIGMAP : 'feijoada') + ' · 4 tropas de 25'];
+  if(m.k === 'war') return ['⚔️', 'Guerra de Times', mmMapName('front') + ' · 4 tropas de 25'];
   const L = MM_BY[m.k] || MM_BY.full; return [L[1], L[2], L[3]()]; }
 function mmSave(m){ MM = m; try{ localStorage.setItem('feijao-modo', JSON.stringify(m)); }catch(e){} mmRender(); }
 function mmRender(){ const [ic, nm, sub] = mmInfo(MM); $('mmIc').textContent = ic; $('mmName').textContent = nm; $('mmSub').textContent = sub;
@@ -18146,7 +18360,7 @@ function mmPickRender(){ const k = MM.k, ae = document.activeElement, fa = ae &&
   const opt = (kk, ic, nm, sub, cls = '') => `<button class="mpo${cls}${k === kk ? ' on' : ''}" data-k="${kk}"><i>${ic}</i><span><b>${nm}</b><small>${sub}</small></span><em>${k === kk ? 'escolhido' : ''}</em></button>`;
   const chip = (at, v, txt, on) => `<button class="mpc${on ? ' on' : ''}" data-${at}="${v}">${txt}</button>`;
   const maps = [...document.querySelectorAll('#bigMap button')].map(b => [b.dataset.m, b.childNodes[0].textContent.trim()]);
-  const brMap = BIGMAP === 'front' ? 'feijoada' : BIGMAP, sq = MM.sq || mmSq(), warMap = ['front', 'metro'].includes(BIGMAP) ? BIGMAP : 'feijoada';
+  const brMap = BIGMAP === 'front' ? 'feijoada' : BIGMAP, sq = MM.sq || mmSq(), warMap = 'front';
   $('mPickL').innerHTML =
     `<section class="mpcol"><h3>🏁 Provas</h3>${opt('full', '🏁', 'Partida completa', `${NPL > 40 ? 5 : NPL > 16 ? 4 : 3} provas sorteadas e a final`)}${opt('pts', '🏆', 'Modo Pontos', 'Todo mundo joga as 5 provas. Ganha quem somar mais')}
       ${opt('map', '🎲', 'Uma prova só', k === 'map' && ROUND_INFO[MM.r] ? `${ROUND_INFO[MM.r]} · clique pra trocar` : 'Escolha um dos mapas de prova')}
@@ -18155,8 +18369,8 @@ function mmPickRender(){ const k = MM.k, ae = document.activeElement, fa = ae &&
       <div class="mpg">Equipe</div><div class="mpcs">${[[1, 'Solo'], [2, 'Dupla'], [4, 'Squad']].map(([v, t]) => chip('sq', v, t, k === 'br' && sq === v)).join('')}</div>
       <div class="mpg">Mapa</div><div class="mpms">${maps.filter(([m]) => m !== 'front').map(([m, nm]) => `<button class="mpo sub${k === 'br' && brMap === m ? ' on' : ''}" data-bm="${m}"><i>${nm.split(' ')[0]}</i><span><b>${nm.split(' ').slice(1).join(' ')}</b></span></button>`).join('')}</div>
       <div class="mpg">Com provas antes</div>${opt('big', '👑', 'Partida completa com 100', 'Corrida gigante, provas e a final no BR')}</section>` +
-    `<section class="mpcol"><h3>⚔️ Mais modos</h3>${opt('war', '⚔️', 'Guerra de Times', '4 tropas de 25, zona de controle e loja da base')}
-      <div class="mpcs">${[['feijoada', 'Ilha Feijoada'], ['front', 'Front do Feijão'], ['metro', 'Metrópole']].map(([m, t]) => chip('wm', m, t, k === 'war' && warMap === m)).join('')}</div>
+    `<section class="mpcol"><h3>⚔️ Mais modos</h3>${opt('war', '⚔️', 'Guerra de Times', '4 tropas de 25 no Front do Feijão, 6 rotas e ondas de soldadinhos')}
+      <div class="mpcs">${[['front', 'Front do Feijão']].map(([m, t]) => chip('wm', m, t, k === 'war' && warMap === m)).join('')}</div>
       ${opt('campo', '🔫', 'Campo de Tiro', 'Mesas com todos os itens, alvos e parkour')}${opt('test', '🧪', 'Teste de gameplay', 'Só você no mapa, sem bots e sem zona')}</section>`;
   let f = $('mPickF'); if(!f){ $('mPick').insertAdjacentHTML('beforeend', '<div class="mpf" id="mPickF"><span>Modo: <b id="mpSel"></b></span><button class="go" id="mpGo">Jogar</button></div>'); $('mpGo').onclick = () => { mmPick(false); mmGo(); }; }
   const [, nm, sub] = mmInfo(MM); $('mpSel').textContent = nm + ' · ' + sub;
@@ -18165,7 +18379,7 @@ const mmSq = () => { try{ return +localStorage.getItem('feijao-sq') || 1; }catch
 $('mPickL').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; sfx('beep'); const d = b.dataset;
   const setMap = m => { const x = document.querySelector(`#bigMap [data-m="${m}"]`); if(x) x.click(); };
   if(d.k === 'map'){ mmPick(false); openScreen('mapsel'); return; }
-  if(d.k){ if(d.k === 'br' && BIGMAP === 'front') setMap('feijoada'); mmSave(d.k === 'br' ? {k:'br', sq:MM.sq || mmSq()} : {k:d.k}); }
+  if(d.k){ if(d.k === 'br' && BIGMAP === 'front') setMap('feijoada'); if(d.k === 'war' && BIGMAP !== 'front') setMap('front'); mmSave(d.k === 'br' ? {k:'br', sq:MM.sq || mmSq()} : {k:d.k}); }
   else if(d.npl){ setNPL(+d.npl); if(!['full', 'map'].includes(MM.k)) mmSave({k:'full'}); else mmRender(); }
   else if(d.sq){ if(BIGMAP === 'front') setMap('feijoada'); try{ localStorage.setItem('feijao-sq', d.sq); }catch(e){} mmSave({k:'br', sq:+d.sq}); }
   else if(d.bm){ setMap(d.bm); mmSave({k:'br', sq:MM.k === 'br' && MM.sq || mmSq()}); }
@@ -19146,7 +19360,7 @@ function mbOff(){ if(!mbOn) return; mbOn = false; players.forEach(p => { if(p.m 
 const MB_CARDS = [
   {c:'c1', keys:['full', 'pts', 'map'], ic:'🏁', nm:'Provas', sub:() => `Partida completa · ${NPL} feijões`, pick:() => mmSave({k:'full'})},
   {c:'c2', keys:['br', 'big'], ic:'🎯', nm:'Battle Royale', sub:() => 'Solo, dupla ou squad · 100 feijões', pick:() => { if(BIGMAP === 'front'){ const x = document.querySelector('#bigMap [data-m="feijoada"]'); if(x) x.click(); } mmSave({k:'br', sq:MM.sq || mmSq()}); }},
-  {c:'c3', keys:['war'], ic:'⚔️', nm:'Guerra de Times', sub:() => '4 tropas de 25 · zonas e loja da base', pick:() => mmSave({k:'war'})},
+  {c:'c3', keys:['war'], ic:'⚔️', nm:'Guerra de Times', sub:() => '4 tropas de 25 · zonas e loja da base', pick:() => { if(BIGMAP !== 'front'){ const x = document.querySelector('#bigMap [data-m="front"]'); if(x) x.click(); } mmSave({k:'war'}); }},
   {c:'c4', keys:['campo', 'test'], ic:'🎲', nm:'Todos os modos', sub:() => 'Escolher prova, mapa e equipe', pick:null}];
 function mbBuild(){ if($('mbCards')) return; const M = $('menu');
   M.insertAdjacentHTML('beforeend', `<div id="mbCards" role="group" aria-label="Modos">${MB_CARDS.map((d, i) => `<button class="mbc ${d.c}" data-i="${i}"><span class="art" aria-hidden="true"></span><span class="tx"><b></b><small></small></span><em>Opções ›</em></button>`).join('')}</div>`
@@ -20114,7 +20328,7 @@ NET.lb = LBY;
 // O líder decide as bases, a zona, o placar e o fim. Cada PC cuida do próprio feijão (renascer, grãos, loja); os bots são do líder.
 // Veículo: quem dirige manda posição e vida (sem motorista, quem comprou; se ele saiu, o líder). Amigo da mesma tropa sobe de carona com E.
 NET_MODES.push(['war', 'Guerra de Times', '4 tropas de 25: zona de controle, loja na base e veículos']);
-const WN_MAPS = typeof frHeight === 'function' ? ['feijoada', 'front'].concat(typeof mcHeight === 'function' ? ['metro'] : []) : ['feijoada', 'vale', 'ilha'];   // Guerra só na Ilha Feijoada, no Front do Feijão e na Metrópole
+const WN_MAPS = typeof frHeight === 'function' ? ['front'] : ['feijoada', 'vale', 'ilha'];   // Guerra só no Front do Feijão (rotas estilo MOBA)
 const WN = {wt:{}, sq:[], set:null, zT:0, vT:0, vs:0, vc:0};
 const wnOn = () => WAR && !!NET.match && !NET.match.lobby && BIG && round === 20;
 const wnTeam = (id, k) => WN.wt[id] ?? (k % 4);
@@ -20125,7 +20339,7 @@ const wnAuth = c => { if(c.driver) return own(c.driver); const o = c.owner, m = 
 // ---- sala: modo, mapas que servem (com relevo) e a tropa de cada um (o líder clica pra trocar) ----
 const _wnShow = netShowRoom;
 netShowRoom = function(){ _wnShow(); if(NET.mode !== 'war') return;
-  if(!WN_MAPS.includes(NET.map) && NET.host){ NET.map = 'feijoada'; netRoomOut(); return; }
+  if(!WN_MAPS.includes(NET.map) && NET.host){ NET.map = WN_MAPS[0]; netRoomOut(); return; }
   const P = $('netMaps'); P.hidden = false; P.innerHTML = '';
   NET_MAPS.filter(m => WN_MAPS.includes(m[0])).forEach(([id, t]) => { const b = document.createElement('button'); b.className = 'nmode' + (NET.map === id ? ' on' : ''); b.disabled = !NET.host; b.innerHTML = `<b>${t}</b>`; b.onclick = () => { NET.map = id; netRoomOut(); }; P.appendChild(b); });
   const slots = $('lobby').querySelectorAll('div.lslot');
@@ -20137,10 +20351,10 @@ const _wnRoomIn = netRoomIn;
 netRoomIn = function(d){ if(!NET.host && d && d.wt && typeof d.wt === 'object') WN.wt = Object.fromEntries(Object.entries(d.wt).map(([k, v]) => [k, clamp(v | 0, 0, 3)])); _wnRoomIn(d); };
 { const B = $('btnRoomStart'), _st = B.onclick;
   B.onclick = function(e){ if(!NET.host || NET.mode !== 'war') return _st.call(this, e); const ms = NET.members.filter(m => !m.gone);
-    const d = {t:'start', mode:'war', pts:false, br:25, map:WN_MAPS.includes(NET.map) ? NET.map : 'feijoada', plan:[20], seed:netRnd(), clock, diff:DIFF, members:ms.map(m => ({id:m.id, name:m.name, look:m.look})), wt:ms.map((m, k) => wnTeam(m.id, k))};
+    const d = {t:'start', mode:'war', pts:false, br:25, map:WN_MAPS.includes(NET.map) ? NET.map : WN_MAPS[0], plan:[20], seed:netRnd(), clock, diff:DIFF, members:ms.map(m => ({id:m.id, name:m.name, look:m.look})), wt:ms.map((m, k) => wnTeam(m.id, k))};
     netSend(d); netBegin(d); }; }
 const _wnBegin = netBegin;
-netBegin = function(d){ WAR = !!d && d.mode === 'war' && !d.lobby; WN.set = null; WN.vc = 0; if(WAR){ WN.sq = Array.isArray(d.wt) ? d.wt.map(t => clamp(t | 0, 0, 3)) : []; if(!WN_MAPS.includes(d.map)) d.map = 'feijoada'; d.br = 25; } return _wnBegin(d); };
+netBegin = function(d){ WAR = !!d && d.mode === 'war' && !d.lobby; WN.set = null; WN.vc = 0; if(WAR){ WN.sq = Array.isArray(d.wt) ? d.wt.map(t => clamp(t | 0, 0, 3)) : []; if(!WN_MAPS.includes(d.map)) d.map = WN_MAPS[0]; d.br = 25; } return _wnBegin(d); };
 
 // ---- começo: o líder monta bases e zonas e manda pra todo mundo; o amigo espera e monta igual ----
 // tropas: cada pessoa na que o líder escolheu; os bots completam a tropa com menos gente, até 25 em cada
