@@ -12554,24 +12554,24 @@ function updateShoot(dt){
 const WPN = {
   // tomate: o básico de sempre. cereja: rajada de perto, fraca e espalhada. ervilha: chumbo de perto. milho: rápido, forte e preciso de média distância
   // abóbora: zoom forte, dano enorme, 1 tiro por vez e recarga demorada. coco: explode em área
-  pistol:{name:'Pistola de Tomate', ic:'🍅', rar:0, dmg:8, cd:0.24, v:110, g:-9.8, n:1, spr:0.012, ammo:Infinity, col:0xff3b4e, r:0.17, rng:26, mag:12, rel:1.1, kb:0.6, kick:0.012, drag:0.35},
-  smg:{name:'Metralhadora de Cereja', ic:'🍒', rar:0, dmg:6, cd:0.075, v:120, g:-9.8, n:1, spr:0.05, ammo:120, col:0xb0002a, r:0.12, auto:true, rng:20, mag:30, rel:1.7, kb:0.3, kick:0.005, drag:0.45},
-  shotgun:{name:'Escopeta de Ervilha', ic:'🫛', rar:0, dmg:10, cd:0.8, v:110, g:-9.8, n:7, spr:0.12, ammo:15, col:0x38d16a, r:0.12, life:0.15, rng:9, mag:5, rel:2.4, kb:1.6, kick:0.03, drag:1.6},
-  rifle:{name:'Rifle de Milho', ic:'🌽', rar:1, dmg:10, cd:0.09, v:230, g:-9.8, n:1, spr:0.012, ammo:90, col:0xffd23f, r:0.14, auto:true, rng:36, mag:30, rel:2.0, kb:0.5, kick:0.006, drag:0.2},
-  sniper:{name:'Sniper de Abóbora', ic:'🎃', rar:2, dmg:85, cd:1.4, v:300, g:-9.8, n:1, spr:0, ammo:8, col:0xff9f1c, r:0.22, rng:70, mag:1, rel:3.2, kb:7, kick:0.06, noscope:0.07, drag:0.1},
+  pistol:{name:'Pistola de Tomate', ic:'🍅', rar:0, dmg:17, cd:0.15, v:110, g:-9.8, n:1, spr:0.012, ammo:Infinity, col:0xff3b4e, r:0.17, rng:26, mag:12, rel:1.1, kb:0.6, kick:0.012, drag:0.35},
+  smg:{name:'Metralhadora de Cereja', ic:'🍒', rar:0, dmg:17, cd:0.075, v:120, g:-9.8, n:1, spr:0.05, ammo:120, col:0xb0002a, r:0.12, auto:true, rng:20, mag:30, rel:1.7, kb:0.3, kick:0.005, drag:0.45},
+  shotgun:{name:'Escopeta de Ervilha', ic:'🫛', rar:0, dmg:14, cd:0.8, v:110, g:-9.8, n:7, spr:0.12, ammo:15, col:0x38d16a, r:0.12, life:0.15, rng:9, mag:5, rel:2.4, kb:1.6, kick:0.03, drag:1.6},
+  rifle:{name:'Rifle de Milho', ic:'🌽', rar:1, dmg:25, cd:0.09, v:230, g:-9.8, n:1, spr:0.012, ammo:90, col:0xffd23f, r:0.14, auto:true, rng:36, mag:30, rel:2.0, kb:0.5, kick:0.006, drag:0.2},
+  sniper:{name:'Sniper de Abóbora', ic:'🎃', rar:2, dmg:110, cd:1.4, v:300, g:-9.8, n:1, spr:0, ammo:8, col:0xff9f1c, r:0.22, rng:70, mag:1, rel:3.2, kb:7, kick:0.06, noscope:0.07, drag:0.1},
   bazooka:{name:'Bazuca de Coco', ic:'🥥', rar:3, dmg:55, cd:2.0, v:40, g:-5, n:1, spr:0, ammo:4, col:0x8a5a2b, r:0.32, splash:3.6, rng:24, mag:1, rel:2.8, kb:0, kick:0.04},
   // banana: vai e volta pra mão (acerta na ida e na volta), nunca acaba. uva: pente enorme, mas pesa (anda mais devagar). pimenta: chama curtinha que queima
   banana:{name:'Bumerangue de Banana', ic:'🍌', rar:1, dmg:24, cd:0.35, v:26, g:0, n:1, spr:0.008, ammo:Infinity, col:0xffe14a, r:0.2, rng:18, mag:1, rel:0, kb:1.4, kick:0.01, boom:true, life:3},
-  lmg:{name:'Metralhadora de Uva', ic:'🍇', rar:1, dmg:6, cd:0.08, v:210, g:-9.8, n:1, spr:0.04, ammo:180, col:0x7b3fb5, r:0.13, auto:true, rng:26, mag:60, rel:3.4, kb:0.35, kick:0.006, heavy:0.85, drag:0.22},
+  lmg:{name:'Metralhadora de Uva', ic:'🍇', rar:1, dmg:25, cd:0.08, v:210, g:-9.8, n:1, spr:0.04, ammo:180, col:0x7b3fb5, r:0.13, auto:true, rng:26, mag:60, rel:3.4, kb:0.35, kick:0.006, heavy:0.85, drag:0.22},
   flame:{name:'Lança-chamas de Pimenta', ic:'🌶️', rar:2, dmg:3, cd:0.07, v:15, g:3, n:2, spr:0.08, ammo:160, col:0xff6a1a, r:0.16, auto:true, rng:8, mag:50, rel:2.6, kb:0.08, kick:0.002, life:0.5, flame:true},
   // armas novas (31/10): jabuticaba = revólver de 6, forte e lento. abacate = pistolão pesado. caju = fuzil semiautomático entre o milho e a abóbora
   // grão-de-bico = cano duplo, 2 tiros e abre pra recarregar. limão = submetralhadora rapidinha. cana = besta silenciosa com flecha em arco bem curvo
-  revolver:{name:'Revólver de Jabuticaba', ic:'🫐', rar:1, dmg:22, cd:0.4, v:120, g:-9.8, n:1, spr:0.01, ammo:36, col:0x4a1d4f, r:0.15, rng:30, mag:6, rel:2.2, kb:1.0, kick:0.022, drag:0.35, rec:1},
-  deagle:{name:'Pistolão de Abacate', ic:'🥑', rar:2, dmg:27, cd:0.35, v:140, g:-9.8, n:1, spr:0.014, ammo:35, col:0x5a8a2a, r:0.16, rng:30, mag:7, rel:1.8, kb:1.2, kick:0.03, drag:0.3, rec:1},
-  caju:{name:'Fuzil de Caju', ic:'🍎', rar:2, dmg:28, cd:0.25, v:260, g:-9.8, n:1, spr:0.006, ammo:40, col:0xff5a2a, r:0.14, rng:55, mag:10, rel:2.6, kb:1.0, kick:0.03, drag:0.15},
+  revolver:{name:'Revólver de Jabuticaba', ic:'🫐', rar:1, dmg:34, cd:0.4, v:120, g:-9.8, n:1, spr:0.01, ammo:36, col:0x4a1d4f, r:0.15, rng:30, mag:6, rel:2.2, kb:1.0, kick:0.022, drag:0.35, rec:1},
+  deagle:{name:'Pistolão de Abacate', ic:'🥑', rar:2, dmg:50, cd:0.35, v:140, g:-9.8, n:1, spr:0.014, ammo:35, col:0x5a8a2a, r:0.16, rng:30, mag:7, rel:1.8, kb:1.2, kick:0.03, drag:0.3, rec:1},
+  caju:{name:'Fuzil de Caju', ic:'🍎', rar:2, dmg:50, cd:0.25, v:260, g:-9.8, n:1, spr:0.006, ammo:40, col:0xff5a2a, r:0.14, rng:55, mag:10, rel:2.6, kb:1.0, kick:0.03, drag:0.15},
   grao:{name:'Escopeta de Grão-de-bico', ic:'🫘', rar:1, dmg:12, cd:0.18, v:110, g:-9.8, n:9, spr:0.14, ammo:14, col:0xd9b26a, r:0.12, life:0.14, rng:8, mag:2, rel:2.2, kb:2.0, kick:0.04, drag:1.6},
-  limao:{name:'Submetralhadora de Limão', ic:'🍋', rar:0, dmg:5, cd:0.06, v:110, g:-9.8, n:1, spr:0.06, ammo:140, col:0x7ed957, r:0.11, auto:true, rng:18, mag:35, rel:1.6, kb:0.25, kick:0.005, drag:0.5},
-  besta:{name:'Besta de Cana', ic:'🏹', rar:2, dmg:70, cd:1.4, v:75, g:-9.8, n:1, spr:0, ammo:10, col:0xe9e2b0, r:0.1, rng:40, mag:1, rel:1.9, kb:2.5, kick:0.02, sil:true, drag:0.05},
+  limao:{name:'Submetralhadora de Limão', ic:'🍋', rar:0, dmg:15, cd:0.06, v:110, g:-9.8, n:1, spr:0.06, ammo:140, col:0x7ed957, r:0.11, auto:true, rng:18, mag:35, rel:1.6, kb:0.25, kick:0.005, drag:0.5},
+  besta:{name:'Besta de Cana', ic:'🏹', rar:2, dmg:90, cd:1.4, v:75, g:-9.8, n:1, spr:0, ammo:10, col:0xe9e2b0, r:0.1, rng:40, mag:1, rel:1.9, kb:2.5, kick:0.02, sil:true, drag:0.05},
 };
 // raridade de cada arma que cai no chão: mais rara = mais dano, recarga mais rápida, pente maior e mais precisa
 const RMUL = [{d:1, r:1, m:1, s:1}, {d:1.1, r:0.92, m:1.1, s:0.9}, {d:1.2, r:0.84, m:1.2, s:0.8}, {d:1.32, r:0.75, m:1.3, s:0.7}];
