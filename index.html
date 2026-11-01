@@ -1300,6 +1300,7 @@ body:not([data-hud="creme"]):not([data-hud="roxo"]) #mini{border:4px solid #2a12
       <kbd>W A S D</kbd><span>andar</span>
       <kbd>Espaço</kbd><span>pular</span>
       <kbd>Mouse</kbd><span>girar a câmera e mirar (clique no jogo pra travar o mouse, Esc solta)</span>
+      <kbd>N</kbd><span>roda de danças, animações e emotes (segure, mexa o mouse e solte; Q/E troca a aba)</span>
       <kbd>Roda</kbd><span>aproximar ou afastar a câmera</span>
       <kbd>M</kbd><span>ligar e desligar a música</span>
       <kbd>Esc</kbd><span>pausar a partida</span>
@@ -18975,7 +18976,7 @@ if(typeof SND !== 'undefined' && typeof tone === 'function') SND.vvEmo = d => { 
   document.head.appendChild(css); const d = document.createElement('div'); d.id = 'vvEmo'; d.hidden = true; d.innerHTML = VE.L.map(([, n, ic], i) => `<div><b>${i + 1}</b><i>${ic}</i><small>${n}</small></div>`).join(''); document.body.appendChild(d); VE.el = d; })();
 function vvEmoOk(){ const me = players[0]; return me && me.alive && !twoP && R1.phase !== 'menu' && R1.phase !== 'podium' && !PAUSED && !me.car && !me.glide && !me.swim && !me.down; }
 addEventListener('keydown', e => { if(e.repeat || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return;
-  if(e.code === 'KeyN'){ if(VE.open || vvEmoOk()){ VE.open = !VE.open; VE.el.hidden = !VE.open; } return; }
+  if(e.code === 'KeyN' && false){ if(VE.open || vvEmoOk()){ VE.open = !VE.open; VE.el.hidden = !VE.open; } return; }
   if(VE.open && /^Digit[1-5]$/.test(e.code)){ e.preventDefault(); e.stopImmediatePropagation(); const k = VE.L[+e.code.slice(5) - 1][0]; VE.open = false; VE.el.hidden = true; if(vvEmoOk()) vvEmote(players[0], k); return; }
   if(VE.open && e.code === 'Escape'){ VE.open = false; VE.el.hidden = true; } }, true);
 // cancela o emote do jogador quando ele anda, pula, atira ou entra em algo
@@ -19197,6 +19198,202 @@ body.mbTab #menu #btnSettings.on .mi{color:#2f8cff!important}`; document.head.ap
 // Esc numa aba volta pro Jogar (antes abria "Sair do jogo?" porque o menu fica visível por trás)
 addEventListener('keydown', e => { if(e.key !== 'Escape' || !document.body.classList.contains('mbTab')) return; const c = $('confirm'); if(c && !c.hidden) return;
   e.preventDefault(); e.stopImmediatePropagation(); sfx('beep'); openScreen('menu'); }, true);
+
+// ===== Roda de danças, animações e emotes (pedido do Bruno 01/11) =====
+// Segurar N abre a roda (mesmo jeito da roda de utilitários): mexe o mouse pra escolher e solta N pra fazer. Toque rápido em N deixa a roda aberta (clique escolhe).
+// 3 abas (Q/E ou a rodinha do mouse trocam): Danças (ficam em loop até andar), Animações e Emotes (balão em cima do feijão, dá pra usar correndo).
+// No online cada um avisa os outros ('dz' = dança/animação, 'dze' = balão). Na primeira pessoa a câmera vai pra terceira enquanto dança.
+const DZ = {tabs:[
+  {nm:'Danças', L:[['samba', 'Sambinha', '💃'], ['passinho', 'Passinho', '🕺'], ['frevo', 'Frevo', '☂️'], ['forro', 'Forró', '🪗'], ['axe', 'Axé', '🙌'], ['robo', 'Robô', '🤖'], ['minhoca', 'Minhoca', '🐛'], ['giro', 'Giro', '🌀']]},
+  {nm:'Animações', L:[['wave', 'Acenar', '👋'], ['cheer', 'Comemorar', '🎉'], ['laugh', 'Rir', '🤣'], ['salute', 'Continência', '🫡'], ['clap', 'Palmas', '👏'], ['sit', 'Sentar', '🪑'], ['pushup', 'Flexão', '💪'], ['sleep', 'Dormir', '😴']]},
+  {nm:'Emotes', L:[['e_joia', 'Joinha', '👍'], ['e_kkk', 'KKKK', '😂'], ['e_bravo', 'Bravo', '😡'], ['e_choro', 'Chorando', '😭'], ['e_amor', 'Amei', '😍'], ['e_fogo', 'Fogo', '🔥'], ['e_gg', 'GG', 'GG'], ['e_bora', 'Bora!', 'BORA!']]}],
+  tab:0, on:false, sticky:false, hi:-1, vx:0, vy:0, t0:0, sel:[0, 0, 0], b:[], sent:'', sid:0, fpp:false, cam:null, beat:0, step:0, eCD:0, zz:0};
+const DZ_LOOP = {samba:1, passinho:1, frevo:1, forro:1, axe:1, robo:1, minhoca:1, giro:1, sit:1, pushup:1, sleep:1};
+const DZ_DUR = {wave:2.6, cheer:2.6, laugh:3, salute:2.6, clap:3.2};
+const DZ_SUB = {samba:'samba no pé', passinho:'passinho do funk', frevo:'com sombrinha', forro:'dois pra lá, dois pra cá', axé:'', axe:'pula e mãozinha pra cima', robo:'dança do robô', minhoca:'no chão', giro:'piruetas',
+  wave:'oi!', cheer:'pulando de alegria', laugh:'rindo alto', salute:'continência', clap:'batendo palmas', sit:'senta no chão', pushup:'faz flexão', sleep:'deita e dorme'};
+try{ const o = JSON.parse(localStorage.getItem('fj-dz') || 'null'); if(o && Array.isArray(o.sel)){ DZ.tab = clamp(o.tab | 0, 0, 2); DZ.sel = o.sel.map(x => clamp(x | 0, 0, 7)); } }catch(e){}
+const dzSave = () => { try{ localStorage.setItem('fj-dz', JSON.stringify({tab:DZ.tab, sel:DZ.sel})); }catch(e){} };
+const dzKind = k => k.startsWith('e_') ? 'e' : 'p';
+const dzFind = k => { for(const T of DZ.tabs){ const x = T.L.find(a => a[0] === k); if(x) return x; } return null; };
+
+// ---------- poses novas (por cima da animação normal; k = 0..1 entra/sai suave) ----------
+const dzSm = x => { x = Math.min(1, Math.max(0, x)); return x*x*(3 - 2*x); };
+function dzMix(a, x, y, z, k){ a.position.x += (x - a.position.x)*k; a.position.y += (y - a.position.y)*k; a.position.z += (z - a.position.z)*k; }
+function dzLegs(m, f){ m.legs.forEach((l, i) => f(l, i, i ? 1 : -1)); }
+// sombrinha de frevo (8 gomos coloridos), feita uma vez por feijão e presa na luva direita
+let dzUmbT = null;
+function dzUmb(m){ if(m.dzUmb) return m.dzUmb; const T = THREE;
+  if(!dzUmbT){ const c = document.createElement('canvas'); c.width = 256; c.height = 16; const g = c.getContext('2d'), C = ['#ff3b4e', '#ffd23f', '#2fbf71', '#3ec8ff', '#ff3b4e', '#ffd23f', '#2fbf71', '#3ec8ff'];
+    C.forEach((x, i) => { g.fillStyle = x; g.fillRect(i*32, 0, 32, 16); }); dzUmbT = new T.CanvasTexture(c); }
+  const u = new T.Group(), top = new T.Mesh(new T.ConeGeometry(0.55, 0.24, 8, 1, true), new T.MeshLambertMaterial({map:dzUmbT, side:T.DoubleSide}));
+  top.position.y = 0.6; u.add(top); const st = new T.Mesh(new T.CylinderGeometry(0.016, 0.016, 0.72, 5), new T.MeshLambertMaterial({color:0x5a3a1a})); st.position.y = 0.3; u.add(st);
+  const tip = new T.Mesh(new T.SphereGeometry(0.03, 6, 4), new T.MeshLambertMaterial({color:0xffd23f})); tip.position.y = 0.74; u.add(tip);
+  u.position.set(0, 0.02, 0); u.visible = false; m.arms[0].add(u); return m.dzUmb = u; }
+const DZP = {
+  samba(m, t, k){ const s = Math.sin(t*14), h = Math.sin(t*7); m.tilt.rotation.z += h*0.13*k; m.tilt.rotation.y += Math.sin(t*3.5)*0.35*k; m.tilt.position.y += Math.abs(s)*0.05*k;
+    dzLegs(m, (l, i) => { const f = Math.sin(t*14 + i*Math.PI); l.position.y += Math.max(0, f)*0.11*k; l.position.z += Math.sin(t*7 + i*Math.PI)*0.14*k; l.rotation.x += -Math.max(0, f)*0.5*k; });
+    dzMix(m.arms[0], -0.62, 1.0 + h*0.28, 0.28 + Math.cos(t*7)*0.08, k); dzMix(m.arms[1], 0.62, 1.0 - h*0.28, 0.28 - Math.cos(t*7)*0.08, k); },
+  passinho(m, t, k){ const f = Math.sin(t*9), b = Math.abs(Math.sin(t*9)); m.tilt.position.y += (-0.04 + b*0.07)*k; m.tilt.rotation.y += Math.sin(t*4.5)*0.22*k; m.tilt.rotation.x += 0.06*k;
+    dzLegs(m, (l, i, s) => { l.position.x += s*f*0.13*k; l.rotation.y = s*f*0.5*k; l.position.y += Math.max(0, Math.sin(t*9 + i*Math.PI))*0.06*k; });
+    dzMix(m.arms[0], -0.42, 0.95 + Math.max(0, Math.sin(t*9))*0.3, 0.38, k); dzMix(m.arms[1], 0.42, 0.95 + Math.max(0, -Math.sin(t*9))*0.3, 0.38, k); },
+  frevo(m, t, k){ const u = dzUmb(m); u.visible = k > 0.3; u.rotation.set(0, t*2, 0.04 + Math.sin(t*5)*0.08); const c = Math.sin(t*5);
+    m.tilt.position.y += (-0.1 + Math.abs(Math.sin(t*10))*0.16)*k; m.tilt.rotation.z += c*0.12*k;
+    dzLegs(m, (l, i) => { const f = Math.max(0, Math.sin(t*5 + i*Math.PI)); l.position.z += f*0.36*k; l.position.y += f*0.24*k; l.rotation.x += -f*0.9*k; l.position.x += (i ? 0.06 : -0.06)*k; });
+    dzMix(m.arms[0], -0.86, 1.25 + c*0.22, 0.12, k); dzMix(m.arms[1], 0.86, 1.02 - c*0.22, 0.12, k); },
+  forro(m, t, k){ const s = Math.sin(t*4.2); m.tilt.position.x = s*0.13*k; m.tilt.rotation.z += -s*0.06*k; m.tilt.rotation.y += Math.sin(t*2.1)*0.4*k; m.tilt.position.y += Math.abs(Math.cos(t*4.2))*0.04*k;
+    dzLegs(m, (l, i) => { const f = Math.sin(t*4.2 + i*Math.PI*0.5); l.position.x += s*0.1*k; l.position.y += Math.max(0, f)*0.07*k; });
+    dzMix(m.arms[0], -0.36, 1.12, 0.46, k); dzMix(m.arms[1], 0.5, 0.92 + Math.sin(t*2.1)*0.05, 0.4, k); },
+  axe(m, t, k){ const h = Math.abs(Math.sin(t*6)), sd = Math.sin(t*3); m.tilt.position.y += h*0.26*k; m.tilt.rotation.z += sd*0.12*k;
+    dzLegs(m, l => { l.position.y += h*0.2*k; });
+    dzMix(m.arms[0], -0.5 + sd*0.2, 1.5 + Math.sin(t*12)*0.06, 0.15, k); dzMix(m.arms[1], 0.5 + sd*0.2, 1.5 - Math.sin(t*12)*0.06, 0.15, k); },
+  robo(m, t, k){ const P = [[-0.75, 0.75, 0.05, 0.75, 0.75, 0.05, 0], [-0.55, 1.2, 0.45, 0.75, 0.75, 0.05, 0.4], [-0.55, 1.2, 0.45, 0.55, 1.2, 0.45, 0.4], [-0.75, 0.75, 0.05, 0.55, 1.2, 0.45, -0.4],
+      [-0.45, 1.55, 0.1, 0.45, 1.55, 0.1, 0], [-0.8, 1.0, 0.05, 0.45, 1.55, 0.1, -0.4], [-0.8, 1.0, 0.05, 0.8, 1.0, 0.05, 0.4], [-0.55, 0.9, 0.5, 0.55, 0.9, 0.5, 0]];
+    const q = t*3, i = Math.floor(q), e = dzSm((q - i)*5), A = P[(i + 7) % 8], B = P[i % 8], L = j => A[j] + (B[j] - A[j])*e;
+    m.tilt.rotation.y += L(6)*k; m.tilt.position.y += (i % 2 ? 0.03 : 0)*e*k; dzMix(m.arms[0], L(0), L(1), L(2), k); dzMix(m.arms[1], L(3), L(4), L(5), k);
+    m.arms.forEach(a => a.rotation.set(0, 0, 0));
+    dzLegs(m, (l, j) => { l.position.y += (i % 4 === j*2 ? 0.08 : 0)*e*k; }); },
+  minhoca(m, t, k){ const w = Math.sin(t*5); m.tilt.rotation.x += (1.42 + w*0.22)*k; m.tilt.position.y += (0.3 + Math.max(0, w)*0.22)*k;
+    dzMix(m.arms[0], -0.36, 1.45 + Math.max(0, -w)*0.1, 0.18, k); dzMix(m.arms[1], 0.36, 1.45 + Math.max(0, -w)*0.1, 0.18, k);
+    dzLegs(m, l => { l.position.z += (-0.1 - Math.max(0, w)*0.25)*k; l.position.y += Math.max(0, -w)*0.1*k; }); },
+  giro(m, t, k){ const c = t % 2.2, a = dzSm(c/1.2)*Math.PI*4; m.g.rotation.y += a*k; m.tilt.position.y += (c < 1.2 ? 0.07 : 0)*k; m.tilt.rotation.z += (c < 1.2 ? 0.08 : 0)*k;
+    const up = c >= 1.2 ? dzSm((c - 1.2)*5)*dzSm((2.2 - c)*5) : 0;
+    dzMix(m.arms[0], -0.85 + up*0.4, 1.0 + up*0.75, 0.05, k); dzMix(m.arms[1], 0.85 - up*0.4, 1.0 + up*0.75, 0.05, k);
+    dzLegs(m, (l, i) => { if(i && c < 1.2){ l.position.y += 0.22*k; l.position.x += -0.12*k; l.rotation.x += 0.4*k; } }); },
+  clap(m, t, k){ const c = Math.abs(Math.sin(t*8)); dzMix(m.arms[0], -0.07 - c*0.22, 1.02, 0.5, k); dzMix(m.arms[1], 0.07 + c*0.22, 1.02, 0.5, k); m.tilt.position.y += (1 - c)*0.02*k; m.tilt.rotation.x += 0.05*k; },
+  pushup(m, t, k){ const u = Math.sin(t*3.2)*0.5 + 0.5; m.tilt.rotation.x += 1.36*k; m.tilt.position.y += (0.34 + u*0.24)*k;
+    dzMix(m.arms[0], -0.42, 0.95, 0.42 + u*0.3, k); dzMix(m.arms[1], 0.42, 0.95, 0.42 + u*0.3, k); dzLegs(m, l => { l.position.z += -0.15*k; }); },
+  sleep(m, t, k){ m.tilt.rotation.x += -1.42*k; m.tilt.position.y += 0.32*k; m.body.scale.y += Math.sin(t*1.6)*0.03*k;
+    dzMix(m.arms[0], -0.26, 0.74 + Math.sin(t*1.6)*0.02, 0.52, k); dzMix(m.arms[1], 0.3, 0.7, 0.5, k);
+    dzLegs(m, (l, i) => { l.position.z += 0.1*k; l.rotation.x += -0.4*k; });
+    if(m.eyes) m.eyes.forEach(e => { e.scale.y *= 1 - 0.9*k; }); if(m.mouth) m.mouth.scale.y += (0.15 - m.mouth.scale.y)*k; } };
+{ const _vp = vvPose; vvPose = function(m, kind, t, k){ if(m && m.dzUmb && kind !== 'frevo') m.dzUmb.visible = false;
+    if(DZP[kind]){ if(!m || !m.arms || k <= 0.001) return; if(m.gun) m.gun.visible = k < 0.5; return DZP[kind](m, t, k); } return _vp.apply(this, arguments); }; }
+// feijão fica virado pro lado em que começou (a câmera pode dar a volta) e esconde a sombrinha quando para
+{ const _ab = animateBean; animateBean = function(p, dt){ const E = p.vvE, m = p.m; if(m && m.tilt && !E && (m.tilt.position.x || m.dzUmb)){ m.tilt.position.x = 0; m.legs.forEach(l => l.rotation.y = 0); if(m.dzUmb) m.dzUmb.visible = false; }
+    if(!E || E.f === undefined || !p.alive) return _ab.apply(this, arguments);
+    const f0 = p.face; p.face = E.f; try{ return _ab.apply(this, arguments); } finally { p.face = f0; } }; }
+// duração: danças e posturas ficam até andar (o vvEmoStep do lote 4 corta quando anda, pula, atira ou mira)
+{ const _ve = vvEmote; vvEmote = function(p, k, d){ if(!d && DZ_LOOP[k]) d = 3600; else if(!d && DZ_DUR[k]) d = DZ_DUR[k]; const r = _ve.call(this, p, k, d); if(p && p.vvE && p.vvE.k === k) p.vvE.f = p.face; return r; }; }
+
+// ---------- balão do emote em cima do feijão ----------
+const DZ_BM = {};
+function dzBalloonMat(k){ if(DZ_BM[k]) return DZ_BM[k]; const a = dzFind(k), txt = k === 'zz' ? '💤' : a ? a[2] : '?', isT = /^[A-Z!]+$/.test(txt), c = document.createElement('canvas'); c.width = 256; c.height = 288; const g = c.getContext('2d');
+  g.fillStyle = '#ffffff'; g.strokeStyle = '#2a1250'; g.lineWidth = 12; g.lineJoin = 'round';
+  g.beginPath(); const x = 18, y = 14, w = 220, h = 210, r = 70; g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.lineTo(150, y + h); g.lineTo(118, 270); g.lineTo(104, y + h); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  g.save(); g.fillStyle = 'rgba(42,18,80,.9)'; g.translate(0, 9); g.fill(); g.restore(); g.fill(); g.stroke();
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  if(isT){ g.font = `${txt.length > 3 ? 64 : 96}px "Lilita One","Arial Black",sans-serif`; g.fillStyle = '#ff8cc6'; g.strokeStyle = '#2a1250'; g.lineWidth = 10; g.strokeText(txt, 128, 124); g.fillText(txt, 128, 124); }
+  else { g.font = '128px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif'; g.fillText(txt, 128, 128); }
+  const t = new THREE.CanvasTexture(c); return DZ_BM[k] = new THREE.SpriteMaterial({map:t, depthWrite:false, transparent:true}); }
+function dzBalloon(p, k, quiet, y){ if(!p || !p.m || !p.m.g || (k !== 'zz' && !dzFind(k))) return; y = y || 2.45; DZ.b = DZ.b.filter(b => { if(b.p === p){ if(b.s.parent) b.s.parent.remove(b.s); b.s.material.dispose(); return false; } return true; });
+  const s = new THREE.Sprite(dzBalloonMat(k).clone()); s.renderOrder = 20; s.center.set(0.5, 0); s.position.set(0, y, 0); s.scale.set(0.01, 0.01, 1); p.m.g.add(s); DZ.b.push({p, s, t:0, k, y});
+  if(!quiet && !p.isBot || vvNearCam(p.pos.x, p.pos.y, p.pos.z, 30)) try{ playSnd('dzPop', {vol:p === players[0] ? 0.6 : 0.35}); }catch(e){} }
+function dzBalloonStep(dt){ DZ.b = DZ.b.filter(b => { b.t += dt; const g = b.p.m && b.p.m.g, D = 2.8;
+    if(b.t > D || !g || b.s.parent !== g || !b.p.alive){ if(b.s.parent) b.s.parent.remove(b.s); b.s.material.dispose(); return false; }
+    const e = b.t < 0.22 ? 1.25*Math.sin(b.t/0.22*Math.PI*0.62)/Math.sin(Math.PI*0.62) : 1 + Math.sin(b.t*5)*0.02, sz = 1.2*e/Math.max(0.3, g.scale.y);
+    b.s.scale.set(sz, sz*1.125, 1); b.s.position.y = b.y + Math.min(0.25, b.t*0.12); b.s.material.opacity = Math.min(1, (D - b.t)/0.4); return true; }); }
+if(typeof SND !== 'undefined' && typeof tone === 'function') SND.dzPop = d => { tone(660, 0.07, 'triangle', 0.06, 1.6, 0, d); tone(990, 0.09, 'sine', 0.05, 1.2, 0.05, d); };
+
+// ---------- a roda (mesmo desenho da roda de utilitários) ----------
+(function(){ const css = document.createElement('style'); css.textContent = `
+#dzWheel{position:fixed;inset:0;z-index:70;font-size:var(--nhf,12px);display:none;place-items:center;background:radial-gradient(circle,rgba(5,8,20,.18),rgba(5,8,20,.6));font-family:var(--body)}
+#dzWheel.on{display:grid}
+#dzWheel svg{width:36em;height:36em;overflow:visible}
+#dzWheel path.wsg{fill:var(--zpnl2,#fff);stroke:var(--zline,#2a1250);stroke-width:1;cursor:pointer;transition:fill .08s}
+#dzWheel g.hi path.wsg{fill:var(--zacc,#2a1250)}
+#dzWheel .ring{fill:none;stroke:var(--zacc,#2a1250);stroke-width:1.2;opacity:.8}
+#dzWheel text{font:900 .62em var(--body);fill:var(--zink,#2a1250);text-anchor:middle;pointer-events:none;letter-spacing:.06em;text-transform:uppercase}
+#dzWheel text.ic{font:22px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif;letter-spacing:0;text-transform:none}
+#dzWheel text.tx{font:400 15px var(--display);letter-spacing:0;fill:#ff8cc6;stroke:var(--zink,#2a1250);stroke-width:1.2px;paint-order:stroke}
+#dzWheel g.hi text{fill:#fff}
+#dzWheel .mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:11.4em;height:11.4em;border-radius:50%;display:grid;place-items:center;text-align:center;padding:1.2em;border:2px solid var(--zacc,#2a1250);background:var(--zpnl,#fff);color:var(--zink,#2a1250)}
+#dzWheel .mid i{display:block;font-style:normal;font-size:3.3em;line-height:1.15;font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif}
+#dzWheel .mid i.tx{font-family:var(--display);color:#ff8cc6;-webkit-text-stroke:2px var(--zink,#2a1250);font-size:2.6em}
+#dzWheel .mid b{font:400 1.15em var(--display);display:block;margin-top:.15em}
+#dzWheel .mid small{color:var(--zmut,#6d5d8c);font-size:.72em;display:block;margin-top:.2em}
+#dzWheel .tabs{position:absolute;left:50%;top:calc(50% - 21.4em);transform:translateX(-50%);display:flex;gap:.5em;align-items:center}
+#dzWheel .tabs button{font:400 1.05em var(--display);padding:.35em .95em;border-radius:.8em;border:3px solid var(--zline,#2a1250);background:var(--zpnl2,#fff);color:var(--zink,#2a1250);box-shadow:var(--zshadow,0 .28em 0 rgba(42,18,80,.9));cursor:pointer}
+#dzWheel .tabs button.on{background:var(--zsel,#ffc928);color:#2a1250}
+#dzWheel .tabs kbd{font:900 .8em var(--body);background:var(--zpnl2,#fff);color:var(--zink,#2a1250);border:2px solid var(--zline,#2a1250);border-radius:.4em;padding:.1em .45em}
+#dzWheel .hint{position:absolute;left:50%;top:calc(50% + 19.6em);transform:translateX(-50%);white-space:nowrap;font:800 .85em var(--body);color:#fff;text-shadow:0 2px 0 rgba(42,18,80,.9)}
+#dzWheel .hint kbd{font:900 .9em var(--body);background:#fff;color:#2a1250;border-radius:.35em;padding:.05em .4em;margin:0 .15em}`;
+  document.head.appendChild(css);
+  const d = document.createElement('div'); d.id = 'dzWheel';
+  d.innerHTML = `<div class="tabs"><kbd>Q</kbd>${DZ.tabs.map((T, i) => `<button data-t="${i}">${T.nm}</button>`).join('')}<kbd>E</kbd></div><svg viewBox="-125 -125 250 250"><g id="dzSegs"></g><circle class="ring" r="103"/></svg><div class="mid"><div><i id="dzIc"></i><b id="dzName">—</b><small id="dzSub"></small></div></div><div class="hint">Mexa o mouse · <kbd>1</kbd>-<kbd>8</kbd> escolhe · solte <kbd>N</kbd> ou clique pra fazer · andar para a dança</div>`;
+  document.body.appendChild(d); DZ.el = d;
+  d.querySelectorAll('.tabs button').forEach(b => b.addEventListener('mousedown', e => { e.stopPropagation(); e.preventDefault(); dzTab(+b.dataset.t - DZ.tab); }));
+  d.addEventListener('mousemove', e => { if(document.pointerLockElement) return; const g = e.target.closest && e.target.closest('g[data-i]'); if(g && +g.dataset.i !== DZ.hi){ DZ.hi = +g.dataset.i; dzDraw(); } });
+  d.addEventListener('mousedown', e => { if(e.target.closest && e.target.closest('.tabs')) return; e.preventDefault(); e.stopPropagation(); if(e.button === 2){ dzClose(false); return; } dzClose(true); });
+  d.addEventListener('contextmenu', e => e.preventDefault());
+})();
+function dzDraw(){ const T = DZ.tabs[DZ.tab], n = T.L.length, R = 100, r = 47, P = (a, rr) => `${(Math.cos(a)*rr).toFixed(1)},${(Math.sin(a)*rr).toFixed(1)}`; let h = '';
+  T.L.forEach(([k, nm, ic], i) => { const a0 = -Math.PI/2 + (i - .5)*2*Math.PI/n + .02, a1 = a0 + 2*Math.PI/n - .04, am = (a0 + a1)/2, cx = Math.cos(am)*73, cy = Math.sin(am)*73, tx = /^[A-Z!]+$/.test(ic);
+    h += `<g data-i="${i}" class="${i === DZ.hi ? 'hi' : ''}"><path class="wsg" d="M${P(a0, r)} L${P(a0, R)} A${R},${R} 0 0 1 ${P(a1, R)} L${P(a1, r)} A${r},${r} 0 0 0 ${P(a0, r)}Z"/><text class="${tx ? 'tx' : 'ic'}" x="${cx.toFixed(1)}" y="${(cy + (tx ? 2 : 4)).toFixed(1)}">${ic}</text><text x="${cx.toFixed(1)}" y="${(cy + 19).toFixed(1)}"${nm.length > 7 ? ' style="font-size:.5em;letter-spacing:.02em"' : ''}>${nm.slice(0, 13)}</text><text x="${(Math.cos(am)*111).toFixed(1)}" y="${(Math.sin(am)*111 + 3).toFixed(1)}" style="font-size:.5em;fill:#fff;stroke:#2a1250;stroke-width:2px;paint-order:stroke">${i + 1}</text></g>`; });
+  $('dzSegs').innerHTML = h; DZ.el.querySelectorAll('.tabs button').forEach((b, i) => b.classList.toggle('on', i === DZ.tab));
+  const a = T.L[DZ.hi], ic = $('dzIc'); ic.textContent = a ? a[2] : '🫘'; ic.className = a && /^[A-Z!]+$/.test(a[2]) ? 'tx' : ''; nhT($('dzName'), a ? a[1] : 'Mexa o mouse');
+  nhT($('dzSub'), a ? (DZ.tab === 2 ? 'balão em cima do feijão' : DZ_SUB[a[0]] || '') : 'pra escolher'); }
+function dzTab(dir){ DZ.tab = (DZ.tab + dir + 3) % 3; DZ.hi = DZ.sel[DZ.tab]; DZ.vx = DZ.vy = 0; dzDraw(); try{ sfx('click'); }catch(e){} }
+function dzCan(){ const me = players[0]; return !!(me && me.alive && !twoP && R1.phase !== 'menu' && !PAUSED && !me.down && !(typeof bagOn !== 'undefined' && bagOn) && !(typeof WH !== 'undefined' && WH.on)); }
+function dzOpen(){ if(DZ.on || !dzCan()) return; DZ.on = true; DZ.sticky = false; DZ.t0 = performance.now(); DZ.hi = DZ.sel[DZ.tab]; DZ.vx = DZ.vy = 0; try{ mouseHeld = false; }catch(e){} DZ.el.classList.add('on'); dzDraw(); }
+function dzClose(ok){ if(!DZ.on) return; DZ.on = false; DZ.el.classList.remove('on'); const a = DZ.tabs[DZ.tab].L[DZ.hi]; if(!ok || !a) return; DZ.sel[DZ.tab] = DZ.hi; dzSave(); dzDo(a[0]); }
+function dzMove(e){ DZ.vx += e.movementX || 0; DZ.vy += e.movementY || 0; const m = Math.hypot(DZ.vx, DZ.vy); if(m > 90){ DZ.vx *= 90/m; DZ.vy *= 90/m; } if(m < 18) return;
+  const n = DZ.tabs[DZ.tab].L.length; let a = Math.atan2(DZ.vy, DZ.vx) + Math.PI/2; a = (a + Math.PI/n + 4*Math.PI) % (2*Math.PI); const i = Math.floor(a/(2*Math.PI)*n) % n; if(i !== DZ.hi){ DZ.hi = i; dzDraw(); } }
+// faz a dança / animação / emote escolhido
+function dzDo(k){ const me = players[0]; if(!me || !me.alive) return;
+  if(dzKind(k) === 'e'){ if(DZ.eCD > 0) return; DZ.eCD = 0.7; dzBalloon(me, k); dzNet({t:'dze', n:me.nid, k}); return; }
+  if(!vvEmoOk() || !me.grounded || me.climb || me.vault || me.mantle){ try{ say('Pare no chão pra dançar', true); }catch(e){} return; }
+  me.vel.x = me.vel.z = 0; me.ads = false; me.nadeAim = false; me.nadeCook = false; vvEmote(me, k);
+  if(me.vvE){ me.vvE.sid = ++DZ.sid; if(CFG.fpp && !DZ.fpp){ DZ.fpp = true; CFG.fpp = false; }
+    // câmera vai pra frente do feijão (3/4), pra ver a dança
+    let to = me.vvE.f + 0.5, d = Math.atan2(Math.sin(to - yaw), Math.cos(to - yaw)); DZ.cam = {from:yaw, d, t:0, p0:pitch}; DZ.beat = 0; DZ.step = 0; } }
+const dzNet = e => { try{ if(typeof NET !== 'undefined' && NET.match && typeof netEv === 'function') netEv(e); }catch(err){} };
+// batida baixinha enquanto o seu feijão dança (16 passos por compasso)
+const DZ_BT = {samba:[138, 'x..x..x.x..x..x.', 'x.xx.x.xx.xx.x.x'], axe:[132, 'x...x...x...x...', '..x...x...x..x.x'], passinho:[130, 'x..x..x...x..x..', '....x.......x...'], minhoca:[130, 'x..x..x...x..x..', '....x.......x...'],
+  frevo:[160, 'x.x.x.x.x.x.x.x.', '.x.x.x.x.x.x.x.x'], forro:[118, 'x..x..x.x..x..x.', '..x...x...x...x.'], robo:[120, 'x...x...x...x...', '..x.x...x.x..x..'], giro:[110, 'x.......x.......', '....x.......x...']};
+function dzBeat(dt){ const me = players[0], E = me && me.vvE, B = E && DZ_BT[E.k]; if(!B || E.t < 0.2 || typeof ac === 'undefined' || !ac || CFG.dzMusic === false) return;
+  DZ.beat -= dt; if(DZ.beat > 0) return; DZ.beat += 60/B[0]/4; const i = DZ.step++ % 16;
+  try{ if(B[1][i] === 'x') tone(E.k === 'robo' ? 110 : 75, 0.22, 'sine', 0.09, 0.5);
+    if(B[2][i] === 'x'){ if(E.k === 'forro') tone(2600, 0.09, 'triangle', 0.02); else if(E.k === 'robo') tone(440*(1 + (i % 3)*0.25), 0.07, 'square', 0.012); else if(typeof noise === 'function') noise(0.05, 0.035, 2800, 0, 'bandpass', 2); } }catch(e){} }
+
+// ---------- entrada: N abre, solta N faz; com a roda aberta o mouse e as teclas ficam com ela ----------
+addEventListener('keydown', e => { if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  if(e.code === 'KeyN'){ e.preventDefault(); e.stopImmediatePropagation(); if(e.repeat) return; if(DZ.on){ if(DZ.sticky) dzClose(true); return; } dzOpen(); return; }
+  if(!DZ.on) return;
+  if(e.code === 'Escape'){ dzClose(false); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if(e.code === 'KeyQ' || e.code === 'KeyE'){ if(!e.repeat) dzTab(e.code === 'KeyE' ? 1 : -1); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if(/^Digit[1-8]$/.test(e.code)){ DZ.hi = +e.code.slice(5) - 1; dzClose(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if(e.code === 'Enter'){ dzClose(true); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if(e.code === 'Tab' || /^Digit/.test(e.code) || e.code === 'KeyT' || e.code === 'KeyH'){ e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+addEventListener('keyup', e => { if(e.code !== 'KeyN' || !DZ.on) return; if(DZ.sticky) return; if(performance.now() - DZ.t0 < 260) DZ.sticky = true; else dzClose(true); }, true);
+addEventListener('mousemove', e => { if(!DZ.on) return; if(document.pointerLockElement) dzMove(e); e.stopImmediatePropagation(); }, true);
+addEventListener('mousedown', e => { if(!DZ.on || (DZ.el && DZ.el.contains(e.target))) return; e.preventDefault(); e.stopImmediatePropagation(); if(e.button === 2) dzClose(false); else dzClose(true); }, true);
+addEventListener('wheel', e => { if(!DZ.on) return; e.preventDefault(); e.stopImmediatePropagation(); if(Math.abs(e.deltaY) > 2 && performance.now() - (DZ.wT || 0) > 160){ DZ.wT = performance.now(); dzTab(e.deltaY > 0 ? 1 : -1); } }, {capture:true, passive:false});
+addEventListener('blur', () => dzClose(false));
+
+// ---------- por quadro: fecha a roda se não der mais, câmera, batida, balões, aviso pro online ----------
+function dzStep(dt){ const me = players[0]; DZ.eCD = Math.max(0, DZ.eCD - dt);
+  if(DZ.on && !dzCan()) dzClose(false);
+  const E = me && me.vvE, key = E && E.sid ? E.k + ':' + E.sid : '';
+  if(key !== DZ.sent){ if(me && me.nid !== undefined){ if(key) dzNet({t:'dz', n:me.nid, k:E.k, f:Math.round(E.f*100)/100}); else if(DZ.sent) dzNet({t:'dz', n:me.nid, k:''}); } DZ.sent = key; }
+  if(!key){ if(DZ.fpp){ DZ.fpp = false; CFG.fpp = true; } DZ.cam = null; }
+  if(DZ.cam && key){ const c = DZ.cam; c.t = Math.min(1, c.t + dt/0.6); const e = dzSm(c.t); yaw = c.from + c.d*e; pitch = c.p0 + (Math.min(c.p0, 0.25) - c.p0)*e; if(c.t >= 1) DZ.cam = null; }
+  if(E && E.k === 'sleep' && E.t > 1.2){ DZ.zz -= dt; if(DZ.zz <= 0){ DZ.zz = 3.2; dzZzz(me); } }
+  dzBeat(dt); dzBalloonStep(dt); }
+// "Zzz" do dormir: balão sem som
+function dzZzz(p){ dzBalloon(p, 'zz', true, 1.7); }
+{ const _vt = vvTick; vvTick = function(dt){ _vt(dt); try{ dzStep(dt); }catch(e){ console.warn('danças', e); } }; }
+// outros feijões dormindo também soltam Zzz
+{ const _st = dzStep; dzStep = function(dt){ _st(dt); for(const p of players){ if(p === players[0] || !p.vvE || p.vvE.k !== 'sleep' || !p.alive) continue; p._dzZ = (p._dzZ ?? 1.5) - dt; if(p._dzZ <= 0){ p._dzZ = 3.2; if(vvNearCam(p.pos.x, p.pos.y, p.pos.z, 40)) dzZzz(p); } } }; }
+
+// ---------- online: recebe dança/emote dos outros ----------
+if(typeof netEvIn === 'function'){ const _ni = netEvIn; netEvIn = function(e, from){
+    if(e && (e.t === 'dz' || e.t === 'dze')){ try{ const p = NET.byNid[e.n]; if(!p || p === players[0]) return;
+        if(e.t === 'dze'){ if(dzFind(String(e.k)) && dzKind(String(e.k)) === 'e') dzBalloon(p, String(e.k)); return; }
+        if(!e.k){ if(p.vvE) p.vvE.d = Math.min(p.vvE.d, p.vvE.t + 0.15); return; }
+        if(!DZP[e.k] && !['wave', 'cheer', 'laugh', 'salute', 'sit', 'dance'].includes(e.k)) return;
+        vvEmote(p, e.k); if(p.vvE && Number.isFinite(+e.f)) p.vvE.f = +e.f; }catch(err){} return; }
+    return _ni.apply(this, arguments); }; }
 
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
