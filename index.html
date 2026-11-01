@@ -3375,6 +3375,247 @@ def('operador', 'Operações Especiais', 'lend', 0, 'roupa tática preta com col
     (fx.ant || []).forEach((s, i) => { s.rotation.x = Math.sin(t*3 - i*0.6)*0.12; s.rotation.z = Math.sin(t*2.2 - i*0.5)*0.1; }); },
 }, WR));
 
+// ---------- FANTASIAS INTEIRAS (o feijão veste a fantasia toda: cabeça de bicho em cima e o rosto aparecendo num buraco na frente) ----------
+const FT = {shop:true, fant:true};
+// profundidade da pele do corpo em (x, y), pra colar peças na frente
+const bodyZ = (x, y) => 0.475*Math.sqrt(Math.max(0, 1 - (x/0.5)*(x/0.5) - ((y - 0.78)/0.675)*((y - 0.78)/0.675)));
+// borda acolchoada do buraco do rosto: um tubo em volta da viseira, colado no corpo
+function holeRing(k, tube, rx, ry){ return G('hr' + k, () => { const g = new T.TorusGeometry(1, tube, 10, 56), p = g.attributes.position;
+  for(let i=0;i<p.count;i++){ const px = p.getX(i), py = p.getY(i), a = Math.atan2(py, px), rr = Math.hypot(px, py) - 1;
+    const x = Math.cos(a)*(rx + rr), y = 1.0 + Math.sin(a)*(ry + rr); p.setXYZ(i, x, y, bodyZ(x*0.96, y) + tube*0.45 + p.getZ(i)); }
+  g.computeVertexNormals(); return g; }); }
+// ponto na borda do buraco (pra dentes etc.)
+const holePt = (a, rx, ry, out) => { const x = Math.cos(a)*rx, y = 1.0 + Math.sin(a)*ry; return [x, y, bodyZ(x*0.96, y) + (out || 0)]; };
+// buraco do rosto pintado no corpo: é o feijão de verdade aparecendo por dentro, na cor dele, com sombra na borda
+function holePaint(g, color){ const c = new T.Color(color), d = c.clone().multiplyScalar(0.45), cx = FX, cy = rowOf(1.0), rx = 100, ry = 58;
+  g.save(); g.translate(cx, cy); g.scale(1, ry/rx); const gr = g.createRadialGradient(0, 0, 8, 0, 0, rx);
+  gr.addColorStop(0, '#' + c.getHexString()); gr.addColorStop(0.72, '#' + c.getHexString()); gr.addColorStop(1, '#' + d.getHexString());
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, rx, 0, 7); g.fill(); g.restore(); }
+// escamas em meia-lua
+function scales(g, col, r, y0, y1){ g.strokeStyle = col; g.lineWidth = 3; for(let y=y0, j=0; y<y1; y+=r*0.85, j++) for(let x=-r + (j % 2)*r; x<W + r; x+=r*2){ g.beginPath(); g.arc(x, y, r, 0.12*Math.PI, 0.88*Math.PI); g.stroke(); } }
+const clawG = () => G('fclaw', () => new T.ConeGeometry(0.026, 0.075, 7));
+function claws(m, col){ m.arms.forEach(a => { for(let j=0;j<3;j++) P(a, clawG(), col, [(j - 1)*0.055, -0.03, 0.11], 1, [Math.PI/2 + 0.3, 0, 0]); });
+  m.legs.forEach(l => { for(let j=0;j<3;j++) P(l, clawG(), col, [(j - 1)*0.07, 0.04, 0.17], 1, [Math.PI/2, 0, 0]); }); }
+// cabeça da fantasia: some com o capacete do BR (aí fica só o corpo da fantasia)
+const hood = (g, y) => { const h = new T.Group(); h.position.set(0, y, 0); g.add(h); return AR(h, q => !(q && q.helm)); };
+// capuz: casca do mesmo formato do corpo, um pouco maior, cobrindo o topo até a borda do buraco (vira a cabeça da fantasia)
+const domeG = (k, th) => G('dome' + k, () => new T.SphereGeometry(0.5, 30, 16, 0, Math.PI*2, 0, th));
+function dome(h, col, k, th, sy){ return P(h, domeG(k, th), col, [0, 0.78, -0.01], [1.08, 1.35*(sy || 1.08), 0.95*1.09]); }
+// a borda do buraco vai pra frente do colete
+const ringArm = (o, z0) => AR(o, (q, c) => { c.position.z = (z0 || 0) + (q && q.vest ? 0.05 : 0); return true; });
+// rabo grosso que afina, em gomos que balançam em onda
+function fatTail(g, m, col, n, len, r0, r1, spikeCol){ const t = new T.Group(); t.position.set(0, 0.36, -0.36); t.rotation.x = 1.2; g.add(t);
+  const segs = chain(t, n, len, r0, r1, matC(col), null); m.skinFx.tail = segs;
+  if(spikeCol) segs.forEach((s, i) => P(s, ext('fsp', leafShape(0.1, 0.17), 0.045, 0.025), spikeCol, [0, -len*0.5, -(r0 + (r1 - r0)*i/(n - 1))*0.85], 0.95 - i*0.13, [-Math.PI/2, Math.PI/2, 0]));
+  return t; }
+const swish = (m, t, sp, amp) => (m.skinFx.tail || []).forEach((s, i) => s.rotation.z = Math.sin(t*sp - i*0.7)*amp*(0.6 + i*0.25));
+
+// 1. REX — dinossauro roxo de pelúcia: cabeção com focinho e dentinhos, placas laranja nas costas, rabo enorme e garrinhas
+def('rexfant', 'Fantasia de Rex', 'epico', 0, 'fantasia inteira de dinossauro roxo: cabeção com focinho e dentinhos, placas nas costas, rabo enorme que balança e garrinhas. De vez em quando dá um rugido', Object.assign({
+  covers:['hat', 'outfit'], price:550,
+  body:c => bodyMat('rexf' + c, g => { g.fillStyle = '#7b5bd6'; g.fillRect(0, 0, W, H); scales(g, '#6747c0', 13, -4, H + 10);
+    g.fillStyle = '#ffd9a0'; g.beginPath(); g.ellipse(FX, rowOf(0.38), 84, 78, 0, 0, 7); g.fill();
+    g.strokeStyle = '#efbd78'; g.lineWidth = 4; for(let k=0;k<4;k++){ const y = rowOf(0.6) + k*20, w = 74 - k*k*5; g.beginPath(); g.moveTo(FX - w, y); g.quadraticCurveTo(FX, y + 8, FX + w, y); g.stroke(); }
+    holePaint(g, c); }),
+  limb:0x7b5bd6, legCol:0x6747c0,
+  parts:(g, m) => {
+    const C = 0x7b5bd6, D = 0x5a3ea8, SP = [0xff9f1c, 0xffc94a];
+    ringArm(P(g, holeRing('rex', 0.065, 0.45, 0.29), 0x8f72e6));
+    const h = hood(g, 0); m.skinFx.head = h; dome(h, C, 'rex', 0.95, 1.12);
+    const jaw = new T.Group(); jaw.position.set(0, 1.42, 0.2); h.add(jaw); m.skinFx.jaw = jaw;   // focinho (abre no rugido)
+    P(jaw, sph(0.3, 22, 14), C, [0, 0.0, 0.2], [1.0, 0.56, 0.82]);
+    P(jaw, sph(0.3, 18, 12), 0x9d84ee, [0, -0.05, 0.2], [0.94, 0.4, 0.78]);
+    [-1, 1].forEach(s => P(jaw, sph(0.028, 8, 6), 0x3a2470, [s*0.08, 0.08, 0.43]));
+    for(let k=-3;k<=3;k++){ const a = k*0.3; P(jaw, clawG(), 0xffffff, [Math.sin(a)*0.23, -0.15, 0.2 + Math.cos(a)*0.19], 0.9, [Math.PI, 0, 0]); }
+    const eyes = new T.Group(); h.add(eyes); m.skinFx.eyes = eyes;
+    [-1, 1].forEach(s => { P(h, sph(0.11, 14, 10), C, [s*0.17, 1.52, 0.2]); P(eyes, sph(0.085, 14, 10), 0xffffff, [s*0.17, 1.54, 0.27], [1, 1.05, 0.8]); P(eyes, sph(0.045, 10, 8), 0x2b1846, [s*0.165, 1.54, 0.33]);
+      P(eyes, sph(0.016, 6, 5), 0xffffff, [s*0.155, 1.565, 0.36]); P(h, caps(0.026, 0.17), D, [s*0.17, 1.64, 0.27], 1, [0.25, 0, s*0.4]); });
+    [[0.45, 1.1], [0.95, 1.0], [1.45, 0.9]].forEach(([th, sc], i) => P(h, ext('fsp', leafShape(0.1, 0.17), 0.045, 0.025), SP[i % 2], [0, 0.78 + Math.cos(th)*0.73, -0.01 - Math.sin(th)*0.5], sc*1.15, [-th, Math.PI/2, 0]));
+    for(let k=0;k<4;k++){ const y = 0.92 - k*0.17, p = onBody(Math.PI, y, 0);
+      AR(P(g, ext('fsp', leafShape(0.1, 0.17), 0.045, 0.025), SP[(k + 1) % 2], [0, p[1], p[2] + 0.01], 1.1 - k*0.06, [-(y - 0.78)*1.5, Math.PI/2, 0]), q => !(q && (q.vest || q.pack))); }
+    fatTail(g, m, C, 5, 0.13, 0.16, 0.05, SP[0]);
+    claws(m, 0xffffff);
+  },
+  tick:(m, t) => { const fx = m.skinFx; swish(m, t, 3, 0.2);
+    const roar = Math.pow(Math.max(0, Math.sin(t*0.7)), 14); if(fx.jaw) fx.jaw.rotation.x = -roar*0.45; if(fx.head) fx.head.position.y = Math.sin(t*2.2)*0.01;
+    if(fx.eyes) fx.eyes.scale.y = (t % 3.3) < 0.1 ? 0.15 : 1; },
+}, FT));
+
+// 2. TUBARÃO — o rosto sai da boca aberta do tubarão, com gengiva e dentes em volta; barbatana em cima, nadadeiras e rabo
+def('tubafant', 'Fantasia de Tubarão', 'raro', 0, 'fantasia inteira de tubarão: o seu rosto aparece dentro da bocona cheia de dentes, barbatana em cima, nadadeiras nos braços e rabo que balança. A boca dá umas mordidinhas', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:c => bodyMat('tubf' + c, g => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#557ead'); gr.addColorStop(1, '#6f97c4'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#f4f6fb'; g.beginPath(); g.ellipse(FX, rowOf(0.32), 118, 100, 0, 0, 7); g.fill();
+    g.strokeStyle = '#3f6290'; g.lineWidth = 5; g.lineCap = 'round'; [FX - 122, FX + 122].forEach((x, s) => { for(let k=0;k<3;k++){ const xx = x + (s ? 1 : -1)*k*12; g.beginPath(); g.moveTo(xx, rowOf(0.86)); g.quadraticCurveTo(xx + (s ? 1 : -1)*6, rowOf(0.76), xx, rowOf(0.66)); g.stroke(); } });
+    g.fillStyle = '#4a6f9c'; for(let k=0;k<16;k++){ const x = (k*97 + 40) % W; if(Math.abs(x - FX) < 130) continue; g.beginPath(); g.arc(x, 16 + (k*53) % 60, 4, 0, 7); g.fill(); }
+    holePaint(g, c); }),
+  limb:0x5f86b3, legCol:0x6f97c4,
+  parts:(g, m) => {
+    const C = 0x5f86b3, rx = 0.45, ry = 0.3;
+    const mouth = new T.Group(); mouth.position.set(0, 1.0, 0.42); g.add(mouth); m.skinFx.mouth = mouth; ringArm(mouth, 0.42);   // boca: encolhe um pouco na mordida
+    const mo = new T.Group(); mo.position.set(0, -1.0, -0.42); mouth.add(mo);
+    P(mo, holeRing('shk', 0.07, rx, ry), 0xff7c8c);
+    for(let k=0;k<16;k++){ const a = k/16*Math.PI*2 + 0.2; if(Math.abs(Math.cos(a)) > 0.93) continue; const p = holePt(a, rx - 0.035, ry - 0.025, 0.075);
+      P(mo, clawG(), 0xffffff, p, [1.15, 1, 1.15], [0, 0, a + Math.PI/2]); }
+    const h = hood(g, 0); dome(h, C, 'shk', 0.95, 1.12);
+    P(h, sph(0.3, 22, 14), C, [0, 1.42, 0.3], [1.0, 0.62, 0.9]);
+    P(h, sph(0.3, 18, 12), 0x7aa0cc, [0, 1.37, 0.33], [0.9, 0.45, 0.82]);
+    [-1, 1].forEach(s => { P(h, sph(0.068, 12, 9), 0x1e1e2a, [s*0.29, 1.43, 0.3]); P(h, sph(0.02, 6, 5), 0xffffff, [s*0.3, 1.46, 0.355]); });
+    const fin = new T.Group(); fin.position.set(0, 1.5, -0.12); h.add(fin); m.skinFx.fin = fin;
+    P(fin, ext('fin', finShape(0.36, 0.34, 0.2), 0.05, 0.03), C, [0, 0, 0], 1.15, [-0.15, -Math.PI/2, 0]);
+    const tail = new T.Group(); tail.position.set(0, 0.34, -0.42); g.add(tail); m.skinFx.tailF = tail;
+    P(tail, ext('tail', finShape(0.2, 0.3, 0.12), 0.04, 0.025), C, [0, 0, 0], 1.4, [-2.3, Math.PI/2, 0]);
+    P(tail, ext('tail2', finShape(0.16, 0.2, 0.06), 0.04, 0.025), C, [0, 0, 0], 1.4, [-0.9, Math.PI/2, 0]);
+    m.arms.forEach((a, k) => { const s = k ? 1 : -1; P(a, ext('pfin', finShape(0.22, 0.26, 0.12), 0.035, 0.02), C, [s*0.05, -0.02, -0.02], 1.2, [0, s*Math.PI/2, -s*1.9]); });
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(fx.tailF) fx.tailF.rotation.y = Math.sin(t*5)*0.4; if(fx.fin) fx.fin.rotation.z = Math.sin(t*2.4)*0.08;
+    const bite = Math.pow(Math.max(0, Math.sin(t*1.6)), 10); if(fx.mouth) fx.mouth.scale.set(1 - bite*0.05, 1 - bite*0.16, 1); },
+}, FT));
+
+// 3. ABACATE — metade de abacate: casca verde-escura, polpa clara na frente e o rosto no lugar do caroço
+def('abacate', 'Fantasia de Abacate', 'raro', 0, 'fantasia inteira de abacate cortado: casquinha verde-escura, polpa cremosa na frente e o seu rosto no lugar do caroço. A pontinha balança e a folhinha dança', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:c => bodyMat('abaf' + c, g => { g.fillStyle = '#35602a'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#2b5021'; for(let k=0;k<90;k++){ g.beginPath(); g.arc((k*67) % W, (k*41) % H, 3 + k % 3, 0, 7); g.fill(); }
+    g.save(); g.translate(FX, rowOf(0.82)); g.scale(1, 1.15); let gr = g.createRadialGradient(0, 0, 10, 0, 0, 118);
+    gr.addColorStop(0, '#f7f0a8'); gr.addColorStop(0.55, '#e4ea8f'); gr.addColorStop(0.9, '#a9d05a'); gr.addColorStop(1, '#6f9e38');
+    g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 118, 0, 7); g.fill(); g.restore();
+    holePaint(g, c); }),
+  limb:0x4c7d34, legCol:0x35602a,
+  parts:(g, m) => {
+    ringArm(P(g, holeRing('pit', 0.075, 0.45, 0.29), 0x8a5a2b));
+    const h = hood(g, 1.34); m.skinFx.head = h;
+    P(h, latheG('avo', [[0.37, -0.02], [0.37, 0.06], [0.33, 0.18], [0.25, 0.29], [0.14, 0.37], [0.05, 0.41], [0.001, 0.42]], 26), 0x35602a, [0, -0.06, -0.03]);
+    const st = new T.Group(); st.position.set(0, 0.35, -0.03); h.add(st); m.skinFx.stem = st;
+    P(st, caps(0.03, 0.14), 0x6b4a2a, [0, 0.05, 0], 1, [0.1, 0, 0.15]);
+    const lf = new T.Group(); lf.position.set(0.02, 0.1, 0); st.add(lf); m.skinFx.leaf = lf;
+    P(lf, ext('avleaf', leafShape(0.1, 0.24), 0.012, 0.012), 0x5cb84a, [0, 0, 0], 1, [-0.3, 0.4, -1.1]);
+    [-1, 1].forEach(s => P(g, sph(0.05, 10, 8), matC(0xff8fa0, {transparent:true, opacity:0.55}), [s*0.36, 0.83, bodyZ(s*0.36, 0.83) - 0.01], [1, 0.6, 0.4]));
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(fx.head){ const b = Math.sin(t*3); fx.head.scale.set(1 - b*0.03, 1 + b*0.05, 1 - b*0.03); fx.head.rotation.z = Math.sin(t*1.7)*0.04; }
+    if(fx.stem) fx.stem.rotation.z = Math.sin(t*2.6)*0.2; if(fx.leaf) fx.leaf.rotation.y = Math.sin(t*3.4)*0.5; },
+}, FT));
+
+// pelinho: tracinhos curtos em volta toda
+function fur(g, col, n){ g.strokeStyle = col; g.lineWidth = 2.5; g.lineCap = 'round'; for(let k=0;k<n;k++){ const x = (k*73.3) % W, y = (k*41.7) % H, a = 1.2 + Math.sin(k)*0.5; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a)*7, y + Math.sin(a)*7); g.stroke(); } }
+const belly = (g, col, y, rx, ry) => { g.fillStyle = col; g.beginPath(); g.ellipse(FX, rowOf(y), rx, ry, 0, 0, 7); g.fill(); };
+const blink = (fx, t, per) => { if(fx.eyes) fx.eyes.scale.y = (t % per) < 0.1 ? 0.15 : 1; };
+// olho de bicho: branco, pupila e brilho (num grupo, pra piscar)
+function eye(eg, x, y, z, r, pup){ P(eg, sph(r, 14, 10), 0xffffff, [x, y, z], [1, 1.05, 0.8]); P(eg, sph(r*0.52, 10, 8), pup || 0x1e1e2a, [x*0.97, y, z + r*0.7]); P(eg, sph(r*0.18, 6, 5), 0xffffff, [x*0.9, y + r*0.3, z + r*1.0]); }
+
+// 4. URSO DE PELÚCIA — marrom fofinho com barriga clara, orelhas redondas e focinho
+def('ursofant', 'Fantasia de Urso', 'comum', 0, 'fantasia inteira de urso de pelúcia: pelinho marrom, barriga clarinha, orelhas redondas que mexem e focinho com narizinho', Object.assign({
+  covers:['hat', 'outfit'], price:300,
+  body:c => bodyMat('ursf' + c, g => { g.fillStyle = '#a8703f'; g.fillRect(0, 0, W, H); fur(g, '#94602f', 520); belly(g, '#f2d3a2', 0.4, 80, 74); fur(g, 'rgba(214,170,110,.6)', 0); holePaint(g, c); }),
+  limb:0xa8703f, legCol:0x94602f,
+  parts:(g, m) => { const C = 0xa8703f;
+    ringArm(P(g, holeRing('urs', 0.07, 0.45, 0.29), 0xf2d3a2));
+    const h = hood(g, 0); dome(h, C, 'urs', 0.95, 1.1);
+    m.skinFx.ears = [-1, 1].map(s => { const e = new T.Group(); e.position.set(s*0.29, 1.46, -0.02); h.add(e); P(e, sph(0.14, 16, 12), C, [0, 0.06, 0], [1, 1, 0.55]); P(e, sph(0.09, 12, 9), 0xffb3b8, [0, 0.06, 0.05], [1, 1, 0.3]); e.userData.s = s; return e; });
+    P(h, sph(0.13, 16, 12), 0xf2d3a2, [0, 1.35, 0.36], [1.25, 0.8, 0.75]); P(h, sph(0.045, 10, 8), 0x3a2416, [0, 1.39, 0.45], [1.4, 1, 1]);
+    const eyes = new T.Group(); h.add(eyes); m.skinFx.eyes = eyes; [-1, 1].forEach(s => { P(eyes, sph(0.04, 10, 8), 0x2b1a12, [s*0.15, 1.47, 0.29]); P(eyes, sph(0.013, 6, 5), 0xffffff, [s*0.14, 1.485, 0.325]); });
+    m.arms.forEach(a => P(a, sph(0.07, 10, 8), 0xf2d3a2, [0, -0.02, 0.07], [1, 1, 0.4]));
+    P(g, sph(0.09, 12, 9), 0xf2d3a2, [0, 0.36, -0.43]);   // rabinho
+  },
+  tick:(m, t) => { const fx = m.skinFx; (fx.ears || []).forEach((e, k) => { const w = Math.pow(Math.max(0, Math.sin(t*1.3 + k*2.1)), 12); e.rotation.z = -e.userData.s*w*0.35; }); blink(fx, t, 3.1); },
+}, FT));
+
+// 5. POLVO — cabeção rosa com pintinhas e oito tentáculos que ondulam em volta
+def('polvofant', 'Fantasia de Polvo', 'epico', 0, 'fantasia inteira de polvo: cabeção rosa cheio de pintinhas, olhos grandes e oito tentáculos com ventosas que ondulam sem parar', Object.assign({
+  covers:['hat', 'outfit'], price:550,
+  body:c => bodyMat('polf' + c, g => { g.fillStyle = '#f25c9a'; g.fillRect(0, 0, W, H); g.fillStyle = '#d9417f'; for(let k=0;k<40;k++){ const x = (k*89) % W, y = (k*47) % H; if(Math.abs(x - FX) < 110 && Math.abs(y - rowOf(1.0)) < 70) continue; wrapX(xx => { g.beginPath(); g.arc(xx, y, 4 + k % 4*2, 0, 7); g.fill(); }, x); } holePaint(g, c); }),
+  limb:0xf25c9a, legCol:0xd9417f,
+  parts:(g, m) => { const C = 0xf25c9a;
+    ringArm(P(g, holeRing('pol', 0.065, 0.45, 0.29), 0xff9cc4));
+    const h = hood(g, 0); dome(h, C, 'pol', 0.95, 1.3);
+    [[0.4, 0.2, 0.07], [2.2, 0.35, 0.055], [3.3, 0.45, 0.06], [-1.4, 0.4, 0.05], [1.3, 0.6, 0.05], [-2.4, 0.6, 0.06], [2.8, 0.85, 0.05], [-0.9, 0.75, 0.045]].forEach(([az, ph, r]) => { const n = [Math.sin(az)*Math.sin(ph), Math.cos(ph), Math.cos(az)*Math.sin(ph)];
+      P(h, sph(r, 10, 8), 0xd9417f, [n[0]*0.54, 0.78 + n[1]*0.878, -0.01 + n[2]*0.518], [1, 1, 0.35]).lookAt(n[0]*9, 0.78 + n[1]*9, n[2]*9); });
+    const eyes = new T.Group(); h.add(eyes); m.skinFx.eyes = eyes; [-1, 1].forEach(s => eye(eyes, s*0.17, 1.42, 0.33, 0.085));
+    m.skinFx.tent = []; for(let k=0;k<8;k++){ const a = Math.PI/8 + k*Math.PI/4, p = onBody(a, 0.3, 0), o = new T.Group(); o.position.set(p[0]*0.95, 0.3, p[2]*0.95); o.rotation.y = a; g.add(o);
+      const i = new T.Group(); i.rotation.x = -1.05; o.add(i); const segs = chain(i, 4, 0.085, 0.07, 0.035, matC(C), null);
+      segs.forEach((s, j) => P(s, sph(0.022, 6, 5), 0xffd0e2, [0, -0.04, 0.06 - j*0.008], [1, 1, 0.5]));
+      m.skinFx.tent.push(segs); }
+  },
+  tick:(m, t) => { const fx = m.skinFx; (fx.tent || []).forEach((segs, k) => segs.forEach((s, j) => { s.rotation.x = Math.sin(t*3 + k*0.9 - j*0.8)*0.3 + (j ? 0.15 : 0); s.rotation.z = Math.sin(t*2.2 + k*1.7 - j*0.6)*0.15; })); blink(fx, t, 3.7); },
+}, FT));
+
+// 6. BANANA — banana descascando: casca amarela com pintinhas, cabinho em cima e quatro tiras de casca soltas na cintura
+def('bananafant', 'Fantasia de Banana', 'comum', 0, 'fantasia inteira de banana: casca amarela com pintinhas, cabinho curvado em cima e tiras de casca soltas na cintura que balançam', Object.assign({
+  covers:['hat', 'outfit'], price:300,
+  body:c => bodyMat('banf' + c, g => { const gr = g.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, '#f4d23a'); gr.addColorStop(1, '#ffe36a'); g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    g.strokeStyle = '#d9b42a'; g.lineWidth = 3; for(let k=0;k<5;k++){ const x = FX + 128 + k*W/5; wrapX(xx => { g.beginPath(); g.moveTo(xx, 0); g.lineTo(xx, H); g.stroke(); }, x % W); }
+    g.fillStyle = '#8a5a22'; for(let k=0;k<22;k++){ const x = (k*113) % W, y = (k*59) % (H - 30) + 10; if(Math.abs(x - FX) < 110 && Math.abs(y - rowOf(1.0)) < 70) continue; g.beginPath(); g.ellipse(x, y, 3 + k % 3, 2, 0.5, 0, 7); g.fill(); }
+    belly(g, '#fff3c4', 0.33, 70, 54); holePaint(g, c); }),
+  limb:0xffd84a, legCol:0xf4c63a,
+  parts:(g, m) => { const C = 0xf4d23a;
+    ringArm(P(g, holeRing('ban', 0.065, 0.45, 0.29), 0xfff3c4));
+    const h = hood(g, 0); dome(h, C, 'ban', 0.95, 1.12);
+    const st = new T.Group(); st.position.set(0, 1.5, -0.04); h.add(st); m.skinFx.stem = st;
+    const sg = chain(st, 3, 0.07, 0.07, 0.045, matC(0xc9b03a), null); st.rotation.x = Math.PI - 0.2; sg.forEach((s, i) => s.rotation.x = 0.35);
+    P(sg[2], sph(0.05, 10, 8), 0x5a3a1a, [0, -0.09, 0], [1, 0.6, 1]);
+    m.skinFx.peel = []; for(let k=0;k<4;k++){ const a = Math.PI/4 + k*Math.PI/2, p = onBody(a, 0.5, 0.04), o = new T.Group(); o.position.set(...p); o.rotation.y = a; g.add(o);
+      if(k === 1 || k === 2) AR(o, q => !(q && q.pack));
+      P(o, ext('peel', leafShape(0.13, 0.4), 0.02, 0.015), 0xf4d23a, [0, 0, 0], 1, [Math.PI + 0.35, 0, 0]); P(o, ext('peel2', leafShape(0.1, 0.32), 0.012, 0.01), 0xfff3c4, [0, -0.02, -0.02], 1, [Math.PI + 0.35, 0, 0]); m.skinFx.peel.push(o); }
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(fx.stem) fx.stem.rotation.z = Math.sin(t*2.4)*0.12; (fx.peel || []).forEach((o, k) => o.children.forEach(c => c.rotation.x = Math.PI + 0.35 + Math.sin(t*3 + k*1.6)*0.12)); },
+}, FT));
+
+// 7. PINGUIM — azul-marinho com barrigona branca, bico laranja, nadadeiras que batem, pés de pato e cachecol
+def('pinguimfant', 'Fantasia de Pinguim', 'raro', 0, 'fantasia inteira de pinguim: azul-marinho com barrigona branca, bico laranja, nadadeiras que batem, pés de pato e cachecol vermelho', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:c => bodyMat('pinf' + c, g => { g.fillStyle = '#273049'; g.fillRect(0, 0, W, H); belly(g, '#f4f6fb', 0.6, 118, 128); holePaint(g, c); }),
+  limb:0x273049, legCol:0xff9f1c,
+  parts:(g, m) => { const C = 0x273049;
+    ringArm(P(g, holeRing('pin', 0.06, 0.45, 0.29), 0xdfe5f2));
+    const h = hood(g, 0); dome(h, C, 'pin', 0.95, 1.1);
+    P(h, G('beak', () => new T.ConeGeometry(0.08, 0.2, 14)), 0xff9f1c, [0, 1.36, 0.43], [1.4, 1, 0.7], [Math.PI/2 + 0.2, 0, 0]);
+    const eyes = new T.Group(); h.add(eyes); m.skinFx.eyes = eyes; [-1, 1].forEach(s => eye(eyes, s*0.15, 1.46, 0.3, 0.06));
+    m.skinFx.flip = m.arms.map((a, k) => { const s = k ? 1 : -1; return P(a, ext('flip', leafShape(0.11, 0.34), 0.03, 0.02), C, [s*0.03, 0.04, -0.02], 1, [0, s*Math.PI/2, s*(Math.PI - 0.35)]); });
+    m.legs.forEach(l => P(l, sph(0.1, 12, 8), 0xff9f1c, [0, 0.02, 0.1], [1.2, 0.3, 1.3]));
+    const sc = AR(P(g, tor(0.49, 0.045, 30), 0xe8323f, [0, 0.62, 0], [1, 1, 0.98], [Math.PI/2, 0, 0]), q => !(q && q.vest));
+    AR(P(g, caps(0.045, 0.24), 0xe8323f, [0.2, 0.52, 0.44], 1, [0.2, 0, 0.35]), q => !(q && q.vest));
+  },
+  tick:(m, t) => { const fx = m.skinFx; (fx.flip || []).forEach((f, k) => f.rotation.x = Math.pow(Math.max(0, Math.sin(t*2.2)), 6)*0.8*Math.sin(t*24)); blink(fx, t, 2.9); },
+}, FT));
+
+// 8. SAPO PRÍNCIPE — sapo verde com olhões em cima, bochechas rosadas e uma coroinha dourada
+def('sapofant', 'Fantasia de Sapo Príncipe', 'raro', 0, 'fantasia inteira de sapo: verde com pintinhas, olhões saltados em cima, bochechas rosadas e uma coroinha dourada que pula quando ele pisca', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:c => bodyMat('sapf' + c, g => { g.fillStyle = '#5cc24a'; g.fillRect(0, 0, W, H); g.fillStyle = '#47a338'; for(let k=0;k<30;k++){ const x = (k*97) % W, y = (k*43) % H; if(Math.abs(x - FX) < 110 && y > rowOf(1.2)) continue; wrapX(xx => { g.beginPath(); g.arc(xx, y, 5 + k % 3*3, 0, 7); g.fill(); }, x); }
+    belly(g, '#d8f0a0', 0.38, 86, 80); holePaint(g, c); }),
+  limb:0x5cc24a, legCol:0x47a338,
+  parts:(g, m) => { const C = 0x5cc24a;
+    ringArm(P(g, holeRing('sap', 0.065, 0.45, 0.29), 0x8fdc6e));
+    const h = hood(g, 0); dome(h, C, 'sap', 0.95, 1.06);
+    const eyes = new T.Group(); h.add(eyes); m.skinFx.eyes = eyes;
+    [-1, 1].forEach(s => { P(h, sph(0.15, 16, 12), C, [s*0.2, 1.45, 0.16]); eye(eyes, s*0.2, 1.48, 0.25, 0.1); P(g, sph(0.07, 10, 8), matC(0xff8fa0, {transparent:true, opacity:0.6}), [s*0.41, 0.95, bodyZ(s*0.41, 0.95) - 0.005], [1, 0.6, 0.35]); });
+    const cr = new T.Group(); cr.position.set(0, 1.52, -0.08); cr.rotation.x = -0.15; h.add(cr); m.skinFx.crown = cr;
+    const gold = phong(0xffc928, {shininess:80}); P(cr, latheG('crown', [[0.13, 0], [0.13, 0.07], [0.001, 0.07]], 18), gold, [0, 0, 0]);
+    for(let k=0;k<5;k++){ const a = k/5*Math.PI*2; P(cr, G('cspk', () => new T.ConeGeometry(0.035, 0.09, 8)), gold, [Math.sin(a)*0.11, 0.11, Math.cos(a)*0.11]); P(cr, sph(0.02, 6, 5), [0xff3b4e, 0x4d7cff][k % 2], [Math.sin(a)*0.135, 0.04, Math.cos(a)*0.135]); }
+    m.legs.forEach(l => { for(let j=0;j<3;j++) P(l, sph(0.04, 8, 6), 0x47a338, [(j - 1)*0.07, 0.02, 0.17], [1, 0.6, 1]); });
+  },
+  tick:(m, t) => { const fx = m.skinFx; blink(fx, t, 2.6); if(fx.crown){ const j = (t % 2.6) < 0.25 ? Math.sin((t % 2.6)/0.25*Math.PI) : 0; fx.crown.position.y = 1.52 + j*0.08; } },
+}, FT));
+
+// 9. COGUMELO — tronquinho creme e um chapéu vermelho enorme com bolinhas brancas
+def('cogufant', 'Fantasia de Cogumelo', 'raro', 0, 'fantasia inteira de cogumelo: corpo de tronquinho creme e um chapéu vermelho enorme de bolinhas brancas que balança. Solta esporinhas brilhantes', Object.assign({
+  covers:['hat', 'outfit'], price:400,
+  body:c => bodyMat('cogf' + c, g => { g.fillStyle = '#f6ead2'; g.fillRect(0, 0, W, H); g.strokeStyle = '#e6d3b0'; g.lineWidth = 3; for(let x=6;x<W;x+=22){ g.beginPath(); g.moveTo(x, 20); g.quadraticCurveTo(x + 6, H*0.6, x - 2, H); g.stroke(); } holePaint(g, c); }),
+  limb:0xf6ead2, legCol:0xe6d3b0,
+  parts:(g, m) => {
+    ringArm(P(g, holeRing('cog', 0.065, 0.45, 0.29), 0xe0c99c));
+    const h = hood(g, 0), cap = new T.Group(); cap.position.set(0, 1.27, -0.02); h.add(cap); m.skinFx.cap = cap;
+    P(cap, latheG('mcap', [[0.001, -0.02], [0.4, -0.02], [0.6, 0.0], [0.64, 0.06], [0.6, 0.16], [0.5, 0.27], [0.34, 0.36], [0.16, 0.41], [0.001, 0.42]], 30), 0xe8323f, [0, 0, 0]);
+    P(cap, latheG('mgill', [[0.6, 0.01], [0.4, -0.015], [0.001, -0.015]], 30), 0xf2dcc0, [0, -0.005, 0]);
+    [[0, 0.42, 0, 0.09], [0.32, 0.3, 0.2, 0.08], [-0.34, 0.28, 0.16, 0.07], [0.2, 0.33, -0.3, 0.08], [-0.25, 0.3, -0.3, 0.075], [0.52, 0.12, -0.12, 0.06], [-0.5, 0.13, -0.15, 0.06], [0.05, 0.22, 0.52, 0.065], [0.42, 0.14, 0.36, 0.055], [-0.4, 0.14, 0.38, 0.055]]
+      .forEach(([x, y, z, r]) => P(cap, sph(r, 12, 8), 0xffffff, [x, y, z], [1, 1, 0.45]).lookAt(x*2, y*2 + 0.2, z*2));
+    const sp = new T.Group(); g.add(sp); m.skinFx.spores = sp; const sm = addM(0xfff6a0, 0.9);
+    for(let k=0;k<10;k++){ const d = new T.Mesh(sph(0.018, 6, 4), sm); d.userData = {k, a:k*2.39, r:0.55 + (k % 3)*0.08}; sp.add(d); }
+  },
+  tick:(m, t) => { const fx = m.skinFx; if(fx.cap){ fx.cap.rotation.z = Math.sin(t*1.9)*0.05; fx.cap.rotation.x = Math.sin(t*1.4)*0.04; const b = Math.sin(t*3.2); fx.cap.scale.set(1 + b*0.02, 1 - b*0.03, 1 + b*0.02); }
+    if(fx.spores) fx.spores.children.forEach(d => { const u = d.userData, f = ((t*0.25 + u.k*0.1) % 1); d.position.set(Math.sin(u.a + t*0.5)*u.r, 1.3 - f*1.1, Math.cos(u.a + t*0.5)*u.r); d.scale.setScalar(Math.sin(f*Math.PI)); }); },
+}, FT));
+
 // ---------- COSMÉTICOS NOVOS (chapéu/óculos/roupa) ----------
 // formato compatível com addCos do jogo: COS[id](g, col, m) monta as peças no grupo g (preso no tilt). Devolve uma função tick opcional.
 const COS = {}, CINFO = [];
@@ -12121,7 +12362,7 @@ const SHOP = {
   hat:[['h0','Nada',0,'—'],['h1','Boné',60,'🧢'],['h2','Chapéu de festa',50,'🎉'],['h3','Cartola',120,'🎩'],['h4','Orelhas de gato',90,'🐱'],['h5','Hélice',150,'🚁'],['h6','Chifres viking',140,'🤘'],['h7','Flor',80,'🌼'],['h8','Chef',110,'🍰'],['h9','Coroa',400,'👑',10],['hp1','Chapéu de palha',250,'👒',0,0,0,1],['hp2','Folhas de abacaxi',250,'🍍',0,0,0,1],['hp3','Auréola',500,'😇',0,0,0,1],['hp4','Chapéu de cangaceiro',-1,'🌙',99,8],['hp5','Lenço de chita',-1,'🌸',99,17],['hp6','Coroa de milho',-1,'🌽',99,28],['h10','Fone de ouvido',110,'🎧'],['h11','Chapéu de mago',160,'🧙']],
   glasses:[['g0','Nada',0,'—'],['g1','Óculos escuros',60,'🕶️'],['g2','Óculos redondos',70,'👓'],['g3','Óculos de coração',90,'💖'],['g4','Máscara de herói',120,'🦸'],['g5','Óculos 3D',100,'🎬'],['gp1','Óculos de mergulho',250,'🤿',0,0,0,1],['gp2','Óculos estrela',250,'⭐',0,0,0,1],['gp3','Óculos de fogueira',-1,'🔥',99,5],['gp4','Bigodão caipira',-1,'🥸',99,23],['g6','Óculos de aviador',90,'🥽']],
   outfit:[['o0','Nada',0,'—'],['o1','Gravata borboleta',50,'🎀'],['o2','Cachecol',80,'🧣'],['o3','Capa',200,'🦇'],['o4','Boia',120,'⭕'],['o5','Mochila',150,'🎒'],['op1','Colar havaiano',250,'🌺',0,0,0,1],['op3','Prancha',250,'🏄',0,0,0,1],['op2','Asas douradas',500,'✨',0,0,0,1],['op4','Bandeirinhas',-1,'🎏',99,11],['op5','Lenço xadrez',-1,'🧣',99,20],['op6','Balão junino',-1,'🏮',99,30],['o6','Violão nas costas',180,'🎸']],
-  skin:[['s0','Nada',0,'—'],['sp1','Melancia',350,'🍉',0,0,'melancia',1],['sp2','Salva-vidas',350,'🛟',0,0,'salva',1],['sp3','Casquinha',350,'🍦',0,0,'sorvete',1],['sp4','Tubarão',350,'🦈',0,0,'tubarao',1],['sp5','Caranguejo',500,'🦀',0,0,'caranguejo',1],['sp6','Abacaxi',500,'🍍',0,0,'abacaxi',1],['sp7','Boia de patinho',350,'🦆',0,0,'patinho',1],['sp8','Sol de Verão',800,'☀️',0,0,'sol',1],['sp9','Caipira',-1,'🤠',99,4,'caipira'],['sp10','Pipoca',-1,'🍿',99,7,'pipoca'],['sp11','Espiga de milho',-1,'🌽',99,10,'milho'],['sp12','Noivinha da quadrilha',-1,'👰',99,13,'noiva'],['sp13','Espantalho',-1,'🐦',99,16,'espantalho'],['sp14','Maçã do amor',-1,'🍎',99,19,'maca'],['sp15','Sanfoneiro',-1,'🪗',99,22,'sanfona'],['sp16','Fogueira de São João',-1,'🔥',99,29,'fogueira'],['sp17','Astronauta',400,'🧑‍🚀',0,0,'astronauta',1],['sp18','Ninja',300,'🥷',0,0,'ninja',1],['sp19','Robô',450,'🤖',0,0,'robo',1],['sp20','Dinossauro',350,'🦖',0,0,'dino',1],['sp21','Abelha',300,'🐝',0,0,'abelha',1],['sp22','Nuvem de chuva',400,'🌧️',0,0,'nuvem',1],['sp23','Água-viva',400,'🪼',0,0,'aguaviva',1],['sp24','DJ Feijão',400,'🎧',0,0,'dj',1],['sp25','Foguete',550,'🚀',0,0,'foguete',1],['sp26','Bola de discoteca',550,'🪩',0,0,'disco',1],['sp27','Dragão',800,'🐉',0,0,'dragao',1],['sp28','Galáxia',800,'🌌',0,0,'galaxia',1],['sp29','Bailarina',300,'🩰',0,0,'bailarina',1],['sp30','Gatinha',400,'🐱',0,0,'gatinha',1],['sp31','Sereia',550,'🧜',0,0,'sereia',1],['sp32','Unicórnio',550,'🦄',0,0,'unicornio',1],['sp33','Borboleta',550,'🦋',0,0,'borboleta',1],['sp34','Moranguinho',300,'🍓',0,0,'moranguinho',1],['sp35','Pop Star',400,'🎤',0,0,'popstar',1],['sp36','Fada das Flores',800,'🧚',0,0,'fada',1],['sp37','Soldado de Selva',300,'🪖',0,0,'selva',1],['sp38','Soldado do Deserto',300,'🏜️',0,0,'deserto',1],['sp39','Médico de Combate',300,'⛑️',0,0,'medico',1],['sp40','Soldado da Neve',400,'❄️',0,0,'neve',1],['sp41','Soldado Urbano',400,'🏙️',0,0,'urbano',1],['sp42','Atirador Camuflado',400,'🌿',0,0,'ghillie',1],['sp43','Paraquedista',550,'🪂',0,0,'paraquedista',1],['sp44','Comandante',550,'🎖️',0,0,'comandante',1],['sp45','Operações Especiais',800,'🥽',0,0,'operador',1]],
+  skin:[['s0','Nada',0,'—'],['sp1','Melancia',350,'🍉',0,0,'melancia',1],['sp2','Salva-vidas',350,'🛟',0,0,'salva',1],['sp3','Casquinha',350,'🍦',0,0,'sorvete',1],['sp4','Tubarão',350,'🦈',0,0,'tubarao',1],['sp5','Caranguejo',500,'🦀',0,0,'caranguejo',1],['sp6','Abacaxi',500,'🍍',0,0,'abacaxi',1],['sp7','Boia de patinho',350,'🦆',0,0,'patinho',1],['sp8','Sol de Verão',800,'☀️',0,0,'sol',1],['sp9','Caipira',-1,'🤠',99,4,'caipira'],['sp10','Pipoca',-1,'🍿',99,7,'pipoca'],['sp11','Espiga de milho',-1,'🌽',99,10,'milho'],['sp12','Noivinha da quadrilha',-1,'👰',99,13,'noiva'],['sp13','Espantalho',-1,'🐦',99,16,'espantalho'],['sp14','Maçã do amor',-1,'🍎',99,19,'maca'],['sp15','Sanfoneiro',-1,'🪗',99,22,'sanfona'],['sp16','Fogueira de São João',-1,'🔥',99,29,'fogueira'],['sp17','Astronauta',400,'🧑‍🚀',0,0,'astronauta',1],['sp18','Ninja',300,'🥷',0,0,'ninja',1],['sp19','Robô',450,'🤖',0,0,'robo',1],['sp20','Dinossauro',350,'🦖',0,0,'dino',1],['sp21','Abelha',300,'🐝',0,0,'abelha',1],['sp22','Nuvem de chuva',400,'🌧️',0,0,'nuvem',1],['sp23','Água-viva',400,'🪼',0,0,'aguaviva',1],['sp24','DJ Feijão',400,'🎧',0,0,'dj',1],['sp25','Foguete',550,'🚀',0,0,'foguete',1],['sp26','Bola de discoteca',550,'🪩',0,0,'disco',1],['sp27','Dragão',800,'🐉',0,0,'dragao',1],['sp28','Galáxia',800,'🌌',0,0,'galaxia',1],['sp29','Bailarina',300,'🩰',0,0,'bailarina',1],['sp30','Gatinha',400,'🐱',0,0,'gatinha',1],['sp31','Sereia',550,'🧜',0,0,'sereia',1],['sp32','Unicórnio',550,'🦄',0,0,'unicornio',1],['sp33','Borboleta',550,'🦋',0,0,'borboleta',1],['sp34','Moranguinho',300,'🍓',0,0,'moranguinho',1],['sp35','Pop Star',400,'🎤',0,0,'popstar',1],['sp36','Fada das Flores',800,'🧚',0,0,'fada',1],['sp37','Soldado de Selva',300,'🪖',0,0,'selva',1],['sp38','Soldado do Deserto',300,'🏜️',0,0,'deserto',1],['sp39','Médico de Combate',300,'⛑️',0,0,'medico',1],['sp40','Soldado da Neve',400,'❄️',0,0,'neve',1],['sp41','Soldado Urbano',400,'🏙️',0,0,'urbano',1],['sp42','Atirador Camuflado',400,'🌿',0,0,'ghillie',1],['sp43','Paraquedista',550,'🪂',0,0,'paraquedista',1],['sp44','Comandante',550,'🎖️',0,0,'comandante',1],['sp45','Operações Especiais',800,'🥽',0,0,'operador',1],['sp46','Fantasia de Rex',550,'🦖',0,0,'rexfant',1],['sp47','Fantasia de Tubarão',400,'🦈',0,0,'tubafant',1],['sp48','Fantasia de Abacate',400,'🥑',0,0,'abacate',1],['sp49','Fantasia de Urso',300,'🧸',0,0,'ursofant',1],['sp50','Fantasia de Polvo',550,'🐙',0,0,'polvofant',1],['sp51','Fantasia de Banana',300,'🍌',0,0,'bananafant',1],['sp52','Fantasia de Pinguim',400,'🐧',0,0,'pinguimfant',1],['sp53','Fantasia de Sapo Príncipe',400,'🐸',0,0,'sapofant',1],['sp54','Fantasia de Cogumelo',400,'🍄',0,0,'cogufant',1]],
 };
 const SLOTS = {color:'Cores', hat:'Chapéus', glasses:'Óculos', outfit:'Roupas', skin:'Skins'};
 const SAVE = (() => { let s = null; try{ s = JSON.parse(localStorage.getItem('feijao-save')); }catch(e){} s = s && typeof s === 'object' ? s : {};
