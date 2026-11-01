@@ -12565,8 +12565,8 @@ const WPN = {
   flame:{name:'Lança-chamas de Pimenta', ic:'🌶️', rar:2, dmg:3, cd:0.07, v:15, g:3, n:2, spr:0.08, ammo:160, col:0xff6a1a, r:0.16, auto:true, rng:8, mag:50, rel:2.6, kb:0.08, kick:0.002, life:0.5, flame:true},
   // armas novas (31/10): jabuticaba = revólver de 6, forte e lento. abacate = pistolão pesado. caju = fuzil semiautomático entre o milho e a abóbora
   // grão-de-bico = cano duplo, 2 tiros e abre pra recarregar. limão = submetralhadora rapidinha. cana = besta silenciosa com flecha em arco bem curvo
-  revolver:{name:'Revólver de Jabuticaba', ic:'🫐', rar:1, dmg:22, cd:0.4, v:120, g:-9.8, n:1, spr:0.01, ammo:36, col:0x4a1d4f, r:0.15, rng:30, mag:6, rel:2.2, kb:1.0, kick:0.03, drag:0.35},
-  deagle:{name:'Pistolão de Abacate', ic:'🥑', rar:2, dmg:27, cd:0.35, v:140, g:-9.8, n:1, spr:0.014, ammo:35, col:0x5a8a2a, r:0.16, rng:30, mag:7, rel:1.8, kb:1.2, kick:0.045, drag:0.3},
+  revolver:{name:'Revólver de Jabuticaba', ic:'🫐', rar:1, dmg:22, cd:0.4, v:120, g:-9.8, n:1, spr:0.01, ammo:36, col:0x4a1d4f, r:0.15, rng:30, mag:6, rel:2.2, kb:1.0, kick:0.022, drag:0.35, rec:1},
+  deagle:{name:'Pistolão de Abacate', ic:'🥑', rar:2, dmg:27, cd:0.35, v:140, g:-9.8, n:1, spr:0.014, ammo:35, col:0x5a8a2a, r:0.16, rng:30, mag:7, rel:1.8, kb:1.2, kick:0.03, drag:0.3, rec:1},
   caju:{name:'Fuzil de Caju', ic:'🍎', rar:2, dmg:28, cd:0.25, v:260, g:-9.8, n:1, spr:0.006, ammo:40, col:0xff5a2a, r:0.14, rng:55, mag:10, rel:2.6, kb:1.0, kick:0.03, drag:0.15},
   grao:{name:'Escopeta de Grão-de-bico', ic:'🫘', rar:1, dmg:12, cd:0.18, v:110, g:-9.8, n:9, spr:0.14, ammo:14, col:0xd9b26a, r:0.12, life:0.14, rng:8, mag:2, rel:2.2, kb:2.0, kick:0.04, drag:1.6},
   limao:{name:'Submetralhadora de Limão', ic:'🍋', rar:0, dmg:5, cd:0.06, v:110, g:-9.8, n:1, spr:0.06, ammo:140, col:0x7ed957, r:0.11, auto:true, rng:18, mag:35, rel:1.6, kb:0.25, kick:0.005, drag:0.5},
@@ -13101,8 +13101,8 @@ function pickUp(p, L){
 const nearLoot = (p, R, pred) => { let best = null, bd = R; const m = lootGrid(), x0 = Math.floor((p.pos.x - R)/LGC), x1 = Math.floor((p.pos.x + R)/LGC), z0 = Math.floor((p.pos.z - R)/LGC), z1 = Math.floor((p.pos.z + R)/LGC);
   for(let cx = x0; cx <= x1; cx++) for(let cz = z0; cz <= z1; cz++){ const cell = m.get(cx*65536 + cz); if(cell) for(const L of cell){ if(Math.abs(L.pos.y - p.pos.y) > 1.3 || (pred && !pred(L))) continue; const d = Math.hypot(L.pos.x - p.pos.x, L.pos.z - p.pos.z); if(d < bd){ bd = d; best = L; } } } return best; };
 function kickCam(p, w){ const a = p.ads ? 0.5 : 1, kv = w.kick*a*rand(0.85, 1.15), kh = w.kick*a*(w.auto ? 0.45 : 0.25)*(rand(-1, 1) + (w.auto ? 0.35 : 0));
-  pitch = clamp(pitch - kv, p.ads ? -0.55 : 0.05, 1.1); yaw -= kh; p.recV = Math.min(0.3, (p.recV || 0) + kv); p.recT = 0; VM.kick = Math.min(1.4, VM.kick + 0.5 + w.kick*12); }
-function recoverCam(p){ p.recT = (p.recT || 0) + 1/60; if(!(p.recV > 0) || p.recT < 0.09) return; const r = Math.max(0.0006, p.recV*0.12); const d = Math.min(r, p.recV); p.recV -= d; pitch = clamp(pitch + d*0.85, p.ads ? -0.55 : 0.05, 1.1); }
+  pitch = clamp(pitch - kv, p.ads ? -0.55 : 0.05, 1.1); yaw -= kh; p.recV = Math.min(0.3, (p.recV || 0) + kv); p.recT = 0; p.recK = w.rec || 0.85; VM.kick = Math.min(1.4, VM.kick + (w.rec ? 0.35 + w.kick*9 : 0.5 + w.kick*12)); }
+function recoverCam(p){ p.recT = (p.recT || 0) + 1/60; if(!(p.recV > 0) || p.recT < 0.09) return; const r = Math.max(0.0006, p.recV*(p.recK >= 1 ? 0.2 : 0.12)); const d = Math.min(r, p.recV); p.recV -= d; pitch = clamp(pitch + d*(p.recK || 0.85), p.ads ? -0.55 : 0.05, 1.1); }
 function fireW(p, dir){ p.lastShot = clock; p.shotFx = true;
   const it = normIt(p.inv[p.sel]), w = WI(it);
   if(p.relT > 0) return;
