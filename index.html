@@ -8873,7 +8873,7 @@ function chfHud(){ if(CHF_HUD) return CHF_HUD;
   const d = document.createElement('div'); d.id = 'chfHud'; d.hidden = true;
   d.innerHTML = '<div class="n"><em>DRAGÃO DE PIMENTA</em><span id="chfPh">FASE 1</span></div><div class="b"><u id="chfGh"></u><i id="chfFill"></i><b style="left:33.3%"></b><b style="left:66.6%"></b></div><div class="s" id="chfSub"></div>';
   document.body.appendChild(d); return CHF_HUD = d; }
-function chfHudHide(){ if(CHF_HUD) CHF_HUD.hidden = true; }
+function chfHudHide(){ if(CHF_HUD) CHF_HUD.hidden = true; if(typeof chfMiraHide === 'function') chfMiraHide(); }
 
 // ---------- avisos de área no chão (estilo da referência do Bruno: faixa/área laranja com borda brilhante que vai se enchendo) ----------
 const CHF_TG_VS = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix*modelViewMatrix*vec4(position, 1.0); }';
@@ -9074,13 +9074,13 @@ function updateChefao(dt){ if(!chf) return; const c = chf, play = R1.phase === '
   // ondas (pule!)
   c.waves = c.waves.filter(w => { w.r += w.v*dt; w.m.scale.setScalar(w.r); w.m2.scale.set(w.r, 1, w.r); w.m.material.opacity = Math.max(0, 0.95 - w.r/(c.R*2)); w.m2.material.opacity = w.m.material.opacity*0.45;
     for(const q of players){ if(!q.alive || q.dying > 0 || q.hitCD > 0) continue; const dx = q.pos.x - w.cx, dz = q.pos.z - w.cz, d = Math.hypot(dx, dz); if(Math.abs(d - w.r) > 0.9 || q.pos.y > 0.55) continue;
-      const f = (w.power ? 5.5 : 4.5)*c.kf; knock(q, dx/Math.max(d, 0.1)*f, 6, dz/Math.max(d, 0.1)*f, 0.55, 'onda'); }
+      const f = (w.power ? 5.5 : 4.5)*c.kf; if((q.chfInv || 0) > 0) knock(q, dx/Math.max(d, 0.1)*f, 6, dz/Math.max(d, 0.1)*f, 0.55, 'onda'); else chfHurt(q, 'onda', {x:w.cx, z:w.cz, kb:f}); }   // onda tira 1 coração (pedido do Bruno 01/11 18:03): só pulando desvia
     if(w.r > c.R*2 + 3){ world.remove(w.m); world.remove(w.m2); return false; } return true; });
   chfBombsUpd(dt, play);
   // corpo sólido no chão
   if(c.alt < 4 && c.st !== 'dead') for(const q of players){ if(!q.alive || q.dying > 0) continue; const dx = q.pos.x - c.pos.x, dz = q.pos.z - c.pos.z, d = Math.hypot(dx, dz), r = c.BR + 0.4;
     if(d < r && q.pos.y < 9){ const a = d > 0.01 ? Math.atan2(dx, dz) : rand(0, 7); q.pos.x = c.pos.x + Math.sin(a)*r; q.pos.z = c.pos.z + Math.cos(a)*r; const vn = q.vel.x*Math.sin(a) + q.vel.z*Math.cos(a); if(vn < 0){ q.vel.x -= vn*Math.sin(a); q.vel.z -= vn*Math.cos(a); } } }
-  chfHudSet(); }
+  chfMira(); chfHudSet(); }
 function chfPose0(dt, lean, head, jaw, aY, aP, tailY, flap, moving){ const c = chf, f = Math.min(1, dt*6), fast = c.st === 'atk' && c.a === 'slam' && c.tgs.length && c.tgs[c.tgs.length - 1].st > 0;
   if(moving){ const w = Math.sin(clock*(moving > 1 ? 16 : 8)); aP = [aP[0] + w*0.35, aP[1] - w*0.35]; }
   c.root.position.set(c.pos.x, c.alt, c.pos.z); c.root.rotation.y = c.yaw;
@@ -9117,12 +9117,28 @@ const chfCore = () => new V3(chf.pos.x, chf.alt + 5, chf.pos.z);
 function chfNewBomb(){ const c = chf; let x, z, k = 0; do { const a = rand(0, Math.PI*2), r = Math.sqrt(rand(0.05, 1))*Math.min(c.R - 3.2, 24); x = Math.sin(a)*r; z = Math.cos(a)*r; } while(Math.hypot(x - c.pos.x, z - c.pos.z) < c.BR + 2 && k++ < 8);
   const g = new THREE.Group(); world.add(g); chfMesh('boss_bomb', g, chfMats().soft, 1.1);
   const b = {g, pos:new V3(x, 0.55, z), vel:new V3(), holder:null, live:null, t:rand(0, 6)}; g.position.copy(b.pos); c.bombs.push(b); if(near({pos:b.pos}, 40)) puff(x, 0.4, z, 5, 0xbfefff, 0.12, 2); return b; }
-function chfThrow(p){ const b = p.chfB; if(!b) return; p.chfB = null; b.holder = null; b.live = p;
-  const C = chfCore(); let tx = C.x, ty = C.y, tz = C.z; const fx = Math.sin(p.face), fz = Math.cos(p.face);
+function chfAim(p){ const C = chfCore(); let tx = C.x, ty = C.y, tz = C.z; const fx = Math.sin(p.face), fz = Math.cos(p.face);
   if(chf.v.st === 'ground'){ const dx = chf.v.pos.x - p.pos.x, dz = chf.v.pos.z - p.pos.z, d = Math.hypot(dx, dz); if(d < 12 && (dx*fx + dz*fz)/Math.max(d, 0.1) > 0.4){ tx = chf.v.pos.x; ty = 1; tz = chf.v.pos.z; } }
+  return [tx, ty, tz, fx, fz]; }
+function chfThrow(p){ const b = p.chfB; if(!b) return; p.chfB = null; b.holder = null; b.live = p;
+  let [tx, ty, tz, fx, fz] = chfAim(p);
   if(p.isBot){ const e = (1.25 - (p.skill || 0.8))*2.2; tx += rand(-e, e); tz += rand(-e, e); }
   const o = new V3(p.pos.x + fx*0.5, p.pos.y + 1.4, p.pos.z + fz*0.5), dx = tx - o.x, dz = tz - o.z, d = Math.max(1, Math.hypot(dx, dz)), t = Math.max(0.45, d/22);
   b.pos.copy(o); b.vel.set(dx/t, (ty - o.y)/t + CHF_G*t/2, dz/t); b.tv = ty === 1; p.face = Math.atan2(dx, dz); p.pushAnim = 0.3; sfxNear(p, 'whoosh', 30); }
+// mira: alvo na tela (no dragão ou na pimentinha) + pontinhos da curva do arremesso, só pra quem está com o gelo
+let CHF_MIRA = null;
+function chfMiraHide(){ if(CHF_MIRA){ CHF_MIRA.el.style.display = 'none'; CHF_MIRA.arc.visible = false; } }
+function chfMira(){ const me = you(); if(!chf || !me || !me.chfB || !me.alive || chf.hp <= 0 || R1.phase !== 'play'){ chfMiraHide(); return; }
+  if(!CHF_MIRA){ const el = document.createElement('div'); el.id = 'chfMira'; el.innerHTML = '<i></i><b></b>'; document.body.appendChild(el);
+    const st = document.createElement('style'); st.textContent = '#chfMira{position:fixed;left:0;top:0;width:58px;height:58px;margin:-29px 0 0 -29px;pointer-events:none;z-index:30;display:none}#chfMira i{position:absolute;inset:0;border:3px solid #bfefff;border-radius:50%;box-shadow:0 0 8px #3aa0ff,inset 0 0 6px #3aa0ff;animation:chfMp 0.9s ease-in-out infinite}#chfMira b{position:absolute;left:50%;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#fff;box-shadow:0 0 6px #3aa0ff}#chfMira.weak i{border-color:#ffd23f;box-shadow:0 0 10px #ffb000,inset 0 0 6px #ffb000}@keyframes chfMp{50%{transform:scale(0.82)}}';
+    document.head.appendChild(st);
+    const arc = new THREE.Group(), m = new THREE.MeshBasicMaterial({color:0xbfefff, transparent:true, opacity:0.75, depthWrite:false}), g = new THREE.SphereGeometry(0.13, 8, 6);
+    for(let i = 0; i < 14; i++) arc.add(new THREE.Mesh(g, m)); scene.add(arc); arc.userData.keep = true; CHF_MIRA = {el, arc}; }
+  const [tx, ty, tz] = chfAim(me), o = new V3(me.pos.x + Math.sin(me.face)*0.5, me.pos.y + 1.4, me.pos.z + Math.cos(me.face)*0.5), dx = tx - o.x, dz = tz - o.z, d = Math.max(1, Math.hypot(dx, dz)), T = Math.max(0.45, d/22);
+  const vx = dx/T, vy = (ty - o.y)/T + CHF_G*T/2, vz = dz/T;
+  CHF_MIRA.arc.visible = true; CHF_MIRA.arc.children.forEach((s, i) => { const t = T*(i + 1)/15; s.position.set(o.x + vx*t, o.y + vy*t - CHF_G*t*t/2, o.z + vz*t); });
+  const v = new V3(tx, ty, tz).project(camera), el = CHF_MIRA.el; if(v.z > 1){ el.style.display = 'none'; return; }
+  el.style.display = 'block'; el.style.left = ((v.x + 1)/2*innerWidth) + 'px'; el.style.top = ((1 - v.y)/2*innerHeight) + 'px'; el.classList.toggle('weak', ty === 1); }
 function chfBoomBomb(b, hit){ world.remove(b.g); const {x, y, z} = b.pos; if(near({pos:b.pos}, 50)){ puff(x, y, z, hit ? 14 : 8, 0xbfefff, 0.18, 5); puff(x, y, z, 6, 0xffffff, 0.14, 4); } sfxAt(b.pos, 'boom', hit ? 45 : 25); }
 function chfPush(p){ p.pushCD = 0.45; p.pushAnim = 0.25; if(R1.phase !== 'play' || !chf) return true;
   if(p.chfB){ chfThrow(p); return true; }
@@ -15965,7 +15981,7 @@ function wdStep(dt){ if(WD.over || !WD.cz) return; WD.t += dt; WD.zt += dt; WD.h
   for(const p of players){
     if(!p.alive){ if(p.wdResp == null) p.wdResp = WD.RESP; if(!(p.dying > 0) && !p.rev){ p.wdResp -= dt; if(p.wdResp <= 0) wdSpawn(p); } continue; }
     // base inimiga queima quem entra
-    p.wdHq = (p.wdHq || 0) - dt; if(p.wdHq <= 0){ p.wdHq = 0.5; const H = WD.hq.find(H => !H.off && H.t !== p.squad && Math.hypot(p.pos.x - H.x, p.pos.z - H.z) < WD.HQR - 2); if(H) hurt(p, null, 6, `Você entrou na base da ${WD_T[H.t].n}`, true); } }
+    p.wdHq = (p.wdHq || 0) - dt; if(p.wdHq <= 0){ p.wdHq = 0.5; const H = WD.hq.find(H => !H.off && !(typeof mstRingOff === 'function' && mstRingOff()) && H.t !== p.squad && Math.hypot(p.pos.x - H.x, p.pos.z - H.z) < WD.HQR - 2); if(H) hurt(p, null, 6, `Você entrou na base da ${WD_T[H.t].n}`, true); } }
   if(bagOn && WD.shop) wdShopOpen(false);
   const me = you(); if(WD.shop && me.alive && !wdAtHQ(me)) wdShopOpen(false);
   wdHud(); }
@@ -18418,6 +18434,186 @@ function mobShots(dt){ if(!MOB.on || !MOB.sd.length || !mobOn()) return;
 
 // HUD da Guerra alinhado (cartões na mesma largura, sem faixa lateral)
 { const st = document.createElement('style'); st.id = 'wdHudAlinhado'; st.textContent = "#wdHud.hlSide > *{box-sizing:border-box;margin:0;width:100%}\n#wdHud.hlSide .wdT{display:grid;grid-template-columns:1fr 1fr;gap:4px}\n#wdHud.hlSide .wdS{box-sizing:border-box;display:flex;align-items:center;gap:6px;min-width:0;width:100%;border-width:2px;border-radius:8px;padding:2px 8px}\n#wdHud.hlSide .wdS i{display:block;flex:1;height:6px}\n#wdHud.hlSide .wdS b{min-width:22px}\n#wdHud.hlSide .wdS.own{box-shadow:inset 0 0 0 2px var(--c)!important}\n#wdHud.hlSide .wdZ,#wdHud.hlSide .wdOb,#wdHud.hlSide .wdMat{border-radius:8px}\n#wdHud .wdOb,#wdHud.hlSide .wdOb{border-left:1px solid var(--zline,transparent)!important}"; document.head.appendChild(st); }
+// ---------- Guerra MOBA (lote 2): 12 torres nas rotas (torreta nas de borda, artilharia nas do meio) e 12 guaritas na saída das bases ----------
+// torre: 5 min de escudo no começo; guarita: escudo enquanto a torre da mesma rota (da mesma tropa) estiver de pé
+// as duas miram primeiro nos soldadinhos inimigos e depois nos jogadores; o anel que queima a base fica desligado (a guarita defende)
+const MST = {SH:300, HP:6000, HPG:9000, RT:40, RA:90, RA0:15, RG:36, list:[], sh:[], nt:0, ft:[], im:null, ok:false, pts:{torre:15, guarita:25}};
+// [posto, tropa, rota, artilharia?]
+const MST_TW = [['Moinho', 0, 0], ['Pedreira', 0, 2], ['Casamata', 0, 4, 1], ["Torre d'Água", 2, 0], ['Mirante', 2, 3], ['Ninho', 2, 5, 1],
+  ['Silo', 1, 1], ['Galpão', 1, 3], ['Bunker', 1, 4, 1], ['Celeiro', 3, 1], ['Paiol', 3, 2], ['Posto', 3, 5, 1]];
+const mstShield = S => S.k === 'torre' ? WD.t < MST.SH : MST.list.some(T => T.k === 'torre' && T.alive && T.t === S.t && T.li === S.li);
+const mstIn = (S, x, y, z, m) => Math.abs(x - S.x) < S.r + (m || 0.15) && Math.abs(z - S.z) < S.r + (m || 0.15) && y > S.y - 0.3 && y < S.y + S.H + 1.6;
+const mstName = S => S.k === 'torre' ? `torre ${S.n}` : `guarita da ${S.n}`;
+
+// ---------- lugar: perto do posto (torre) ou ao lado da saída da base (guarita), em chão livre e plano ----------
+function mstFree(x, z, r){ const y = gY(x, z), wl = typeof FJ_WL === 'number' ? FJ_WL : -99; if(y < wl + 0.8) return false;
+  for(const [u, v] of [[-r, -r], [r, -r], [-r, r], [r, r], [0, 0]]){ if(Math.abs(gY(x + u, z + v) - y) > 1.3) return false;
+    if(solidsAt(x + u, z + v).some(b => b.active && b.max.y > y + 0.4 && b.min.y < y + 6 && x + u > b.min.x - 0.6 && x + u < b.max.x + 0.6 && z + v > b.min.z - 0.6 && z + v < b.max.z + 0.6)) return false; }
+  return !WD.hq.some(H => Math.hypot(H.x - x, H.z - z) < WD.HQR + 3); }
+function mstPathD(R, x, z){ let d = 1e9; for(const p of R.p) d = Math.min(d, Math.hypot(p[0] - x, p[1] - z)); return d; }
+function mstSpot(cx, cz, R, want, rs){ let best = null, bs = 1e9;
+  for(const r of rs) for(let k=0;k<20;k++){ const a = k/20*Math.PI*2, x = cx + Math.sin(a)*r, z = cz + Math.cos(a)*r; if(!mstFree(x, z, 2.8) || MST.list.some(S => Math.hypot(S.x - x, S.z - z) < 13)) continue;
+    const pd = R ? mstPathD(R, x, z) : want, sc = Math.abs(pd - want) + r*0.15 + (pd < 4.5 ? 30 : 0); if(sc < bs){ bs = sc; best = [x, z]; } }
+  return best; }
+
+// ---------- modelos ----------
+function mstModel(S){ const g = new THREE.Group(), col = WD_T[S.t].c, M = (geo, c, p, x, y, z) => { const m = new THREE.Mesh(geo, mat(c)); m.position.set(x || 0, y || 0, z || 0); (p || g).add(m); return m; };
+  g.position.set(S.x, S.y, S.z); g.userData.keep = true;
+  if(S.k === 'torre'){ M(new THREE.CylinderGeometry(1.9, 2.4, 5.2, 8), 0xa8a49a, g, 0, 2.6); M(new THREE.CylinderGeometry(1.95, 1.95, 0.7, 8), col, g, 0, 4.3);
+    [0, 1, 2, 3].forEach(k => { const a = k*Math.PI/2 + Math.PI/4; M(new THREE.BoxGeometry(0.5, 0.25, 0.08), 0x2e2a28, g, Math.sin(a)*2.1, 2.2, Math.cos(a)*2.1).rotation.y = a; });
+    M(new THREE.CylinderGeometry(2.7, 2.7, 0.4, 8), 0x6f6c68, g, 0, 5.4); const sb = M(new THREE.TorusGeometry(2.35, 0.38, 6, 14), 0x9a8a5f, g, 0, 5.85); sb.rotation.x = Math.PI/2; S.H = 5.6; S.r = 2.3; }
+  else if(S.k === 'art'){ M(new THREE.BoxGeometry(4.6, 3.6, 4.6), 0x9a958a, g, 0, 1.8); M(new THREE.BoxGeometry(4.7, 0.6, 4.7), col, g, 0, 3.0);
+    M(new THREE.BoxGeometry(3.4, 0.3, 0.08), 0x2e2a28, g, 0, 1.6, 2.31); M(new THREE.BoxGeometry(3.4, 0.3, 0.08), 0x2e2a28, g, 0, 1.6, -2.31);
+    M(new THREE.BoxGeometry(5.2, 0.35, 5.2), 0x6f6c68, g, 0, 3.75); [[-2.3, 0], [2.3, 0], [0, -2.3], [0, 2.3]].forEach(([x, z]) => M(new THREE.BoxGeometry(x ? 0.6 : 4.4, 0.7, z ? 0.6 : 4.4), 0x9a8a5f, g, x, 4.25, z)); S.H = 3.9; S.r = 2.6; }
+  else { M(new THREE.BoxGeometry(4.2, 4.4, 4.2), 0xb8b2a2, g, 0, 2.2); M(new THREE.BoxGeometry(4.3, 0.6, 4.3), col, g, 0, 3.6);
+    M(new THREE.BoxGeometry(1.4, 2.2, 0.1), 0x5a4a3a, g, 0, 1.1, 2.11); [-1.3, 1.3].forEach(x => M(new THREE.BoxGeometry(0.9, 0.7, 0.1), 0x9fd6ff, g, x, 2.7, 2.11));
+    M(new THREE.BoxGeometry(4.8, 0.35, 4.8), 0x6f6c68, g, 0, 4.55); [[-2.1, 0], [2.1, 0], [0, -2.1], [0, 2.1]].forEach(([x, z]) => M(new THREE.BoxGeometry(x ? 0.5 : 4.2, 0.6, z ? 0.5 : 4.2), 0x9a8a5f, g, x, 5.0, z));
+    M(new THREE.CylinderGeometry(0.06, 0.06, 3, 6), 0xdddddd, g, 1.9, 6.2, 1.9); const fl = M(new THREE.BoxGeometry(0.05, 0.7, 1.1), col, g, 1.9, 7.2, 2.45); fl.userData.flag = 1; S.H = 4.7; S.r = 2.2; }
+  // arma em cima (gira inteira; o cano levanta na artilharia)
+  const gi = new THREE.Group(); gi.position.y = S.H + 0.05; g.add(gi); S.giro = gi;
+  if(S.k === 'art'){ M(new THREE.CylinderGeometry(1.0, 1.2, 0.6, 12), 0x4f5d36, gi, 0, 0.3); const cn = new THREE.Group(); cn.position.set(0, 0.9, 0); gi.add(cn); S.cano = cn;
+    M(new THREE.BoxGeometry(1.3, 0.9, 1.4), 0x5d6b3a, cn, 0, 0, -0.1); const b = M(new THREE.CylinderGeometry(0.22, 0.3, 3.2, 10), 0x3d4148, cn, 0, 0, 1.6); b.rotation.x = Math.PI/2; M(new THREE.CylinderGeometry(0.32, 0.32, 0.3, 10), 0x2e2a28, cn, 0, 0, 3.1).rotation.x = Math.PI/2; cn.rotation.x = -0.45; }
+  else { M(new THREE.CylinderGeometry(0.55, 0.65, 0.45, 10), 0x3d4148, gi, 0, 0.22); M(new THREE.BoxGeometry(1.1, 0.75, 1.3), 0x4f5d36, gi, 0, 0.8, 0); M(new THREE.BoxGeometry(1.3, 0.9, 0.12), 0x5d6b3a, gi, 0, 0.9, 0.62);
+    [-0.2, 0.2].forEach(x => { const b = M(new THREE.CylinderGeometry(0.07, 0.08, 1.7, 8), 0x2e2a28, gi, x, 0.85, 1.4); b.rotation.x = Math.PI/2; }); const fl = M(new THREE.BoxGeometry(0.42, 0.42, 0.06), 0xffd23f, gi, 0, 0.85, 2.27); fl.visible = false; S.flash = fl; }
+  // escudo (bolha) e barra de vida
+  const sh = new THREE.Mesh(new THREE.SphereGeometry(S.r + 1.8, 18, 12), new THREE.MeshBasicMaterial({color:0x7fd6ff, transparent:true, opacity:0.16, depthWrite:false})); sh.position.y = S.H*0.55; sh.scale.y = (S.H + 3)/(S.r + 1.8)/1.5; g.add(sh); S.bub = sh;
+  const cv = document.createElement('canvas'); cv.width = 160; cv.height = 26; const tx = new THREE.CanvasTexture(cv), sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tx, transparent:true, depthWrite:false, fog:false}));
+  sp.scale.set(4.6, 0.75, 1); sp.position.y = S.H + 3.2; g.add(sp); S.bar = {cv, tx, sp, k:-1}; mstBar(S); world.add(g); S.g = g;
+  S.col = box(S.x - S.r, S.x + S.r, S.y - 0.5, S.y + S.H, S.z - S.r, S.z + S.r, 0, {invisible:true}); if(typeof gridAdd === 'function') gridAdd(S.col); }
+function mstBar(S){ const B = S.bar, k = S.alive ? Math.ceil(S.hp/S.mhp*40) : 0, shd = S.alive && mstShield(S) ? 1 : 0, key = k*2 + shd; if(B.k === key) return; B.k = key; const g = B.cv.getContext('2d');
+  g.clearRect(0, 0, 160, 26); g.fillStyle = 'rgba(43,24,70,.85)'; g.fillRect(0, 0, 160, 26); g.fillStyle = shd ? '#7fd6ff' : WD_T[S.t].s; g.fillRect(3, 3, 154*k/40, 20); g.strokeStyle = '#fff7e8'; g.lineWidth = 2; g.strokeRect(1, 1, 158, 24);
+  if(shd){ g.fillStyle = '#2a1250'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center'; g.fillText('ESCUDO', 80, 19); } B.tx.needsUpdate = true; B.sp.visible = S.alive; }
+// projéteis da artilharia (abóbora em arco)
+function mstMeshes(){ if(MST.im) return MST.im; const o = new THREE.InstancedMesh(new THREE.SphereGeometry(0.42, 10, 8), new THREE.MeshLambertMaterial({color:0xff8a1c}), 40); o.frustumCulled = false; o.userData.keep = true; o.count = 0;
+  o.instanceMatrix.setUsage(THREE.DynamicDrawUsage); MST.im = {o, d:new THREE.Object3D()}; return MST.im; }
+
+// ---------- montar ----------
+function mstBuild(){ MST.ok = true; MST.list = []; let id = 0;
+  for(const [n, t, li, art] of MST_TW){ const g = frR(n), R = MOB.lanes[li]; if(!g) continue; const P = mstSpot(g[1], g[2], R, 7, [9, 11, 13, 15, 18, 22]) || [g[1] + 9, g[2]];
+    const S = {id:id++, k:art ? 'art' : 'torre', n, t, li, x:P[0], z:P[1], y:gY(P[0], P[1]), alive:true, isSt:true, cd:rand(0, 1), rt:0, tg:null, ang:0, pos:new THREE.Vector3()}; mstModel(S); S.k = 'torre'; S.art = !!art; MST.list.push(S); }
+  MOB.lanes.forEach((R, li) => { if(!R) return; for(const t of [R.a, R.b]){ const H = WD.hq[t], u = t === R.a ? 22 : R.L - 22, Q = mobAt(R, u, 0, {}), side = t === R.a ? 1 : -1;
+      const P = mstSpot(Q.x, Q.z, R, 7.5, [7, 9, 11, 13, 16, 20]) || [Q.x + 7, Q.z]; const S = {id:id++, k:'guarita', n:R.n, t, li, x:P[0], z:P[1], y:gY(P[0], P[1]), alive:true, isSt:true, cd:rand(0, 1), rt:0, tg:null, ang:0, pos:new THREE.Vector3()};
+      mstModel(S); MST.list.push(S); } });
+  const k = mobHPk(); MST.list.forEach(S => { S.mhp = S.hp = Math.round((S.k === 'guarita' ? MST.HPG : MST.HP)*k); S.pos.set(S.x, S.y + S.H*0.55, S.z); S.ang = Math.atan2(-S.x, -S.z); S.giro.rotation.y = S.ang; mstBar(S); });
+  // posto da torre é da tropa dona desde o começo (dá pra renascer lá) e não pode ser tomado enquanto a torre estiver de pé
+  if(WD.po) MST.list.forEach(S => { if(S.k !== 'torre') return; const P = WD.po.find(P => P.n === S.n); if(P){ S.po = P; frPoOwn(P, S.t, true); } });
+  mstNetHook(); }
+function mstClear(){ MST.list.forEach(S => { if(S.g) world.remove(S.g); if(S.col) S.col.active = false; if(S.rub) S.rub.active = false; }); MST.list = []; MST.sh = []; MST.ft = []; MST.ok = false; if(MST.im){ MST.im.o.count = 0; if(MST.im.o.parent) MST.im.o.parent.remove(MST.im.o); } }
+
+// ---------- dano e queda ----------
+function mstDmg(S, dmg, by, team){ if(!S || !S.alive || dmg <= 0) return; if(mstShield(S)){ if(by && by === you() && (S._sht || 0) < clock){ S._sht = clock + 1.2; say(`🛡️ A ${mstName(S)} está com escudo${S.k === 'torre' ? ' nos primeiros 5 min' : ': derrube antes a torre dessa rota'}`, true); } return; }
+  dmg = Math.round(dmg); if(by && !by.isBot && by === you()){ dmgNum(S, dmg, ''); hitMark(false); }
+  if(!mobLead()){ netEv({t:'wth', i:S.id, d:dmg, n:by ? by.nid : -1, tm:team ?? (by ? by.squad : -1)}); return; }
+  S.hp -= dmg; S.lastBy = by || null; S.lastT = team ?? (by ? by.squad : -1); if(S.hp <= 0) mstDie(S); else mstBar(S); }
+function mstDie(S){ if(!S.alive) return; S.alive = false; S.hp = 0; mstBar(S); const x = S.x, y = S.y + S.H*0.6, z = S.z; puff(x, y, z, 40, 0x4a4a4a, 0.3, 9); puff(x, y + 1, z, 26, 0xff9f1c, 0.2, 7); sfxAt(S.pos, 'boom', 140);
+  if(humans().some(h => h.pos.distanceTo(S.pos) < 30)) shake = Math.max(shake, 0.7);
+  S.giro.visible = false; S.bub.visible = false; S.g.scale.y = 0.4; S.g.traverse(o => { if(o.isMesh && o.material && o.material.color && !o.isSprite){ o.material = o.material.clone(); o.material.color.multiplyScalar(0.45); } });
+  if(S.col) S.col.active = false; S.rub = box(S.x - S.r, S.x + S.r, S.y - 0.5, S.y + S.H*0.4, S.z - S.r, S.z + S.r, 0, {invisible:true}); if(typeof gridAdd === 'function') gridAdd(S.rub);
+  const bt = S.lastT, me = you(), pts = MST.pts[S.k] || 15;
+  if(mobLead() && bt >= 0 && bt !== S.t){ WD.pts[bt] += pts; if(S.lastBy && !S.lastBy.isBot) wdsPay(S.lastBy, 200, `derrubou a ${mstName(S)}`); if(WD.pts[bt] >= WD.GOAL && !WD.over) wdFinish(bt); }
+  const who = bt >= 0 && bt !== S.t ? `<b style="color:${WD_T[bt].s}">${WD_T[bt].n}</b> derrubou` : 'Caiu';
+  say(`💥 ${who} a ${mstName(S)} da <b style="color:${WD_T[S.t].s}">${WD_T[S.t].n}</b>${bt >= 0 && bt !== S.t ? ` (+${pts} pontos)` : ''}`, true);
+  if(S.t === me.squad){ banner(S.k === 'torre' ? '🗼 Perdemos uma torre!' : '🚧 Perdemos uma guarita!', `${mstName(S)} caiu. ${S.k === 'torre' ? 'A guarita dessa rota ficou sem escudo' : 'A entrada da base está aberta'}`, 2400); sfx('lose'); }
+  else if(bt === me.squad){ banner(S.k === 'torre' ? '🗼 Torre derrubada!' : '🚧 Guarita derrubada!', `+${pts} pontos pra sua tropa`, 2000); sfx('win'); }
+  // torre caiu: a guarita da rota perde o escudo e o posto fica livre pra tomar
+  if(S.po && S.po.t === S.t) frPoOwn(S.po, -1, true); MST.list.forEach(mstBar); }
+
+// ---------- armas das estruturas (o líder escolhe o alvo e atira; os outros PCs recebem os tiros) ----------
+function mstFind(S){ const R = S.art ? MST.RA : S.k === 'guarita' ? MST.RG : MST.RT, R0 = S.art ? MST.RA0 : 0; let best = null, bd = R;
+  for(const o of MOB.sd){ if(!o.alive || o.t === S.t) continue; const d = Math.hypot(o.pos.x - S.x, o.pos.z - S.z); if(d < bd && d > R0){ bd = d; best = o; } }
+  if(best) return best; bd = R;
+  const top = new THREE.Vector3(S.x, S.y + S.H + 1, S.z);
+  for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === S.t || q.glide) continue; const d = Math.hypot(q.pos.x - S.x, q.pos.z - S.z); if(d >= bd || d < R0 || Math.abs(q.pos.y - S.y) > 30) continue;
+    const t = new THREE.Vector3(q.pos.x, q.pos.y + 0.9, q.pos.z), v = t.clone().sub(top), L = v.length(); v.normalize(); if(rayHit(top, v, L, null).distanceTo(top) > L - 0.9){ bd = d; best = q; } }
+  return best; }
+function mstShoot(S, ax, ay, az, send){ const a = S.ang, o = S.g.position, mz = S.art ? 3.3 : 2.3, oy = S.y + S.H + (S.art ? 1.6 : 0.95);
+  const ox = o.x + Math.sin(a)*mz, oz = o.z + Math.cos(a)*mz;
+  if(S.art){ const dx = ax - ox, dz = az - oz, d = Math.hypot(dx, dz) || 1, T = clamp(d/34, 1.1, 3.2), G = 20; MST.sh.push({x:ox, y:oy, z:oz, vx:dx/T, vz:dz/T, vy:(ay - oy + 0.5*G*T*T)/T, t:0, team:S.t, S}); sfxAt(S.pos, 'boom', 90); puff(ox, oy, oz, 8, 0x8a8a8a, 0.12, 2.5); }
+  else { const dx = ax - ox, dy = ay - oy, dz = az - oz, d = Math.hypot(dx, dy, dz) || 1, sp = 0.025, V = 95; MOB.bul.push({x:ox, y:oy, z:oz, vx:(dx/d + rand(-sp, sp))*V, vy:(dy/d + rand(-sp, sp)*0.6)*V, vz:(dz/d + rand(-sp, sp))*V, t:0, team:S.t, life:(MST.RA + 6)/V, dp:S.k === 'guarita' ? 10 : 8, dsd:22, dst:0, src:S});
+    if(Math.random() < 0.7) sfxAt(S.pos, 'w_lmg', 60); if(S.flash){ S.flash.visible = true; S.fl = 0.06; } }
+  if(send) MST.ft.push([S.id, Math.round(ax*10), Math.round(ay*10), Math.round(az*10)]); }
+function mstStep(dt){ const lead = mobLead(), me = you();
+  for(const S of MST.list){ if(!S.alive) continue; S.bub.visible = mstShield(S); if(S.bub.visible) S.bub.rotation.y += dt*0.3; if(S.fl > 0 && (S.fl -= dt) <= 0) S.flash.visible = false;
+    if((S._bt = (S._bt || 0) - dt) <= 0){ S._bt = 1; mstBar(S); }
+    if(lead){ S.rt -= dt; if(S.rt <= 0 || (S.tg && (!S.tg.alive || S.tg.dying > 0))){ S.rt = rand(0.25, 0.4); S.tg = mstFind(S); }
+      const tg = S.tg; if(tg){ const want = Math.atan2(tg.pos.x - S.x, tg.pos.z - S.z); let da = want - S.ang; while(da > Math.PI) da -= Math.PI*2; while(da < -Math.PI) da += Math.PI*2; S.ang += clamp(da, -dt*3, dt*3);
+        S.cd -= dt; if(S.cd <= 0 && Math.abs(da) < 0.25){ S.cd = S.art ? 2.6 : S.k === 'guarita' ? 0.25 : 0.32; const y = tg.isMob ? tg.pos.y + 0.65 : tg.pos.y + 0.9, lead2 = S.art ? 0.9 : 0;
+          mstShoot(S, tg.pos.x + (tg.vel ? tg.vel.x*lead2 : 0), S.art ? (tg.isMob ? tg.pos.y : tg.pos.y + 0.2) : y, tg.pos.z + (tg.vel ? tg.vel.z*lead2 : 0), mobNet()); } } }
+    S.giro.rotation.y = S.ang; }
+  // abóboras da artilharia
+  const G = 20, wl = typeof FJ_WL === 'number' ? FJ_WL : -99;
+  for(let i=MST.sh.length - 1;i>=0;i--){ const B = MST.sh[i]; B.vy -= G*dt; B.x += B.vx*dt; B.y += B.vy*dt; B.z += B.vz*dt; B.t += dt;
+    let hit = B.t > 6 || B.y < Math.max(wl, gY(B.x, B.z)); if(!hit && B.t > 0.3) hit = solidsAt(B.x, B.z).some(b => b.active && b.mesh && B.x > b.min.x && B.x < b.max.x && B.y > b.min.y && B.y < b.max.y && B.z > b.min.z && B.z < b.max.z);
+    if(hit){ MST.sh.splice(i, 1); mstBoom(B); } }
+  const M = mstMeshes(); if(M.o.parent !== world) world.add(M.o); let n = 0; for(const B of MST.sh){ if(n >= 40) break; M.d.position.set(B.x, B.y, B.z); M.d.rotation.set(B.t*6, B.t*4, 0); M.d.updateMatrix(); M.o.setMatrixAt(n++, M.d.matrix); } M.o.count = n; M.o.instanceMatrix.needsUpdate = true;
+  if(lead && mobNet() && (MST.nt -= dt) <= 0){ MST.nt = 0.5; netEv({t:'wts', h:MST.list.map(S => S.alive ? Math.max(1, Math.round(S.hp)) : 0), b:MST.list.map(S => S.lastT ?? -1)}); }
+  if(lead && mobNet() && MST.ft.length){ netEv({t:'wtf', f:MST.ft.flat()}); MST.ft = []; } }
+function mstBoom(B){ const R = 5.5; puff(B.x, Math.max(B.y, gY(B.x, B.z)) + 0.3, B.z, 20, 0xff8a1c, 0.16, 6); puff(B.x, Math.max(B.y, gY(B.x, B.z)) + 0.3, B.z, 14, 0x6a5a40, 0.16, 5); sfxAt(new THREE.Vector3(B.x, B.y, B.z), 'boom', 90);
+  if(mobLead()) for(const o of MOB.sd){ if(!o.alive || o.t === B.team) continue; const d = Math.hypot(o.pos.x - B.x, o.pos.y + 0.6 - B.y, o.pos.z - B.z); if(d < R){ o.hp -= Math.round(70*(1 - d/R*0.6)); o.ht = 0.2; if(o.hp <= 0) mobKill(o, null); } }
+  for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === B.team || !mobAuth(q)) continue; const d = Math.hypot(q.pos.x - B.x, q.pos.y + 0.8 - B.y, q.pos.z - B.z); if(d < R){ mobHurt(q, B.team, Math.round(42*(1 - d/R*0.65)), B.S); knock(q, (q.pos.x - B.x)/(d || 1)*8, 6, (q.pos.z - B.z)/(d || 1)*8, 0.5, 'tomate'); } } }
+
+// ---------- substitui partes do lote 1: alvo dos soldadinhos inclui estruturas, tiros dos soldadinhos/estruturas acertam estrutura ----------
+{ const _mf = mobFind; mobFind = function(s){ const r = _mf(s); if(r) return r; let best = null, bd = MOB.RNG + 3;
+    for(const S of MST.list){ if(!S.alive || S.t === s.t) continue; const d = Math.hypot(S.x - s.pos.x, S.z - s.pos.z) - S.r; if(d < bd){ bd = d; best = S; } } return best; }; }
+{ const _ap = mobAimPt; mobAimPt = function(tg){ return tg.isSt ? [tg.x + rand(-0.6, 0.6), tg.y + tg.H*0.5 + rand(-0.5, 0.5), tg.z + rand(-0.6, 0.6)] : _ap(tg); }; }
+mobHurt = function(q, team, dmg, S){ let d = dmg || MOB.DMG; if(q.arm){ const c = VEST_CUT[q.arm.vest]; if(c) d = Math.max(1, Math.round(d*(1 - c))); } const T = WD_T[team], _s = say, src = S ? `a ${mstName(S)} da` : 'um soldadinho da';
+  say = (h, f) => _s(/ficou fora da zona/.test(h) ? `${nm(q)} caiu pra ${src} <b style="color:${T.s}">${T.n}</b>` : h, f);
+  try{ hurt(q, null, d, `${S ? 'A ' + mstName(S) : 'Um soldadinho'} da ${T.n} te pegou`); } finally { say = _s; } };
+mobStepBul = function(dt){ const lead = mobLead(), wl = typeof FJ_WL === 'number' ? FJ_WL : -99;
+  for(let i=MOB.bul.length - 1;i>=0;i--){ const B = MOB.bul[i]; let gone = false; const n = Math.max(1, Math.ceil(Math.hypot(B.vx, B.vy, B.vz)*dt/0.6)), h = dt/n;
+    for(let st=0; st<n && !gone; st++){ B.x += B.vx*h; B.y += B.vy*h; B.z += B.vz*h; B.t += h; if(B.t > B.life || B.y < Math.max(wl, gY(B.x, B.z))){ gone = true; break; }
+      for(const b of solidsAt(B.x, B.z)){ if(b.active && b.mesh && b.kind !== 'ramp' && B.x > b.min.x && B.x < b.max.x && B.y > b.min.y && B.y < b.max.y && B.z > b.min.z && B.z < b.max.z){ gone = true; break; } } if(gone) break;
+      for(const S of MST.list){ if(!S.alive || S === B.src || !mstIn(S, B.x, B.y, B.z)) continue; gone = true; if(S.t !== B.team && lead && !B.src) mstDmg(S, 10, null, B.team); break; } if(gone) break;
+      for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === B.team || q.iframe > 0) continue; const dx = q.pos.x - B.x, dz = q.pos.z - B.z; if(dx*dx + dz*dz > 0.36 || B.y < q.pos.y || B.y > q.pos.y + bodyH(q)) continue;
+        gone = true; if(mobAuth(q)) mobHurt(q, B.team, B.dp, B.src); break; }
+      if(gone) break;
+      for(const o of MOB.sd){ if(!o.alive || o.t === B.team) continue; const dx = o.pos.x - B.x, dy = o.pos.y + 0.62 - B.y, dz = o.pos.z - B.z; if(dx*dx + dy*dy + dz*dz > 0.36) continue; gone = true; if(lead){ o.hp -= B.dsd || MOB.DMGS; o.ht = 0.12; if(o.hp <= 0) mobKill(o, null); } break; } }
+    if(gone){ puff(B.x, B.y, B.z, 2, 0xffe066, 0.06, 1.2); MOB.bul.splice(i, 1); } } };
+
+// ---------- tiros dos jogadores/bots e explosões acertam estrutura ----------
+function mstShots(dt){ if(!MST.list.length) return;
+  for(let i=shots.length - 1;i>=0;i--){ const s = shots[i], w = s.w; if(!s.owner || (w && (w.smoke || w.util || w.boom))) continue; const own = s.owner.squad; let hit = null, k = 0;
+    for(const S of MST.list){ if(!S.alive || S.t === own) continue; if(Math.abs(S.x - s.pos.x) > 40 || Math.abs(S.z - s.pos.z) > 40) continue;
+      for(const f of [0.33, 0.66, 1]){ if(mstIn(S, s.pos.x + s.vel.x*dt*f, s.pos.y + s.vel.y*dt*f, s.pos.z + s.vel.z*dt*f)){ hit = S; k = f; break; } } if(hit) break; }
+    if(!hit) continue; const px = s.pos.x + s.vel.x*dt*k, py = s.pos.y + s.vel.y*dt*k, pz = s.pos.z + s.vel.z*dt*k;
+    if(w && w.splash){ s.pos.set(px, py, pz); s.vel.set(0, 0.001, 0); s.t = (w.life || 3) + 0.01; continue; }
+    if(mobAuth(s.owner)) mstDmg(hit, w ? w.dmg : 7, s.owner); puff(px, py, pz, 5, 0x9a958a, 0.1, 2); sfxAt(s.pos, 'hit', 30); world.remove(s.m); shots.splice(i, 1); } }
+{ const _ex = explode; explode = function(s){ const r = _ex(s); if(MST.list.length && s && s.w && s.w.splash && s.owner && mobAuth(s.owner)){ const w = s.w;
+    for(const S of MST.list){ if(!S.alive || S.t === s.owner.squad) continue; const dx = Math.max(0, Math.abs(s.pos.x - S.x) - S.r), dz = Math.max(0, Math.abs(s.pos.z - S.z) - S.r), dy = Math.max(0, S.y - s.pos.y, s.pos.y - S.y - S.H), d = Math.hypot(dx, dy, dz);
+      if(d < w.splash) mstDmg(S, w.dmg*2*(0.4 + 0.6*(1 - d/w.splash)), s.owner); } }
+  return r; }; }
+// bot sem inimigo nem soldadinho por perto atira na estrutura inimiga
+{ const _bs = botShoot; botShoot = function(p, dt, inp){ const r = _bs(p, dt, inp); if(!MST.list.length || !mobOn() || p.foe || inp.push || p.glide || p.down || p.car || !p.alive || (p.mobTg && p.mobTg.alive)) return r;
+    p.mstT = (p.mstT || 0) - dt; if(p.mstT <= 0){ p.mstT = rand(0.6, 1.0); p.mstTg = MST.list.find(S => S.alive && S.t !== p.squad && !mstShield(S) && Math.hypot(S.x - p.pos.x, S.z - p.pos.z) < 32) || null; }
+    const S = p.mstTg; if(S && S.alive && (p.mobA || 0) <= 0 && (p.shotCD || 0) <= 0){ p.mobA = rand(0.4, 0.9); p.aimPt = new THREE.Vector3(S.x + rand(-0.8, 0.8), S.y + S.H*0.5, S.z + rand(-0.8, 0.8)); p.face = Math.atan2(S.x - p.pos.x, S.z - p.pos.z); inp.push = true; }
+    return r; }; }
+// posto da torre não pode ser tomado enquanto a torre estiver de pé
+{ const _ps = frPoStep; frPoStep = function(dt){ const r = _ps(dt); if(MST.ok) for(const S of MST.list){ if(S.alive && S.po && S.po.t !== S.t){ frPoOwn(S.po, S.t, true); } if(S.alive && S.po){ S.po.c = 0; S.po.ct = -1; } } return r; }; }
+
+// ---------- rede ----------
+function mstNetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wts) return;
+  WN_EV.wts = e => { if(NET.host || !MST.ok || !Array.isArray(e.h)) return; e.h.forEach((v, i) => { const S = MST.list[i]; if(!S) return; v = +v || 0; if(Array.isArray(e.b)) S.lastT = e.b[i] | 0; if(S.alive && v <= 0) mstDie(S); else if(S.alive){ S.hp = v; mstBar(S); } }); };
+  WN_EV.wtf = e => { if(NET.host || !MST.ok || !Array.isArray(e.f)) return; for(let i=0; i + 3 < e.f.length; i += 4){ const S = MST.list[e.f[i] | 0]; if(!S || !S.alive) continue; const ax = e.f[i + 1]/10, ay = e.f[i + 2]/10, az = e.f[i + 3]/10; S.ang = Math.atan2(ax - S.x, az - S.z); mstShoot(S, ax, ay, az, false); } };
+  WN_EV.wth = e => { if(!NET.host || !MST.ok) return; const S = MST.list[e.i | 0]; if(!S || !S.alive) return; mstDmg(S, clamp(+e.d || 0, 0, 2000), NET.byNid[e.n] || null, clamp(e.tm | 0, -1, 3)); }; }
+
+// ---------- HUD (estruturas de pé) e minimapa ----------
+{ const _h = wdHud; wdHud = function(){ _h(); const el = $('wdHud'); if(!el) return; let L = el.querySelector('.wdSt'); if(!L){ L = document.createElement('div'); L.className = 'wdZ wdSt'; el.appendChild(L); }
+    L.hidden = !MST.ok; if(L.hidden) return; const me = you(), c = k => MST.list.filter(S => S.t === me.squad && S.k === k && S.alive).length, h = `🗼 Sua tropa: <b>${c('torre')}</b>/3 torres · <b>${c('guarita')}</b>/3 guaritas de pé`;
+    if(L._h !== h){ L._h = h; L.innerHTML = h; } }; }
+{ const _dm = fjDrawMap; fjDrawMap = function(cv, big){ _dm(cv, big); if(!MST.ok || !WAR || !WD.cz) return; const g = cv.getContext('2d'), S0 = cv.width, me = players[0], W = BIG_W, span = big ? 2*W : Math.min(150, 2*W*0.75);
+    const cx = big ? 0 : clamp(me.pos.x, -W + span/2, W - span/2), cz = big ? 0 : clamp(me.pos.z, -W + span/2, W - span/2), k = S0/span, X = x => (x - cx)*k + S0/2, Z = z => (z - cz)*k + S0/2;
+    for(const S of MST.list){ const x = X(S.x), z = Z(S.z), r = big ? (S.k === 'guarita' ? 6 : 7) : 4.5; if(x < -10 || z < -10 || x > S0 + 10 || z > S0 + 10) continue;
+      g.fillStyle = S.alive ? WD_T[S.t].s : '#8a8478'; g.strokeStyle = '#2b1846'; g.lineWidth = 2; if(S.k === 'guarita'){ g.fillRect(x - r, z - r, r*2, r*2); g.strokeRect(x - r, z - r, r*2, r*2); }
+      else { g.beginPath(); g.moveTo(x, z - r*1.2); g.lineTo(x + r, z + r*0.8); g.lineTo(x - r, z + r*0.8); g.closePath(); g.fill(); g.stroke(); }
+      if(S.alive && mstShield(S)){ g.beginPath(); g.arc(x, z, r + 3, 0, 7); g.strokeStyle = '#7fd6ff'; g.lineWidth = 2; g.stroke(); }
+      if(!S.alive){ g.strokeStyle = '#2b1846'; g.lineWidth = 2; g.beginPath(); g.moveTo(x - r, z - r); g.lineTo(x + r, z + r); g.moveTo(x + r, z - r); g.lineTo(x - r, z + r); g.stroke(); } } }; }
+
+// ---------- ganchos ----------
+{ const _mc = mobClear; mobClear = function(){ mstClear(); return _mc(); }; }
+{ const _us = updateShoot; updateShoot = function(dt){ if(MST.ok && mobOn()) mstShots(dt); _us(dt); if(MOB.on && !MOB.job && !MST.ok && WD.hq.length === 4 && MOB.lanes.length) mstBuild(); if(MST.ok && mobOn() && !WD.over) mstStep(dt); }; }
+// o anel que queima a base fica desligado no modo MOBA (quem defende a base é a guarita)
+const mstRingOff = () => MST.ok;
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
