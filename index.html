@@ -18716,6 +18716,19 @@ function mbTagR(){ const t = $('mbTag'); if(!t) return; const me = players[0], s
 { const _aim = aim; aim = function(c, me, dt){ const r = _aim.apply(this, arguments); if(c === cam1){ if(R1.phase !== 'menu') mbOff(); try{ mbTagR(); }catch(e){} } return r; }; }
 try{ mbBuild(); mmRender(); }catch(e){ console.warn('menu B', e); }
 
+// ---------- Guerra: cartão do ato em 1 linha (01/11, Bruno aprovou): regra completa só nos 12 s depois que o ato muda; depois título + 1 linha curta ----------
+if(typeof gwpCard === 'function'){ const _c = gwpCard; gwpCard = function(){ const h = _c(); if(!h) return h;
+    try{ if(typeof HL !== 'undefined' && clock < HL.until) return h;
+      const tm = h.match(/<b class="t">([\s\S]*?)<\/b>/), T = tm ? tm[1] : ''; if(!T) return h;
+      const um = h.match(/<em class="(bad|ok)">([\s\S]*?)<\/em>/); let L = um ? `<em class="${um[1]}">${um[2]}</em>` : '';
+      if(!L){ const me = you();
+        if(/Ato 4/.test(T)) L = typeof fgReady === 'function' && fgReady(me.squad) ? '<b>Foguete pronto: vá ao painel da plataforma</b>' : 'Junte galões ⛽ e as coordenadas 📡 e lance o foguete';
+        else if(/Ato 3/.test(T)) L = 'Agache no alvo de um depósito pra plantar a bomba';
+        else if(/Ato 2/.test(T)) L = 'Fique perto do caminhão pra ele andar com a sua tropa';
+        else L = `Fique dentro do círculo de <b>${WD.cz ? WD.cz.n : 'zona'}</b>`; }
+      return `<b class="t">${T}</b><i>${L}</i>`; }catch(e){ return h; } }; }
+{ const st = document.createElement('style'); st.textContent = 'body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb{border-left:5px solid #ffc928}body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb .t{color:#2a1250}body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb .ok{color:#14894a}body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb .bad{color:#d0263c}'; document.head.appendChild(st); }
+
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
