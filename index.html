@@ -18582,7 +18582,7 @@ function vvCamFx(c, me, dt){
 // explosão: treme mais perto, um pouco até 50 m
 { const _ex = explode; explode = function(s){ const r = _ex.apply(this, arguments); try{ const me = players[0]; if(me && me.alive && s && s.pos){ const d = me.pos.distanceTo(s.pos); if(d < 50) vvTrauma(0.75*Math.pow(1 - d/50, 1.4)); } }catch(e){} return r; }; }
 // levar tiro: tranco proporcional ao dano
-{ const _h = hurt; hurt = function(q, by, dmg){ const r = _h.apply(this, arguments); try{ if(q === players[0] && dmg > 0 && by && by !== q) { vvTrauma(Math.min(0.2, 0.03 + dmg*0.003)); const k = Math.min(1, 0.3 + dmg/45), cd = camera.getWorldDirection(new THREE.Vector3()), fx = cd.x, fz = cd.z, ax = by.pos.x - q.pos.x, az = by.pos.z - q.pos.z, cr = fz*ax - fx*az; VC.fs = cr > 0.01 ? 1 : cr < -0.01 ? -1 : (Math.random() < 0.5 ? 1 : -1); VC.fv += k*9; } }catch(e){} return r; }; }
+{ const _h = hurt; hurt = function(q, by, dmg){ const r = _h.apply(this, arguments); try{ if(q === players[0] && dmg > 0 && by && by !== q) { /* levar tiro não mexe a câmera (Bruno 01/11 14:18) */ } }catch(e){} return r; }; }
 // pouso forte: câmera afunda e volta
 { const _vp = vvPlayers; vvPlayers = function(dt){ const me = players[0]; const g0 = me && me.vvG, vy = me ? (me.vvVy || 0) : 0; _vp(dt);
     if(me && me.alive && g0 === false && me.grounded && vy < -8 && !me.car){ const k = Math.min(1, (-vy - 8)/14); VC.dipV -= 2.2 + k*3.5; vvTrauma(0.12 + k*0.3); } }; }
