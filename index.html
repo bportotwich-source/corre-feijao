@@ -10092,7 +10092,7 @@ function cdGrid(o){ let s = o.seed || 9191; const sr = () => (s = s*16807 % 2147
       box(x - 0.1, x + 0.1, Y, Y + 5.2, z - 0.1, z + 0.1, 0, {invisible:true}); });
     [pole, head].forEach(m => { m.castShadow = true; m.frustumCulled = false; m.userData.keep = true; world.add(m); }); }
   // quarteirões: calçada + 2 fileiras de prédios de costas (uma pra cada rua), becos entre os prédios e um corredor no meio
-  const info = CD_K.filter(k => PNV.M[k]).map(k => { const M = PNV.M[k], [a0, a1, b0, b1] = M.lot; return {k, w:a1 - a0, d:b1 - b0, h:Math.max(...M.col.map(c => c[3]))}; });
+  const info = CD_K.filter(k => PNV.M[k]).map(k => { const M = PNV.M[k], [a0, a1, b0, b1] = M.lot; return {k, w:a1 - a0, d:b1 - b0, h:Math.max(...M.col.map(c => c[3]))}; }).filter(m => !o.maxH || m.h <= o.maxH);   // o.maxH: tira os arranha-céus (Ilha Feijoada)
   const used = {}, side = [], TINT = [[1, 1, 1], [1.04, 0.97, 0.9], [0.92, 0.96, 1.03], [0.95, 0.93, 0.92]];
   const WT = {tall:m => m.h > 34 ? 4 : m.h > 20 ? 1.6 : 0.4, mid:m => m.h > 34 ? 0.03 : m.h > 20 ? 0.8 : 1.6, low:m => m.h > 20 ? 0 : 1.6};
   const fill = (len, maxD, wt) => { let best = null;
@@ -10118,7 +10118,7 @@ function cdGrid(o){ let s = o.seed || 9191; const sr = () => (s = s*16807 % 2147
 // Grão Capital: 4 x 4 quarteirões, os 4 do meio com os mais altos; chafariz na rotatória das avenidas
 function cdCidade(cx, cz, Y){ const E = 68*CD_S, EW = 68, L = [[-71.5, 7], [-38, 7], [0, 14], [38, 7], [71.5, 7]], LZ = L.map(([c, w]) => [c*CD_S, w]), LX = L.map(([c, w]) => [c > 0 ? c*CD_S : c, w]);
   CDV.box = [cx - EW - 8, cx + E + 8, cz - E - 8, cz + E + 8];
-  cdGrid({cx, cz, Y, LX, LZ, kind:(x0, x1, z0, z1, i, j) => (i === 1 || i === 2) && (j === 1 || j === 2) ? 'tall' : 'mid'});
+  cdGrid({cx, cz, Y, LX, LZ, maxH:34, kind:(x0, x1, z0, z1, i, j) => (i === 1 || i === 2) && (j === 1 || j === 2) ? 'tall' : 'mid'});
   disc(cx, cz, 3.2, Y, Y + 0.7, 0xd8dde6, 24); flat(new THREE.CircleGeometry(2.8, 24), 0xbfe9ff, cx, cz, Y + 0.72).material = new THREE.MeshLambertMaterial({map:waterTex, color:0xbfe9ff}); disc(cx, cz, 0.45, Y + 0.7, Y + 2.4, 0xd8dde6, 12);
   // árvores e pedras ficam fora da cidade inteira (o círculo da região não cobre os cantos do quadrado)
   for(let x = -EW - 10; x <= E + 10; x += 12) for(let z = -E - 10; z <= E + 10; z += 12) FJ_CLR.push([cx + x, cz + z, 9]); }
