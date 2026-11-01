@@ -17953,7 +17953,7 @@ $('btnShop').onclick = () => { if(shopTab === 'pass') shopTab = 'color'; openScr
 $('btnCampoM').onclick = () => { if(!$('btnCampo')) return; mmQuick = true; try{ $('btnCampo').click(); } finally { mmQuick = false; } };
 { const el = $('btnCampoM'); el.style.setProperty('--mc', '#ff7a1a'); el.insertAdjacentHTML('afterbegin', '<span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 1.5v4M12 18.5v4M1.5 12h4M18.5 12h4"/></svg></span>'); }
 $('pfAch').append($('achCount'), $('achList'));
-addEventListener('keydown', e => { if($('menu').hidden || !$('confirm').hidden || !$('title').hidden) return;
+addEventListener('keydown', e => { if($('menu').hidden || document.body.classList.contains('mbTab') || !$('confirm').hidden || !$('title').hidden) return;
   if(document.activeElement && document.activeElement.tagName === 'INPUT') return;
   const P = $('mPick');
   if(!P.hidden){
@@ -18953,6 +18953,31 @@ if(typeof gwpCard === 'function'){ const _c = gwpCard; gwpCard = function(){ con
         else L = `Fique dentro do círculo de <b>${WD.cz ? WD.cz.n : 'zona'}</b>`; }
       return `<b class="t">${T}</b><i>${L}</i>`; }catch(e){ return h; } }; }
 { const st = document.createElement('style'); st.textContent = 'body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb{border-left:5px solid #ffc928}body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb .t{color:#2a1250}body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb .ok{color:#14894a}body:not([data-hud="creme"]):not([data-hud="roxo"]) #wdHud .wdOb .bad{color:#d0263c}'; document.head.appendChild(st); }
+
+// ---------- Abas da barra azul como troca rápida (01/11 14:23, pedido do Bruno): Passe, Loja, Perfil e Configurações abrem embaixo da barra, que continua visível ----------
+const MB_TABS = ['shop', 'recs', 'settings'];
+function mbTabSet(id){ if(id === 'pass') id = 'shop'; const on = R1.phase === 'menu' && MB_TABS.includes(id) && innerWidth > 760; document.body.classList.toggle('mbTab', on);
+  if(on) $('menu').hidden = false;
+  const cur = id === 'menu' ? 'tabPlay' : id === 'recs' ? 'tabRec' : id === 'shop' ? (shopTab === 'pass' ? 'tabPass' : 'tabShop') : '';
+  [['tabPlay', 'tabPlay'], ['tabPass', 'btnPass'], ['tabShop', 'btnShop'], ['tabRec', 'btnRec']].forEach(([k, el]) => { const b = $(el); if(!b) return; const a = k === cur; b.classList.toggle('on', a); if(a) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+  const g = $('btnSettings'); if(g) g.classList.toggle('on', id === 'settings' && on); }
+{ const _os = openScreen; openScreen = function(id){ const r = _os.apply(this, arguments); try{ mbTabSet(id); }catch(e){} return r; }; }
+$('tabPlay').onclick = () => { if(document.body.classList.contains('mbTab')){ sfx('beep'); openScreen('menu'); } else mmPick(false); };
+{ const _tm = toMenu; toMenu = function(){ document.body.classList.remove('mbTab'); return _tm.apply(this, arguments); }; }
+{ const _p = play; play = function(){ document.body.classList.remove('mbTab'); return _p.apply(this, arguments); }; }
+// a arma da 1ª pessoa não aparece no menu
+{ const _vm = vmRender; vmRender = function(W, H){ if(R1.phase === 'menu' || R1.phase === 'podium') return; return _vm(W, H); }; }
+{ const st = document.createElement('style'); st.textContent = `
+body.mbTab #menu>*:not(.mtop){display:none!important}
+body.mbTab #menu.screen.pc{background:none!important;pointer-events:none;z-index:999}
+body.mbTab #menu .mtop{position:fixed;z-index:60;pointer-events:auto}
+body.mbTab :is(#shop,#recs,#settings).screen{padding-top:84px;box-sizing:border-box}
+body.mbTab :is(#shop,#recs,#settings) .back{display:none}
+body.mbTab #menu #btnSettings.on{background:#fff;color:#2f8cff}
+body.mbTab #menu #btnSettings.on .mi{color:#2f8cff!important}`; document.head.appendChild(st); }
+// Esc numa aba volta pro Jogar (antes abria "Sair do jogo?" porque o menu fica visível por trás)
+addEventListener('keydown', e => { if(e.key !== 'Escape' || !document.body.classList.contains('mbTab')) return; const c = $('confirm'); if(c && !c.hidden) return;
+  e.preventDefault(); e.stopImmediatePropagation(); sfx('beep'); openScreen('menu'); }, true);
 
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
