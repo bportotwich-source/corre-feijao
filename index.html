@@ -1095,6 +1095,74 @@ body.wdOn #brTop .bp.mode{display:none}
 }
 @media (max-width:760px){#mbCards,#mbPass,#mbParty,#mbTag{display:none}}
 </style>
+<style id="telasB">/* ---------- Telas no estilo do menu B (01/11, Bruno aprovou o menu e pediu todas as telas iguais): contorno roxo-escuro grosso, sombra dura, faixa azul no título ---------- */
+:root{--tbI:#2a1250;--tbB:#2f8cff;--tbP:#ff4fa3;--tbY:#ffe56a;--tbC:#9fe7ff;--tbL:#d9c8ff;--tbK:#ffb3d9}
+.screen:not(.pc):not(#pause):not(#confirm):not(#result){background:rgba(47,140,255,.28)}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel)>.card.panel{background:#fff7ea;border:5px solid var(--tbI);border-radius:30px;box-shadow:0 10px 0 var(--tbI),0 26px 60px rgba(42,18,80,.35);padding:0 24px 22px}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .phead{box-sizing:border-box;width:calc(100% + 48px);margin:0 -24px 4px;padding:14px 22px 14px 26px;background:linear-gradient(180deg,#4a9dff,var(--tbB));border-bottom:5px solid var(--tbI)!important;border-radius:25px 25px 0 0}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .phead h2{color:#fff!important;-webkit-text-stroke:2px var(--tbI)!important;paint-order:stroke fill;text-shadow:0 4px 0 var(--tbI)!important;font-size:38px}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .back{background:#fff!important;color:var(--tbI)!important;border:4px solid var(--tbI)!important;border-radius:16px;box-shadow:0 5px 0 var(--tbI)!important;padding:7px 14px;font-size:18px;transition:transform .12s}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .back:hover,:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .back:focus-visible{transform:translateY(-2px);background:var(--tbY)!important}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .soon{background:var(--tbY);color:var(--tbI);border:3px solid var(--tbI);border-radius:10px}
+/* abas e botões de escolha */
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel,#menu .mpick) .seg{background:#fff!important;border:4px solid var(--tbI)!important;border-radius:18px!important;box-shadow:0 5px 0 var(--tbI);padding:4px}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .seg button{color:var(--tbI)!important;font-family:var(--display);font-weight:400;letter-spacing:.02em;border-radius:12px!important;opacity:.85}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .seg button:hover{background:#f1e9ff!important;opacity:1}
+:is(#mapsel,#shop,#recs,#settings,#party,#achs,#bigsel) .seg button.on{background:var(--tbP)!important;color:#fff!important;opacity:1;box-shadow:inset 0 -3px 0 rgba(42,18,80,.35)!important}
+/* caixas (mapas, itens da loja, prêmios do passe, números do perfil, linhas das configurações) */
+:is(#mapsel .map,#bigsel .map,#shop .item,#shop .fcard,#shop .preview,#shop .phd,#shop .chrow,#recs .pfhead,#recs .pfbig>*,#recs .pfbox,#settings .setrow,#party .pbox,#achs .ach){background:#fff;border:3px solid var(--tbI)!important;border-radius:18px!important;box-shadow:0 5px 0 var(--tbI)!important;color:var(--tbI)}
+:is(#mapsel .map,#bigsel .map,#shop .item,#shop .fcard){transition:transform .12s,box-shadow .12s}
+:is(#mapsel .map,#bigsel .map,#shop .item,#shop .fcard):hover,:is(#mapsel .map,#bigsel .map,#shop .item,#shop .fcard):focus-visible{transform:translateY(-4px);box-shadow:0 9px 0 var(--tbI)!important;outline:none}
+:is(#mapsel .map,#bigsel .map){overflow:hidden}
+:is(#mapsel,#bigsel) .mart{border-bottom:3px solid var(--tbI)}
+:is(#mapsel,#bigsel) .mart em,#mapsel .mart b{border:2px solid var(--tbI)}
+:is(#mapsel,#bigsel) .mtxt b{font-size:21px;text-transform:uppercase;letter-spacing:.01em}
+#shop .item.eq,#shop .item.on,#shop .fcard.on,#shop .fcard.next{border-color:var(--tbP)!important;box-shadow:0 5px 0 var(--tbI),0 0 0 4px var(--tbP)!important}
+#shop .preview{background:radial-gradient(circle at 50% 35%,#fff,#e9f4ff)}
+#shop .go,#party .go,#settings .go,#recs .go{border:4px solid var(--tbI)!important;border-radius:18px!important;box-shadow:0 6px 0 var(--tbI)!important;font-family:var(--display);text-transform:uppercase}
+#shop .go:not(.alt):not(:disabled),#party .go:not(.alt){background:linear-gradient(180deg,#ff8cc6,var(--tbP) 55%,#e02f86)!important;color:#fff!important;-webkit-text-stroke:1px var(--tbI);text-shadow:0 3px 0 var(--tbI)}
+#shop .go.alt,#settings .go.alt,#party .go.alt{background:#fff!important;color:var(--tbI)!important}
+#shop .coins,#recs .pfchips>*{background:#fff!important;border:3px solid var(--tbI)!important;color:var(--tbI)!important;font-weight:900}
+#shop .lvl{background:var(--tbP)!important;color:#fff!important;border:3px solid var(--tbI);border-radius:12px}
+#shop .xpbar,#shop .chrow .xpbar{background:#f1e9ff!important;border:2px solid var(--tbI);border-radius:8px}
+#shop .xpbar i{background:linear-gradient(90deg,#3ddc84,#20c3a0)!important}
+#shop .fnav{background:#fff;border:3px solid var(--tbI);box-shadow:0 4px 0 var(--tbI);color:var(--tbI)}
+#shop .chrow .mini{background:var(--tbY)!important;color:var(--tbI)!important;border:3px solid var(--tbI);box-shadow:0 3px 0 var(--tbI)}
+#recs .pfhead{background:linear-gradient(90deg,#fff,#fff3fb)}
+#recs .pfav{border:3px solid var(--tbI);border-radius:16px;background:var(--tbC)}
+#recs .pfbig>*:nth-child(4n+1){background:#fff8cf}#recs .pfbig>*:nth-child(4n+2){background:#e5f8ff}#recs .pfbig>*:nth-child(4n+3){background:#ffe8f4}#recs .pfbig>*:nth-child(4n+4){background:#efe7ff}
+#recs .pfbox h3,#recs .pfbox b:first-child{font-family:var(--display);text-transform:uppercase}
+#settings .setrow{box-shadow:0 4px 0 var(--tbI)!important}
+#settings .tog{border:3px solid var(--tbI)}
+#settings .tog.on{background:var(--tbP)!important}
+#settings input[type=range]{accent-color:var(--tbP)}
+/* Escolher modo (por cima do menu) no mesmo estilo */
+#menu .mpick{background:#fff7ea!important;border:5px solid var(--tbI)!important;border-radius:30px!important;box-shadow:0 10px 0 var(--tbI),0 26px 60px rgba(42,18,80,.35)!important;padding:0 20px 16px!important;overflow:hidden}
+#menu .mph{margin:0 -20px 14px!important;padding:12px 22px 12px 26px!important;background:linear-gradient(180deg,#4a9dff,var(--tbB));border-bottom:5px solid var(--tbI)!important;align-items:center!important}
+#menu .mph b{color:#fff!important;-webkit-text-stroke:2px var(--tbI);paint-order:stroke fill;text-shadow:0 4px 0 var(--tbI);font-size:34px!important}
+#menu .mph small{color:#fff!important;text-shadow:0 2px 0 var(--tbI)}
+#menu .mph kbd{background:#fff!important;color:var(--tbI)!important;border:2px solid var(--tbI)}
+#menu .mpcol{border:4px solid var(--tbI)!important;border-radius:22px!important;box-shadow:0 6px 0 var(--tbI)!important;padding:0 14px 14px!important}
+#menu .mpcol h3{margin:0 -14px 6px!important;padding:10px 14px;border-bottom:4px solid var(--tbI);font-size:24px!important;text-transform:uppercase}
+#menu .mpcol:nth-child(1){background:#fffbe6!important}#menu .mpcol:nth-child(1) h3{background:var(--tbY)}
+#menu .mpcol:nth-child(2){background:#f0fbff!important}#menu .mpcol:nth-child(2) h3{background:var(--tbC)}
+#menu .mpcol:nth-child(3){background:#fff2f8!important}#menu .mpcol:nth-child(3) h3{background:var(--tbK)}
+#menu .mpg{color:var(--tbI)!important;opacity:.75}
+#menu .mpo{background:#fff!important;border:3px solid var(--tbI)!important;border-radius:16px!important;box-shadow:0 4px 0 var(--tbI);transition:transform .12s,box-shadow .12s}
+#menu .mpo>i{background:#f3ecff!important;border:2px solid var(--tbI);border-radius:10px}
+#menu .mpo b{text-transform:uppercase;font-size:17px}
+#menu .mpo small{color:#5c4a7d!important}
+#menu .mpo:hover,#menu .mpo:focus-visible{transform:translateY(-3px)!important;box-shadow:0 7px 0 var(--tbI)}
+#menu .mpo.on{background:var(--tbP)!important;color:#fff!important}
+#menu .mpo.on small,#menu .mpo.on em{color:#fff!important}
+#menu .mpo.on>i{background:#fff!important}
+#menu .mpc{background:#fff!important;border:3px solid var(--tbI)!important;color:var(--tbI)!important;box-shadow:0 3px 0 var(--tbI)}
+#menu .mpc:hover,#menu .mpc:focus-visible{background:var(--tbY)!important}
+#menu .mpc.on{background:var(--tbP)!important;color:#fff!important}
+#menu .mpf{border-top:4px dashed rgba(42,18,80,.2);margin-top:12px}
+#menu .mpf span,#menu .mpf span b{color:var(--tbI)!important}
+#menu .mpf .go{background:linear-gradient(180deg,#ff8cc6,var(--tbP) 55%,#e02f86)!important;color:#fff!important;border:4px solid var(--tbI)!important;border-radius:18px!important;box-shadow:0 6px 0 var(--tbI)!important;font-size:30px!important;text-transform:uppercase;-webkit-text-stroke:1px var(--tbI);text-shadow:0 3px 0 var(--tbI)}
+</style>
 <div class="screen pc" id="menu" hidden>
   <header class="mtop">
     <div class="logo"><h1>Corre,<br>Feijão!</h1></div>
