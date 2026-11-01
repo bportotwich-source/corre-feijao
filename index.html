@@ -18397,7 +18397,7 @@ function mobStep(dt){ if(!MOB.on) return; if(!mobOn() || WD.over){ if(MOB.im) mo
   if(lead){ if(!MOB.job){ MOB.wt += dt; if(MOB.wt >= MOB.WAVE){ MOB.wt -= MOB.WAVE; mobWave(); } }
     for(const s of MOB.sd) if(s.alive) mobStepSd(s, dt);
     mobPayStep(dt);
-    if(mobNet() && (MOB.nt -= dt) <= 0){ MOB.nt = 0.25; mobOut(); } }
+    if(mobNet() && (MOB.nt -= dt) <= 0){ MOB.nt = MOB.sd.length > 40 ? 0.5 : 0.25; mobOut(); } }
   else { MOB.wt += dt; for(const s of MOB.sd) if(s.alive) mobPuppet(s, dt); }
   MOB.sd = MOB.sd.filter(s => s.alive); mobStepBul(dt); mobDraw(); }
 
@@ -18622,7 +18622,7 @@ function mstShots(dt){ if(!MST.list.length) return;
 function mstNetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wts) return;
   WN_EV.wts = e => { if(NET.host || !MST.ok || !Array.isArray(e.h)) return; e.h.forEach((v, i) => { const S = MST.list[i]; if(!S) return; v = +v || 0; if(Array.isArray(e.b)) S.lastT = e.b[i] | 0; if(S.alive && v <= 0) mstDie(S); else if(S.alive){ S.hp = v; mstBar(S); } }); };
   WN_EV.wtf = e => { if(NET.host || !MST.ok || !Array.isArray(e.f)) return; for(let i=0; i + 3 < e.f.length; i += 4){ const S = MST.list[e.f[i] | 0]; if(!S || !S.alive) continue; const ax = e.f[i + 1]/10, ay = e.f[i + 2]/10, az = e.f[i + 3]/10; S.ang = Math.atan2(ax - S.x, az - S.z); mstShoot(S, ax, ay, az, false); } };
-  WN_EV.wth = e => { if(!NET.host || !MST.ok) return; const S = MST.list[e.i | 0]; if(!S || !S.alive) return; mstDmg(S, clamp(+e.d || 0, 0, 2000), NET.byNid[e.n] || null, clamp(e.tm | 0, -1, 3)); }; }
+  WN_EV.wth = e => { if(!NET.host || !MST.ok) return; const S = MST.list[e.i | 0]; if(!S || !S.alive) return; mstDmg(S, clamp(+e.d || 0, 0, Math.max(2000, S.mhp*0.5)), NET.byNid[e.n] || null, clamp(e.tm | 0, -1, 3)); }; }
 
 // ---------- HUD (estruturas de pé) e minimapa ----------
 { const _h = wdHud; wdHud = function(){ _h(); const el = $('wdHud'); if(!el) return; let L = el.querySelector('.wdSt'); if(!L){ L = document.createElement('div'); L.className = 'wdZ wdSt'; el.appendChild(L); }
@@ -19228,7 +19228,7 @@ FR2_GLB.mob_tanque = "Z2xURgIAAABg7gAATEMAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvciI6Im
 //   só gente dirige (E), o tiro carrega 15 s (clique), alcança ~120 m e tira 40% da vida de uma torre, 50% de uma guarita e desliga um gerador sem escudo.
 //   O tanque tem 3000 de vida e some depois de 5 min.
 Object.assign(FR2_C, {capi:0x9a6a42, capi_e:0x6a4428, capi_c:0xb8865a});
-const CPV = {T0:1200, RESP:360, HP:9000, CHP:150, CH:15, TTL:300, SPD:80, st:0, wait:0, M:null, sh:[], at:null};
+const CPV = {T0:1200, RESP:360, HP:9000, CHP:150, CH:15, TTL:300, SPD:80, n:0, st:0, wait:0, M:null, sh:[], at:null};
 const SLV_KN = ['sauva', 'dragao', 'capivara', 'capinha'], SLV_KI = {sauva:0, dragao:1, capivara:2, capinha:3};
 WDV.info.tanque = {nm:'Tanque Feijão', seats:1, hp:3000, rad:2.2, box:[1.7, 2.6, 2.9], price:0, ic:'🛡️', d:'tiro que derruba torre', ground:true, spd:0.75, seat:[[0, 0, 0]]};
 function cpvNear(cx, cz){ for(const r of [0, 4, 7, 10, 14]) for(let k=0;k<(r ? 12 : 1);k++){ const a = k/12*6.283, x = cx + Math.sin(a)*r, z = cz + Math.cos(a)*r; if(mstFree(x, z, 3.2)) return [x, z]; } return [cx, cz]; }
@@ -19238,7 +19238,7 @@ function cpvSpot(){ const g = frR('Forte da Colina'); if(!g) return null; for(co
     const big = k === 'capivara', M = {id:SLV.id++, k, nest:-1, big, pos:new THREE.Vector3(x, gY(x, z), z), hx:x, hz:z, ang:rand(0, 6.28), alive:true, cd:rand(0.5, 1.5), tg:null, at:0, isMon:true};
     M.mhp = M.hp = Math.round((big ? CPV.HP : CPV.CHP)*slvK()); M.r = big ? 2.4 : 0.7; M.h = big ? 3.1 : 1.0; M.leash = big ? 30 : 34; M.spd = big ? 5 : 6.5;
     const g = new THREE.Group(); g.userData.keep = true; if(FR2.tpl.mob_capivara){ const m = fr2Clone('mob_capivara'); if(!big) m.scale.setScalar(0.3); g.add(m); } else { const b = new THREE.Mesh(new THREE.SphereGeometry(big ? 1.6 : 0.5, 12, 8), mat(0x9a6a42)); b.position.y = big ? 1.6 : 0.5; b.scale.z = 1.6; g.add(b); }
-    world.add(g); M.g = g; g.position.copy(M.pos); if(!big){ const C = CPV.M; if(C){ M.hx = C.hx; M.hz = C.hz; } } slvBar(M); SLV.L.push(M); return M; }; }
+    world.add(g); M.g = g; g.position.copy(M.pos); if(big) CPV.M = M; if(!big){ const C = CPV.M; if(C){ M.hx = C.hx; M.hz = C.hz; } } slvBar(M); SLV.L.push(M); return M; }; }
 function cpvTarget(M){ let best = null, bd = M.big ? 22 : 14; for(const p of players){ if(!p.alive || p.down || p.dying > 0 || p.car) continue; const d = Math.hypot(p.pos.x - M.pos.x, p.pos.z - M.pos.z);
     if(d < bd && Math.abs(p.pos.y - M.pos.y) < 8 && Math.hypot(p.pos.x - M.hx, p.pos.z - M.hz) < M.leash + 6){ bd = d; best = p; } } return best; }
 function cpvStep(M, dt, lead){
@@ -19270,17 +19270,17 @@ function cpvStep(M, dt, lead){
     const by = M.lastBy, t = by ? by.squad : -1; puff(M.pos.x, M.pos.y + M.h*0.5, M.pos.z, M.big ? 40 : 10, 0x9a6a42, M.big ? 0.3 : 0.12, M.big ? 8 : 3); sfxAt(M.pos, M.big ? 'boom' : 'splat', M.big ? 140 : 30);
     if(!M.big){ if(by) wdsPay(by, 20, 'derrubou uma capivarinha'); return; }
     if(by) wdsPay(by, 300, 'derrubou a Capivara gigante'); CPV.st = 2; CPV.wait = CPV.RESP; CPV.M = null; SLV.L.forEach(o => { if(o.alive && o.k === 'capinha'){ o.lastBy = null; slvDie(o); } });
-    if(mobLead() && t >= 0){ cpvCouro(t); cpvTankSpawn(t, M.pos.x, M.pos.z, by); if(mobNet()) netEv({t:'wcv', tm:t, x:Math.round(M.pos.x*10), z:Math.round(M.pos.z*10)}); } }; }
+    if(mobLead() && t >= 0){ cpvCouro(t); const c = cpvTankSpawn(t, M.pos.x, M.pos.z, by); if(mobNet()) netEv({t:'wcv', tm:t, x:Math.round(M.pos.x*10), z:Math.round(M.pos.z*10), id:c ? c.nid : ''}); } }; }
 function cpvCouro(t){ const me = you(); for(const p of players) if(p.squad === t && p.alive && !p.down && mobAuth(p)){ p.slvSh0 = p.sh || 0; p.sh = Math.min(150, (p.sh || 0) + 75); p.slvB = clock + 180; }
   if(me.squad === t){ banner('🐾 Couro de Capivara + Tanque Feijão!', '+75 de sobrevida por 3 min. O Tanque Feijão da sua tropa está no Forte: chegue perto e aperte <kbd>E</kbd>', 3200); sfx('win'); }
   else banner(`🐾 A ${WD_T[t].n} derrubou a Capivara gigante`, 'Ela ganhou o Tanque Feijão: cuidado com as suas torres', 2600); }
 // ---------- Tanque Feijão ----------
-function cpvTankSpawn(t, x, z, by){ if(!FR2.tpl.mob_tanque) return null; [x, z] = cpvNear(x, z); const I = WDV.info.tanque, y = gY(x, z), a = Math.atan2(-x, -z);
+function cpvTankSpawn(t, x, z, by, id){ if(!FR2.tpl.mob_tanque) return null; [x, z] = cpvNear(x, z); const I = WDV.info.tanque, y = gY(x, z), a = Math.atan2(-x, -z);
   const m = new THREE.Group(); m.rotation.order = 'YXZ'; m.userData = {wheels:[], radii:[], front:[], rot:[], tail:null, keep:true}; const b = mstTint(fr2Clone('mob_tanque'), t); m.add(b);
   const tc = new THREE.Color(WD_T[t] ? WD_T[t].c : 0x8a8a8a).lerp(new THREE.Color(0x4a5a3a), 0.35); let gi = null;
   b.traverse(o => { if(!gi && o.name === 'giro') gi = o; }); if(gi) mstNoAO(gi, t);
   b.traverse(o => { if(o.isMesh && o.userData.fr2 && o.userData.fr2[1] === 'pintura'){ o.material = o.material.clone(); o.material.color.copy(tc); } }); m.position.set(x, y, z); m.rotation.y = a; world.add(m);
-  const c = {m, x, y, z, face:a, driver:null, steer:0, kind:'tanque', team:t, owner:by || null, hp:I.hp, hp0:I.hp, pass:new Array(I.seats).fill(null), rad:I.rad, vx:0, vy:0, vz:0, pitch:0, roll:0, rs:0, air:false,
+  const c = {m, x, y, z, face:a, driver:null, steer:0, kind:'tanque', team:t, owner:null, nid:id || 'cpv' + (++CPV.n), hp:I.hp, hp0:I.hp, pass:new Array(I.seats).fill(null), rad:I.rad, vx:0, vy:0, vz:0, pitch:0, roll:0, rs:0, air:false,
     jeep:true, spdK:I.spd, sx:0, sb:0, tank:true, ttl:CPV.TTL, ch:CPV.CH*0.5, gi, ta:0};
   cars.push(c); ringFx(x, y + 0.3, z, WD_T[t].c, 5); return c; }
 const cpvAim = () => { const v = new THREE.Vector3(); camera.getWorldDirection(v); return v; };
@@ -19288,11 +19288,11 @@ function cpvFire(c, dir, net){ const D = c.driver; if(!net && (c.ch > 0 || !D)) 
   const ox = c.x + Math.sin(a)*4.9, oz = c.z + Math.cos(a)*4.9, oy = c.y + 2.3; const B = {x:ox, y:oy, z:oz, vx:Math.sin(a)*Math.cos(el)*CPV.SPD, vy:Math.sin(el)*CPV.SPD, vz:Math.cos(a)*Math.cos(el)*CPV.SPD, t:0, team:c.team, by:D, m:null};
   B.m = new THREE.Mesh(new THREE.SphereGeometry(0.32, 10, 8), new THREE.MeshBasicMaterial({color:0xffb03a})); B.m.position.set(ox, oy, oz); B.m.userData.keep = true; world.add(B.m); CPV.sh.push(B);
   puff(ox, oy, oz, 14, 0xffd23f, 0.2, 5); puff(ox, oy, oz, 10, 0x6a6a6a, 0.25, 4); sfxAt(new V3(ox, oy, oz), 'boom', 150); if(D && !D.isBot) shake = Math.max(shake, 0.5);
-  if(!net && mobNet()) netEv({t:'wtk', x:Math.round(ox*10), y:Math.round(oy*10), z:Math.round(oz*10), a:Math.round(a*1000), e:Math.round(el*1000), tm:c.team}); }
-function cpvBoom(B){ const x = B.x, y = Math.max(B.y, gY(B.x, B.z)) + 0.3, z = B.z, P = new V3(x, y, z), R = 5, auth = !B.by || mobAuth(B.by);
+  if(!net && mobNet()) netEv({t:'wtk', id:c.nid, x:Math.round(ox*10), y:Math.round(oy*10), z:Math.round(oz*10), a:Math.round(a*1000), e:Math.round(el*1000), tm:c.team}); }
+function cpvBoom(B){ const x = B.x, y = Math.max(B.y, gY(B.x, B.z)) + 0.3, z = B.z, P = new V3(x, y, z), R = 5, auth = B.by ? mobAuth(B.by) : mobLead();
   puff(x, y, z, 30, 0xff8a1c, 0.22, 7); puff(x, y, z, 20, 0x5a5a5a, 0.3, 6); sfxAt(P, 'boom', 160); if(humans().some(h => h.pos.distanceTo(P) < 30)) shake = Math.max(shake, 0.8);
   if(B.st && auth) mstDmg(B.st, B.st.mhp*(B.st.k === 'guarita' ? 0.5 : 0.4)/slvMul(B.team, true), B.by, B.team);
-  if(auth && typeof GEN !== 'undefined' && mobLead()) for(const G of GEN.L){ if(G.t === B.team || G.st !== 0 || Math.hypot(G.x - x, G.z - z) > 6 || (typeof mncGenLock === 'function' && mncGenLock(G))) continue; G.by = B.team; genBoom(G); }
+  if(typeof GEN !== 'undefined' && mobLead()) for(const G of GEN.L){ if(G.t === B.team || G.st !== 0 || Math.hypot(G.x - x, G.z - z) > 6 || (typeof mncGenLock === 'function' && mncGenLock(G))) continue; G.by = B.team; genBoom(G); }
   if(auth) for(const M of SLV.L){ if(M.alive && Math.hypot(M.pos.x - x, M.pos.z - z) < R + M.r) slvDmg(M, 500, B.by); }
   if(mobLead()) for(const o of MOB.sd){ if(o.alive && o.t !== B.team && Math.hypot(o.pos.x - x, o.pos.z - z) < R + 1){ o.hp -= 300; if(o.hp <= 0) mobKill(o, B.by || null); } }
   for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === B.team || !mobAuth(q)) continue; const d = Math.hypot(q.pos.x - x, q.pos.y + 0.8 - y, q.pos.z - z); if(d < R){ hurt(q, B.by && B.by.alive ? B.by : null, Math.round(70*(1 - d/R*0.6)), 'O Tanque Feijão te pegou'); knock(q, (q.pos.x - x)/(d || 1)*10, 6, (q.pos.z - z)/(d || 1)*10, 0.5, 'tomate'); } } }
@@ -19309,11 +19309,12 @@ function cpvTankStep(dt){ const me = you();
   for(const c of cars.slice()){ if(c.kind !== 'tanque' || c.dead) continue; c.ttl -= dt; c.ch = Math.max(0, c.ch - dt);
     if(c.ttl <= 0){ if(c.driver) leaveCar(c.driver, false); wdvGone(c); if(me.squad === c.team) say('🛡️ O Tanque Feijão da sua tropa acabou o combustível', true); continue; }
     // torre segue pra onde o motorista olha (você: a câmera; os outros: pra frente)
-    if(c.gi){ let a = c.face; if(c.driver === me){ const v = cpvAim(); a = Math.atan2(v.x, v.z); } else if(c.driver && c.driver.aimA != null) a = c.driver.aimA; c.ta = a; c.gi.rotation.y = a - c.face; } }
+    if(c.gi){ let a = c.face; if(c.driver === me){ const v = cpvAim(); a = Math.atan2(v.x, v.z); } else if(c.driver && c.taN != null) a = c.taN; c.ta = a; c.gi.rotation.y = a - c.face;
+      if(c.driver === me && mobNet() && (c.taT = (c.taT || 0) - dt) <= 0 && Math.abs(a - (c.taS ?? 99)) > 0.03){ c.taT = 0.15; c.taS = a; netEv({t:'wta', id:c.nid, a:Math.round(a*1000)}); } } }
   cpvShellStep(dt); }
 addEventListener('mousedown', e => { if(e.button !== 0 || !WAR || R1.phase !== 'play') return; const me = you(), c = me && me.car; if(!c || c.kind !== 'tanque' || c.dead) return;
   if(c.ch > 0){ say(`🛡️ Tiro do tanque carregando: ${Math.ceil(c.ch)} s`, true); return; } cpvFire(c, cpvAim(), false); });
-{ const _ec = enterCar; enterCar = function(p, c){ if(c.kind === 'tanque'){ if(p.isBot || p.squad !== c.team) return; _ec(p, c); if(!p.isBot) banner('🛡️ Tanque Feijão!', 'A torre mira pra onde você olha · clique atira (carrega 15 s, ~120 m) · <kbd>E</kbd> desce · some em ' + Math.ceil(c.ttl/60) + ' min', 3000); return; } return _ec(p, c); }; }
+{ const _ec = enterCar; enterCar = function(p, c){ if(c.kind === 'tanque'){ if((p.isBot && !p.netH) || p.squad !== c.team) return; _ec(p, c); if(!p.isBot) banner('🛡️ Tanque Feijão!', 'A torre mira pra onde você olha · clique atira (carrega 15 s, ~120 m) · <kbd>E</kbd> desce · some em ' + Math.ceil(c.ttl/60) + ' min', 3000); return; } return _ec(p, c); }; }
 // ---------- passo da capivara (nascer/voltar) ----------
 function cpvStepAll(dt){ const lead = mobLead();
   if(lead && WD.t >= CPV.T0){ if(CPV.st === 2){ CPV.wait -= dt; if(CPV.wait <= 0) CPV.st = 0; }
@@ -19322,8 +19323,9 @@ function cpvStepAll(dt){ const lead = mobLead();
 function cpvClear(){ CPV.sh.forEach(B => world.remove(B.m)); CPV.sh = []; CPV.st = 0; CPV.wait = 0; CPV.M = null; cars.slice().forEach(c => { if(c.kind === 'tanque'){ if(c.driver) leaveCar(c.driver, true); wdvGone(c); } }); }
 // ---------- rede ----------
 function cpvNetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wcv) return;
-  WN_EV.wcv = e => { if(NET.host) return; const t = clamp(e.tm | 0, 0, 3); cpvCouro(t); cpvTankSpawn(t, e.x/10, e.z/10, null); };
-  WN_EV.wtk = e => { const c = cars.find(o => o.kind === 'tanque' && o.team === (e.tm | 0)); if(!c) return; const a = e.a/1000, el = e.e/1000; cpvFire(c, new THREE.Vector3(Math.sin(a)*Math.cos(el), Math.sin(el), Math.cos(a)*Math.cos(el)), true); }; }
+  WN_EV.wcv = e => { if(NET.host || !SLV.on) return; const t = clamp(e.tm | 0, 0, 3), id = String(e.id || ''); cpvCouro(t); if(!id || !cars.some(c => c.nid === id)) cpvTankSpawn(t, e.x/10, e.z/10, null, id || null); };
+  WN_EV.wta = e => { const c = cars.find(o => o.kind === 'tanque' && o.nid === e.id); if(c && c.driver !== you()) c.taN = (+e.a || 0)/1000; };
+  WN_EV.wtk = e => { if(!SLV.on) return; const c = cars.find(o => o.kind === 'tanque' && !o.dead && (e.id ? o.nid === e.id : o.team === (e.tm | 0))); if(!c) return; const a = e.a/1000, el = e.e/1000; cpvFire(c, new THREE.Vector3(Math.sin(a)*Math.cos(el), Math.sin(el), Math.cos(a)*Math.cos(el)), true); }; }
 // ---------- HUD: barra do tiro no tanque e ícone no mapa ----------
 { const _b = gobBar; gobBar = function(){ const me = you(), b = $('gobBar'), c = me && me.car; if(b && c && c.kind === 'tanque'){ const txt = c.ch > 0 ? `🛡️ Tanque Feijão · tiro em ${Math.ceil(c.ch)} s · some em ${Math.ceil(c.ttl)} s` : `🛡️ Tanque Feijão · tiro pronto (clique) · some em ${Math.ceil(c.ttl)} s`;
       b.hidden = WD.over; if(b._h !== txt){ b._h = txt; b.querySelector('span').textContent = txt; } const s = b.querySelector('s'); s.style.width = Math.round((1 - c.ch/CPV.CH)*100) + '%'; s.style.background = c.ch > 0 ? '#ffd23f' : '#7dffa0'; return; } return _b(); }; }
@@ -19334,6 +19336,18 @@ function cpvNetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wcv) return;
 { const _b = slvBuild; slvBuild = function(){ const r = _b(); cpvClear(); cpvNetHook(); return r; }; }
 { const _c = slvClear; slvClear = function(){ cpvClear(); return _c(); }; }
 { const _us = updateShoot; updateShoot = function(dt){ _us(dt); if(SLV.on && mobOn() && !WD.over) cpvStepAll(dt); }; }
+
+// Guerra MOBA lote 5 (corre-feijao/guerra/moba/moba6.js)
+// ---------- Guerra MOBA lote 5: online (prefixo MO5) ----------
+// Mordida/cabeçada de bicho da selva em feijão de outro PC: o líder simula o bicho e avisa o dono do feijão, que toma o dano no PC dele.
+{ const _h = slvHit; slvHit = function(M, q, dmg, why, kb){ if(q && q.alive && !(q.dying > 0) && mobNet() && mobLead() && !mobAuth(q)){
+      netEv({t:'wsh', n:q.nid, d:Math.round(dmg), w:String(why || '').slice(0, 60), kb:kb || 0, x:Math.round(M.pos.x*10), z:Math.round(M.pos.z*10)}); return; }
+    return _h(M, q, dmg, why, kb); }; }
+function mo5NetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wsh) return;
+  WN_EV.wsh = e => { if(!SLV.on) return; const q = NET.byNid[e.n]; if(!q || !mobAuth(q) || !q.alive || q.dying > 0) return; const dmg = clamp(+e.d || 0, 0, 60), x = +e.x/10, z = +e.z/10, kb = clamp(+e.kb || 0, 0, 20);
+    hurt(q, null, dmg, String(e.w || 'Um bicho da selva te pegou').replace(/</g, '&lt;'));
+    if(kb){ const d = Math.hypot(q.pos.x - x, q.pos.z - z) || 1; knock(q, (q.pos.x - x)/d*kb, 5, (q.pos.z - z)/d*kb, 0.4, 'tomate'); } }; }
+{ const _b = slvBuild; slvBuild = function(){ const r = _b(); mo5NetHook(); return r; }; }
 
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
