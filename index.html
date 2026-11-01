@@ -1175,6 +1175,14 @@ body:not([data-hud="creme"]):not([data-hud="roxo"]) .bp.kill b{color:#2a1250}
 body:not([data-hud="creme"]):not([data-hud="roxo"]) #mini{border:4px solid #2a1250;box-shadow:0 5px 0 #2a1250;border-radius:18px}
 </style>
 <style id="lojaFix">#shop .shopgrid{align-items:start}#shop .shopgrid>.preview{position:sticky;top:16px;align-self:start;z-index:2}body.mbTab #shop .shopgrid>.preview{top:100px}#shop .card.panel,#shop .shopgrid{overflow:visible!important}body.mbTab #menu .mtop{background:linear-gradient(180deg,#4196ff,#2f8cff)}</style>
+<style id="menuTopo">:is(#shop,#recs,#settings).screen{--topo:0px;place-items:start center!important;align-content:start!important;overflow:hidden!important}
+body.mbTab :is(#shop,#recs,#settings).screen{--topo:84px}
+:is(#shop,#recs,#settings).screen>.card.panel{box-sizing:border-box;width:min(1040px,calc(100vw - 32px))!important;max-width:none!important;height:calc(100vh - var(--topo) - 48px)!important;max-height:none!important;margin:16px 0 0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important}
+:is(#shop,#recs,#settings).screen>.card.panel>*{flex:none}
+#recs .card.panel>.pfbody,#settings .card.panel>.setbody{flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important}
+#recs .card.panel>.pfbody{width:100%;box-sizing:border-box}
+#shop .card.panel>.shopgrid{flex:1 1 auto!important;min-height:0!important;overflow-x:hidden!important;overflow-y:auto!important;padding:6px 6px 14px;margin:0 -6px;align-content:start}
+#shop .card.panel>.shopgrid>.preview,body.mbTab #shop .shopgrid>.preview{top:0!important}</style><script>addEventListener('click',e=>{if(!e.target.closest('.mtop,#tabs,#pfTabs,#setTabs'))return;requestAnimationFrame(()=>document.querySelectorAll('#shop .shopgrid,#recs .pfbody,#settings .setbody').forEach(x=>x.scrollTop=0));},true);</script>
 <div class="screen pc" id="menu" hidden>
   <header class="mtop">
     <div class="logo"><h1>Corre,<br>Feijão!</h1></div>
