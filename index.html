@@ -15379,13 +15379,35 @@ function fjChunk(){ if(!FJK.on){ if(FJK.list.length){ FJK.list.forEach(fjChunkDr
       m.visible = o.visible && m.count > 0; m.castShadow = o.castShadow; m.receiveShadow = o.receiveShadow; m.renderOrder = o.renderOrder; m.material = o.material;
       m.customDepthMaterial = o.customDepthMaterial; m.customDistanceMaterial = o.customDistanceMaterial; m.onBeforeRender = o.onBeforeRender; }); }
 }
+// ===== menos comandos repetidos pra placa de vídeo =====
+// O three r128 refaz todos os atributos (bindBuffer + vertexAttribPointer) a cada desenho de InstancedMesh, mesmo quando o VAO já tem tudo certo.
+// Aqui o contexto WebGL lembra o que cada VAO já tem e pula a chamada repetida (mesmo buffer, mesmos parâmetros). A imagem é a mesma; só sai menos trabalho do processador.
+const FJGL = {on:true, n:0, skip:0};
+(function fjGlCache(){ const gl = renderer.getContext(); if(!gl || gl.__fjgl) return; gl.__fjgl = true;
+  const AB = gl.ARRAY_BUFFER, oBind = gl.bindBuffer, oDel = gl.deleteBuffer, oPtr = gl.vertexAttribPointer, oIPtr = gl.vertexAttribIPointer, oVao = gl.bindVertexArray, oDelVao = gl.deleteVertexArray;
+  let ab = null, vao = null; const st = new Map();   // vao (ou null = padrão) -> [estado por local]
+  const S = () => { let s = st.get(vao); if(!s){ s = []; st.set(vao, s); } return s; };
+  gl.bindBuffer = function(t, b){ if(t === AB && FJGL.on){ if(b === ab){ FJGL.skip++; return; } ab = b; } else if(t === AB) ab = b; return oBind.call(gl, t, b); };
+  gl.deleteBuffer = function(b){ if(b === ab) ab = null; for(const s of st.values()) for(let i = 0; i < s.length; i++) if(s[i] && s[i][0] === b) s[i] = null; return oDel.call(gl, b); };
+  if(oVao){ gl.bindVertexArray = function(v){ vao = v; return oVao.call(gl, v); };
+    gl.deleteVertexArray = function(v){ st.delete(v); if(vao === v) vao = null; return oDelVao.call(gl, v); }; }
+  gl.vertexAttribPointer = function(i, sz, ty, no, str, off){ const s = S(), c = s[i];
+    if(FJGL.on && c && c[0] === ab && c[1] === sz && c[2] === ty && c[3] === no && c[4] === str && c[5] === off && !c[6]){ FJGL.skip++; return; }
+    s[i] = [ab, sz, ty, no, str, off, false]; return oPtr.call(gl, i, sz, ty, no, str, off); };
+  if(oIPtr) gl.vertexAttribIPointer = function(i, sz, ty, str, off){ const s = S(), c = s[i];
+    if(FJGL.on && c && c[0] === ab && c[1] === sz && c[2] === ty && c[4] === str && c[5] === off && c[6]){ FJGL.skip++; return; }
+    s[i] = [ab, sz, ty, false, str, off, true]; return oIPtr.call(gl, i, sz, ty, str, off); };
+  canvas.addEventListener('webglcontextlost', () => { ab = null; vao = null; st.clear(); });
+})();
+const FJPF = {t0:0, lg:0, tot:0, n:0, txt:""};
 let fpsN = 0, fpsT = 0;
 function frame(now){
   if(CFG.fps && now - last < 1000/CFG.fps - 2){ requestAnimationFrame(frame); return; }
   const dt = Math.min(0.05, (now - last)/1000); last = now;
-  if(!PAUSED) tick(dt); view(dt); fjCull(camera); fjLod(camera); fjChunk(); fjBatch(); fjLootFx(); fjGrass(PAUSED ? 0 : dt); mkFlora(camera); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
+  const fjPf0 = performance.now(); if(!PAUSED) tick(dt); const fjPf1 = performance.now(); FJPF.lg += fjPf1 - fjPf0; FJPF.t0 = fjPf0; view(dt); fjCull(camera); fjLod(camera); fjChunk(); fjBatch(); fjLootFx(); fjGrass(PAUSED ? 0 : dt); mkFlora(camera); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
   if(TOON){ toonT += dt; if(toonT > 1.5) applyToon(); }
-  fjAutoRes(now); fpsN++; fpsT += FJAR.iv/1000; if(fpsT >= 0.5){ if(CFG.showFps) $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS' + (FJAR.k < 0.99 ? ' · resolução ' + Math.round(FJAR.k*100) + '%' : ''); fpsN = 0; fpsT = 0; }
+  FJPF.tot += performance.now() - FJPF.t0; FJPF.n++;
+  fjAutoRes(now); fpsN++; fpsT += FJAR.iv/1000; if(fpsT >= 0.5){ if(CFG.showFps){ if(FJPF.n){ FJPF.txt = ' · lógica ' + (FJPF.lg/FJPF.n).toFixed(1) + ' ms · desenho ' + Math.max(0, (FJPF.tot - FJPF.lg)/FJPF.n).toFixed(1) + ' ms'; } $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS' + (FJAR.k < 0.99 ? ' · resolução ' + Math.round(FJAR.k*100) + '%' : '') + FJPF.txt; } FJPF.lg = 0; FJPF.tot = 0; FJPF.n = 0; fpsN = 0; fpsT = 0; }
   if(pv && !$('shop').hidden){ pv.rot += dt*0.9; pv.m.g.rotation.y = Math.sin(pv.rot)*0.75 + pv.off; if(pv.m.spin) pv.m.spin.rotation.y += dt*8; SKINS.tick(pv.m, pv.rot*2, dt); SKINS.tickCos(pv.m, pv.rot*2); pv.r.render(pv.sc, pv.cam); }
   requestAnimationFrame(frame);
 }
