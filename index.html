@@ -1163,6 +1163,17 @@ body.wdOn #brTop .bp.mode{display:none}
 #menu .mpf span,#menu .mpf span b{color:var(--tbI)!important}
 #menu .mpf .go{background:linear-gradient(180deg,#ff8cc6,var(--tbP) 55%,#e02f86)!important;color:#fff!important;border:4px solid var(--tbI)!important;border-radius:18px!important;box-shadow:0 6px 0 var(--tbI)!important;font-size:30px!important;text-transform:uppercase;-webkit-text-stroke:1px var(--tbI);text-shadow:0 3px 0 var(--tbI)}
 </style>
+<style id="hudB">/* ---------- HUD no estilo das telas novas (01/11): mesmo formato (contorno roxo-escuro grosso, sombra dura, fonte do jogo), sem as cores do menu. Vale pro tema padrão; Creme e Roxo continuam em Configurações > HUD ---------- */
+body:not([data-hud="creme"]):not([data-hud="roxo"]){--zpnl:rgba(255,255,255,.9);--zpnl2:#fff;--zink:#2a1250;--zmut:#6d5d8c;--zline:#2a1250;--zhi:transparent;--zacc:#2a1250;--zsel:#ffc928;--zshadow:0 .28em 0 rgba(42,18,80,.9)}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) #nh .pn{border-width:3px;border-radius:.85em;backdrop-filter:none;-webkit-backdrop-filter:none}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) #nh .hb{background:rgba(42,18,80,.14)}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) #nh #nhBag{background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.85))}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) .bp{background:rgba(255,255,255,.92);color:#2a1250;border:3px solid #2a1250;box-shadow:0 4px 0 #2a1250;border-radius:14px}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) .bp svg{color:#2a1250!important;opacity:1}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) .bp small{opacity:.75}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) .bp.kill b{color:#2a1250}
+body:not([data-hud="creme"]):not([data-hud="roxo"]) #mini{border:4px solid #2a1250;box-shadow:0 5px 0 #2a1250;border-radius:18px}
+</style>
 <div class="screen pc" id="menu" hidden>
   <header class="mtop">
     <div class="logo"><h1>Corre,<br>Feijão!</h1></div>
