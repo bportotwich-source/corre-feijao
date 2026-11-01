@@ -18761,7 +18761,7 @@ FR2_GLB.mob_formigueiro = "Z2xURgIAAABweQAAkB4AAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvc
 //   a tropa ganha Bafo (+30 de sobrevida por 90 s pra quem está vivo) e 1 Chama (+5% de dano em estrutura, fica a partida toda).
 //   A 4ª Chama vira Alma do Dragão: 3 min com +20% de dano em tudo e vida voltando sozinha.
 Object.assign(FR2_C, {sauva:0x7a2a1c, sauva_e:0x3a1610, folha:0x5f8a3a});
-const SLV = {NEST:[[-60, -150], [60, 150], [-205, 25]], LAIR:[205, -15], A0:240, A1:840, NR:90, D0:480, DR:300, AHP:260, DHP:5200, L:[], nests:[], dr:null, T:[], nt:0, on:false, id:0};
+const SLV = {NEST:[[-60, -150], [60, 150], [-205, 25]], LAIR:[205, -15], A0:240, A1:840, NR:90, D0:1e9, DR:300, AHP:260, DHP:5200, L:[], nests:[], dr:null, T:[], nt:0, on:false, id:0};
 const slvT = t => SLV.T[t] || (SLV.T[t] = {fer:0, cha:0, alma:0});
 const slvK = () => typeof mobHPk === 'function' ? mobHPk() : 1;
 function slvSpot(cx, cz){ for(const r of [0, 10, 18, 26, 34, 44]) for(let k=0;k<(r ? 12 : 1);k++){ const a = k/12*Math.PI*2, x = cx + Math.sin(a)*r, z = cz + Math.cos(a)*r;
@@ -18886,7 +18886,7 @@ function slvShots(dt){ for(let i=shots.length - 1;i>=0;i--){ const s = shots[i],
     const cx = big ? 0 : clamp(me.pos.x, -W + span/2, W - span/2), cz = big ? 0 : clamp(me.pos.z, -W + span/2, W - span/2), k = S0/span, X = x => (x - cx)*k + S0/2, Z = z => (z - cz)*k + S0/2;
     const ic = (x, z, txt, on) => { const px = X(x), pz = Z(z); if(px < -12 || pz < -12 || px > S0 + 12 || pz > S0 + 12) return; g.globalAlpha = on ? 1 : 0.45; g.font = `${big ? 18 : 12}px sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, px, pz); g.globalAlpha = 1; };
     for(const N of SLV.nests) ic(N.x, N.z, '🐜', N.st === 1 && SLV.L.some(M => M.alive && M.nest === N.i));
-    const D = SLV.dr; if(D) ic(D.x, D.z, '🐉', D.st === 1); }; }
+  }; }
 // ---------- ganchos ----------
 { const _b = mstBuild; mstBuild = function(){ const r = _b(); try{ slvBuild(); }catch(e){ console.warn('slv', e); } return r; }; }
 { const _c = mstClear; mstClear = function(){ slvClear(); return _c(); }; }
