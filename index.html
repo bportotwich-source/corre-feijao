@@ -19052,13 +19052,14 @@ function netMsg(t){ $('joinMsg').textContent = t; }
 function netHost(){ if(typeof Peer === 'undefined'){ netMsg('Não deu pra carregar o online. Confira a internet e abra o jogo de novo.'); return; }
   netReset(); const code = 'FJ-' + Array.from({length:4}, () => ROOM_CH[Math.floor(Math.random()*ROOM_CH.length)]).join(''), peer = netPeer(NET_PFX + code.toLowerCase());
   NET.peer = peer; $('btnHost').disabled = true; netMsg('Criando a sala...');
-  peer.on('open', id => { Object.assign(NET, {on:true, host:true, code, myId:id, mode:'party', map:BIGMAP}); NET.members = [{id, name:netName(), look:myLook()}]; $('btnHost').disabled = false; netSys('Sala criada. Mande o código pros seus amigos.'); netShowRoom(); lbStart(); });
+  // 'open' volta a disparar quando o PeerJS reconecta no servidor (jogo travado carregando o mapa, aba em segundo plano): a sala continua, não recria
+  peer.on('open', id => { if(NET.on && NET.host && NET.peer === peer) return; Object.assign(NET, {on:true, host:true, code, myId:id, mode:'party', map:BIGMAP}); NET.members = [{id, name:netName(), look:myLook()}]; $('btnHost').disabled = false; netSys('Sala criada. Mande o código pros seus amigos.'); netShowRoom(); lbStart(); });
   peer.on('connection', c => {
     c.on('data', d => netFromClient(c, d));
     c.on('close', () => netDrop(c.peer));
     c.on('error', () => netDrop(c.peer)); });
   peer.on('disconnected', () => { if(NET.peer === peer && !peer.destroyed) try{ peer.reconnect(); }catch(e){} });
-  peer.on('error', e => { $('btnHost').disabled = false; if(e.type === 'unavailable-id'){ netHost(); return; } if(!NET.on) netMsg('Não deu pra criar a sala (' + (e.type || 'erro') + '). Tente de novo.'); }); }
+  peer.on('error', e => { $('btnHost').disabled = false; if(e.type === 'unavailable-id'){ if(NET.on && NET.peer === peer){ setTimeout(() => { if(NET.peer === peer && peer.disconnected && !peer.destroyed) try{ peer.reconnect(); }catch(x){} }, 3000); return; } netHost(); return; } if(!NET.on) netMsg('Não deu pra criar a sala (' + (e.type || 'erro') + '). Tente de novo.'); }); }
 function netJoin(code){ if(typeof Peer === 'undefined'){ netMsg('Não deu pra carregar o online. Confira a internet e abra o jogo de novo.'); return; }
   netReset(); const peer = netPeer(); NET.peer = peer; netMsg(`Procurando a sala ${code}...`); $('btnJoin').disabled = true;
   const fail = t => { $('btnJoin').disabled = false; netMsg(t); };
