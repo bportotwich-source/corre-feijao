@@ -19371,7 +19371,7 @@ function vvCity(asf, lamps, cx, cz, Y){ try{ if(!lamps || !lamps.length) return;
   lamps.forEach(([x, z, sd, t], i) => {
     // eixo: t = 1 rua corre em x (lado na z); t = 0 rua corre em z (lado na x)
     const ax = t ? [1, 0] : [0, 1], sv = t ? [0, sd] : [sd, 0];
-    for(const off of [4.5, 9.5]){ if(sr() > (lamps.length > 300 ? 0.22 : 0.45) || cars.length >= 240) continue; const px = x + ax[0]*off - sv[0]*1.35, pz = z + ax[1]*off - sv[1]*1.35;
+    for(const off of [4.5, 9.5]){ if(sr() > (lamps.length > 300 ? 0.22 : 0.45) || cars.length >= 0) continue; /* sem carros de enfeite nas ruas (pedido do Bruno 01/11) */ const px = x + ax[0]*off - sv[0]*1.35, pz = z + ax[1]*off - sv[1]*1.35;
       if(!onAsf(px + ax[0]*2.3, pz + ax[1]*2.3) || !onAsf(px - ax[0]*2.3, pz - ax[1]*2.3) || nearCross(px, pz, 3.5) || cars.some(c => Math.hypot(c[0] - px, c[1] - pz) < 4.8)) continue;
       cars.push([px, pz, t ? (sr() < 0.5 ? 0 : Math.PI) : (sr() < 0.5 ? -Math.PI/2 : Math.PI/2) + 0, VV_CAR_COL[Math.floor(sr()*VV_CAR_COL.length)], t]); }
     // calçada: do lado de fora do poste
