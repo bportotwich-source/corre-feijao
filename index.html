@@ -15982,6 +15982,14 @@ if(typeof gwpList === 'function'){ const _l = gwpList; gwpList = function(){ con
       if(big){ const lab = (mine ? '🚩 ' : '') + (P.pav !== undefined ? 'Posto ' : '') + P.n + (mine && P.sx !== undefined ? ` · 📦${P.stk}` : ''); g.font = `bold ${mine ? 14 : 12}px sans-serif`; g.lineWidth = 4; g.strokeStyle = 'rgba(43,24,70,.85)'; g.strokeText(lab, x, z + 20); g.fillStyle = P.t >= 0 ? WD_T[P.t].s : '#fff'; g.fillText(lab, x, z + 20); } }
     g.restore(); }; }
 
+// câmera do Gavião mais alta (pedido do Bruno 01/11 00:39 "ajustar a mira"): a câmera sobe e olha mais pra cima,
+// então o helicóptero fica embaixo da cruz e não tapa o alvo (piloto e atirador)
+HA.ck = 0;
+{ const _aim = aim; aim = function(c, me, dt){ _aim(c, me, dt); if(c !== cam1 || twoP) return;
+    const on = haOk() && me.alive && !!haRole(me) && R1.phase !== 'podium'; HA.ck += ((on ? 1 : 0) - HA.ck)*Math.min(1, dt*4); if(HA.ck < 0.01){ HA.ck = 0; return; }
+    const k = HA.ck, L = (c.lk || c.look).clone(); camera.position.y += HA_CAM[0]*k; L.y += HA_CAM[1]*k; camera.lookAt(L); }; }
+const HA_CAM = [1.5, 3.5];
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
