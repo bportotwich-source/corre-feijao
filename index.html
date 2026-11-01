@@ -12568,10 +12568,12 @@ function botInput0(p, dt){
         if(bigR && (b.max.x < tx - 5.5 || b.min.x > tx + 5.5)) continue;
         if(LX.length > 1 && Math.abs((b.cx ?? (b.min.x + b.max.x)/2) - (p.lx || 0)) > LW/2) continue;
         if((round === 12 || round === 6 || round === 21 || round >= 36) && (b.max.x < tx - 3.6 || b.min.x > tx + 3.6)) continue;
+        if(round === 9 && b.kind === 'lift'){ if(Math.abs((b.min.x + b.max.x)/2 - tx) > 2.6) continue; const d9 = b.max.y - p.pos.y; if(d9 < -0.5 || d9 > 0.9 || b.delta.y < -0.001){ if(!waitFor || b.min.z < waitFor.min.z) waitFor = b; continue; } }
         const dy = b.max.y - p.pos.y, tol = b.kind === 'seesaw' || p.ground.kind === 'seesaw' ? 1.4 : round === 9 || round === 12 || round === 6 || round === 21 || round >= 36 ? 1.4 : 0.6;
         if(dy > tol || dy < -Math.max(tol, 0.6)){ if(b.kind === 'lift' && (!waitFor || b.min.z < waitFor.min.z)) waitFor = b; continue; }
         if(!target || b.min.z < target.min.z) target = b; }
       if(waitFor && (!target || waitFor.min.z < target.min.z)){ target = null; mz = p.ground.max.z - z > 0.9 ? 1 : 0; mx = clamp(((waitFor.min.x + waitFor.max.x)/2 - p.pos.x)*0.6, -1, 1); }
+      if(round === 9 && !target && !waitFor && !(course.ext && z > course.ext.z0 - 1)) mz = p.ground.max.z - z > 0.9 ? 1 : 0;
       if(target){
         const lead = target.kind === 'mover' ? target.delta.x/dt*0.8 : 0;
         const ok = p.pos.x > target.min.x + lead + 0.6 && p.pos.x < target.max.x + lead - 0.6;
@@ -12581,6 +12583,8 @@ function botInput0(p, dt){
         const hurry = p.ground.kind === 'tile' && p.ground.t >= 0;
         mz = ok || hurry || p.vel.z > 3 ? 1 : 0;
         if((ok || hurry || p.vel.z > 3) && edge < 0.7) inp.jump = Math.random() < 0.6 + p.skill*0.4;
+        if(round === 9 && target.max.y - p.pos.y > 0.3 && !(course.ext && z > course.ext.z0 - 1)){ mz = Math.min(mz, ESC_V); p.upJ = 1.1; }
+        if(round === 9 && (ok || p.vel.z > 3) && edge < 0.8) inp.jump = true;
       }
     }
   } else if(!p.grounded){
@@ -12592,8 +12596,10 @@ function botInput0(p, dt){
   if(round === 11 && p.grounded){ const dx = tx - p.pos.x; if(Math.abs(dx) > 1.2 || Math.abs(p.vel.x) > 3.5) mz = Math.min(mz, 0.55); mx = clamp(dx*0.7 - p.vel.x*0.18, -1, 1); }
   mx = obAvoid(p, mx);
   if(Math.random() < 0.006 && (z < 32 || (z > 125 && z < 140) || z > 155)) for(const q of players){ if(q !== p && q.alive && q.pos.distanceTo(p.pos) < 1.4){ inp.push = true; break; } }
+  if(round === 9 && p.upJ > 0){ p.upJ -= dt; if(!p.grounded) mz = Math.min(mz, ESC_V); else if(p.upJ < 0.8) p.upJ = 0; }
   inp.mx = mx; inp.mz = mz; return inp;
 }
+let ESC_V = 0.55;
 function avoidBars(p, inp){
   for(const b of bars){
     const dx = Math.cos(b.ang), dz = Math.sin(b.ang), rx = p.pos.x - b.cx, rz = p.pos.z - b.cz;
