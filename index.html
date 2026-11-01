@@ -14208,11 +14208,11 @@ function wdHeliMove(c, dt){ const ox = c.x, oz = c.z; c.x += c.vx*dt; c.z += c.v
   c.y = Math.min(c.y, g + 70, 140); }
 function wdHeliStep(p, dt, inp){ const c = p.car, I = WDV.info[c.kind], me = p.i === 0 && !twoP;
   const cam = p.i === 0 ? cam1 : cam2, cy = Math.atan2(cam.look.x - cam.pos.x, cam.look.z - cam.pos.z);
-  const up = me ? (keys.Space ? 1 : 0) - (keys.ShiftLeft || keys.ShiftRight || keys.KeyC || keys.ControlLeft ? 1 : 0) : (inp.jump ? 1 : 0), V = c.kind === 'heli4' ? 30 : 22;
+  const up = me ? (keys.Space ? 1 : 0) - (keys.ShiftLeft || keys.ShiftRight || keys.KeyC || keys.ControlLeft ? 1 : 0) : (inp.jump ? 1 : 0), V = c.kind === 'heli4' || c.kind === 'heliA' ? 30 : 22;
   if(inp.jump) inp.jump = false;
   const air = c.y - wdGround(c, c.x, c.z) > 1.2, tvx = air ? inp.mx*V : 0, tvz = air ? inp.mz*V : 0;
-  if(air || up > 0){ let d = cy - c.face; d = Math.atan2(Math.sin(d), Math.cos(d)); c.face += d*Math.min(1, dt*(c.kind === 'heli4' ? 2.6 : 1.6)); }
-  const hk = c.kind === 'heli4', inp0 = Math.abs(tvx) + Math.abs(tvz) > 0.01, rate = inp0 ? (hk ? 1.1 : 0.65) : air ? (hk ? 0.5 : 0.35) : 3;   // inércia: acelera aos poucos e, soltando, desliza uns segundos até parar
+  if(air || up > 0){ let d = cy - c.face; d = Math.atan2(Math.sin(d), Math.cos(d)); c.face += d*Math.min(1, dt*(c.kind === 'heli4' || c.kind === 'heliA' ? 2.6 : 1.6)); }
+  const hk = c.kind === 'heli4' || c.kind === 'heliA', inp0 = Math.abs(tvx) + Math.abs(tvz) > 0.01, rate = inp0 ? (hk ? 1.1 : 0.65) : air ? (hk ? 0.5 : 0.35) : 3;   // inércia: acelera aos poucos e, soltando, desliza uns segundos até parar
   c.vx += (tvx - c.vx)*Math.min(1, dt*rate); c.vz += (tvz - c.vz)*Math.min(1, dt*rate); c.vy += (up*(hk ? 10 : 7) - c.vy)*Math.min(1, dt*(up ? 1.8 : 1.2));
   c.rs = Math.min(30, c.rs + dt*20); wdHeliMove(c, dt);
   // inclina pra frente/lado conforme a velocidade
@@ -15636,7 +15636,7 @@ addEventListener('mousedown', e => { if(e.target !== canvas || document.pointerL
 addEventListener('mouseup', e => { if(e.button === 0) HA.lmb = false; if(e.button === 2) HA.rmb = false; }, true);
 addEventListener('blur', () => { HA.lmb = HA.rmb = false; });
 // voo: ágil como o Beija-Flor
-{ const _hs = wdHeliStep; wdHeliStep = function(p, dt, inp){ const c = p.car; if(!c || c.kind !== 'heliA') return _hs(p, dt, inp); c.kind = 'heli4'; try{ return _hs(p, dt, inp); } finally { c.kind = 'heliA'; } }; }
+
 { const _us = updateShoot; updateShoot = function(dt){ _us(dt); if(haOk() && (cars.some(c => c.kind === 'heliA') || HA.hud && HA.hud.style.display !== 'none')) haStep(dt); }; }
 // avisos ao entrar
 { const _ec = enterCar; enterCar = function(p, c){ const r = _ec(p, c); if(c && c.kind === 'heliA' && p.car === c && !p.isBot) banner('🚁 Helicóptero Gavião', 'O mouse mira e vira · <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> voa · <kbd>Espaço</kbd> sobe · <kbd>Shift</kbd> desce · clique = canhão · botão direito = foguetes · <kbd>E</kbd> salta', 3600); return r; }; }
