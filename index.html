@@ -1183,6 +1183,12 @@ body.mbTab :is(#shop,#recs,#settings).screen{--topo:84px}
 #recs .card.panel>.pfbody{width:100%;box-sizing:border-box}
 #shop .card.panel>.shopgrid{flex:1 1 auto!important;min-height:0!important;overflow-x:hidden!important;overflow-y:auto!important;padding:6px 6px 14px;margin:0 -6px;align-content:start}
 #shop .card.panel>.shopgrid>.preview,body.mbTab #shop .shopgrid>.preview{top:0!important}</style><script>addEventListener('click',e=>{if(!e.target.closest('.mtop,#tabs,#pfTabs,#setTabs'))return;requestAnimationFrame(()=>document.querySelectorAll('#shop .shopgrid,#recs .pfbody,#settings .setbody').forEach(x=>x.scrollTop=0));},true);</script>
+<style id="menuTopo2">#shop .card.panel>.shopgrid{overflow:hidden!important;padding:0!important;margin:0!important;grid-template-rows:minmax(0,1fr)!important;align-items:stretch!important}
+#shop .shopgrid>.preview{align-self:start!important}
+#shop .shopgrid>.shopside{min-height:0!important;height:100%;display:flex!important;flex-direction:column!important;overflow:hidden!important}
+#shop .shopside>#tabs{flex:none}
+#shop .shopside>:is(#items,#shopPass){flex:1 1 auto;min-height:0;overflow-y:auto!important;overflow-x:hidden!important;padding:6px 6px 14px;margin:0 -6px;align-content:start}
+#shop .shopside>#items{grid-auto-rows:max-content!important;grid-template-rows:none!important}</style><script>addEventListener('click',e=>{if(!e.target.closest('.mtop,#tabs'))return;requestAnimationFrame(()=>document.querySelectorAll('#shop #items,#shop #shopPass').forEach(x=>x.scrollTop=0));},true);</script>
 <div class="screen pc" id="menu" hidden>
   <header class="mtop">
     <div class="logo"><h1>Corre,<br>Feijão!</h1></div>
