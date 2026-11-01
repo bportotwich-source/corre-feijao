@@ -4774,7 +4774,7 @@ function fjLodGeo(g){
 }
 function fjLodInit(){
   FJL.w = world; FJL.list = []; FJL.t = 0;
-  world.traverse(o => { if(!o.isInstancedMesh || o === (typeof FJG !== 'undefined' && FJG.m) || !o.userData.keep || (o.count < 200 && !o.userData.lodGeo) || !o.instanceColor || !o.geometry.attributes.color) return;
+  world.traverse(o => { if(!o.isInstancedMesh || o.userData.fjk || o === (typeof FJG !== 'undefined' && FJG.m) || !o.userData.keep || (o.count < 200 && !o.userData.lodGeo) || !o.instanceColor || !o.geometry.attributes.color) return;
     const g = o.geometry, tri = (g.index ? g.index.count : g.attributes.position.count)/3; if(tri < 150) return;
     const lg = o.userData.lodGeo || fjLodGeo(g); if(!lg || (!o.userData.lodGeo && lg.attributes.position.count/3 > tri*0.5)) return;
     const n = o.count, M = o.instanceMatrix.array.slice(0, n*16), ML = o.userData.lodK ? M.map((v, j) => (j % 16) < 11 && (j % 4) < 3 ? v*o.userData.lodK : v) : M, C = o.instanceColor.array.slice(0, n*3), X = new Float32Array(n*2);
@@ -15291,11 +15291,63 @@ function fjAutoRes(now){ const iv = now - FJAR.ln; FJAR.ln = now; FJAR.iv = Math
   if(FJAR.ema > 22.2 && FJAR.k > 0.61){ fjArSet(Math.max(0.6, FJAR.k - 0.1)); FJAR.t = 0; FJAR.hold = now + 20000; }
   else if(FJAR.ema < 17.8 && FJAR.k < 1 && now > FJAR.hold && FJAR.t > 4000){ fjArSet(Math.min(1, FJAR.k + 0.1)); FJAR.t = 0; } }
 { const _av = applyVideo; applyVideo = function(...a){ const r = _av(...a); FJAR.base = renderer.getPixelRatio(); if(FJAR.k < 1) fjArSet(FJAR.k); return r; }; }
+// ===== árvores, plantas e pedras em pedaços (células de 64 m; 128 m pras que não fazem sombra) =====
+// Cada InstancedMesh grande e parado do mapa (uma malha pra ilha toda, sem corte de tela) ganha "pedaços": uma InstancedMesh por célula,
+// com a esfera de limite só das cópias daquela célula. Assim o three pula o que está fora da tela E fora da caixa da sombra do sol.
+// A original continua existindo (dados, contagem, visível) mas não é desenhada (camada 29). Se ela muda (fjLod troca perto/longe), os pedaços são refeitos.
+const FJK = {on:true, w:null, list:[], seen:new WeakSet(), CELL:64, CELLF:128, MIN:40000, t:0, f:0};
+function fjChunkOk(o){
+  if(!o.isInstancedMesh || o.userData.fjk || o.frustumCulled !== false || o.count < 8 || o.isSkinnedMesh) return false;
+  if(o === FJG.m || (typeof FJD !== 'undefined' && o === FJD.im)) return false;
+  if(typeof MOB !== 'undefined' && MOB && MOB.im && Object.values(MOB.im).includes(o)) return false;   // soldadinhos da Guerra andam todo quadro
+  if(o.instanceMatrix.usage === THREE.DynamicDrawUsage && !FJL.list.some(e => e.hi === o || e.lo === o)) return false;
+  if(o.morphTargetInfluences && o.morphTargetInfluences.length) return false;
+  const g = o.geometry; if(!g || !g.attributes.position) return false;
+  const tri = (g.index ? g.index.count : g.attributes.position.count)/3; if(tri < 60 || tri*o.count < FJK.MIN) return false;   // malha pequena no total: não compensa mais desenhos
+  const a = o.instanceMatrix.array; let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+  for(let i = 0; i < o.instanceMatrix.count; i++){ const x = a[i*16 + 12], z = a[i*16 + 14]; if(x < x0) x0 = x; if(x > x1) x1 = x; if(z < z0) z0 = z; if(z > z1) z1 = z; }
+  return Math.max(x1 - x0, z1 - z0) > 60; }
+function fjChunkInit(){
+  FJK.list.forEach(e => fjChunkDrop(e)); FJK.w = world; FJK.list = []; FJK.t = 0; fjChunkScan(); }
+function fjChunkScan(){ const have = new Set(FJK.list.map(e => e.src));
+  world.traverse(o => { if(have.has(o) || FJK.seen.has(o) || !fjChunkOk(o)) return; const g = o.geometry; if(!g.boundingSphere) g.computeBoundingSphere();
+    FJK.list.push({src:o, cells:new Map(), v:-1, vc:-1, n:-1, ch:0, f0:FJK.f, r:g.boundingSphere.radius, c:g.boundingSphere.center.clone(), L0:o.layers.mask}); });
+}
+function fjChunkDrop(e){ e.cells.forEach(m => { if(m.parent) m.parent.remove(m); m.geometry.boundingSphere = null; }); e.cells.clear(); e.src.layers.mask = e.L0; }
+const FJK_M = new THREE.Matrix4(), FJK_V = new THREE.Vector3(), FJK_S = new THREE.Vector3(), FJK_Q = new THREE.Quaternion();
+function fjChunkBuild(e){ const o = e.src, a = o.instanceMatrix.array, ca = o.instanceColor && o.instanceColor.array, n = o.count, C = o.castShadow ? FJK.CELL : FJK.CELLF, by = new Map();   // sem sombra: pedaço maior (menos desenhos)
+  for(let i = 0; i < n; i++){ if(a[i*16] === 0 && a[i*16 + 5] === 0 && a[i*16 + 10] === 0) continue; const k = Math.floor(a[i*16 + 12]/C)*4096 + Math.floor(a[i*16 + 14]/C); let L = by.get(k); if(!L) by.set(k, L = []); L.push(i); }
+  e.cells.forEach((m, k) => { if(!by.has(k)){ m.count = 0; m.visible = false; } });
+  by.forEach((L, k) => { let m = e.cells.get(k);
+    if(!m || m.instanceMatrix.count < L.length){ if(m && m.parent) m.parent.remove(m);
+      const g = new THREE.BufferGeometry(), sg = o.geometry; for(const nm in sg.attributes) g.setAttribute(nm, sg.attributes[nm]); if(sg.index) g.setIndex(sg.index); g.groups = sg.groups; g.drawRange = sg.drawRange;
+      m = new THREE.InstancedMesh(g, o.material, Math.ceil(L.length*1.3) + 2); m.userData.fjk = true; m.userData.keep = true; m.frustumCulled = true; m.matrixAutoUpdate = false;
+      if(ca) m.setColorAt(0, new THREE.Color()); e.cells.set(k, m); }
+    const ma = m.instanceMatrix.array, mc = m.instanceColor && m.instanceColor.array, sp = new THREE.Box3(); let rr = 0;
+    L.forEach((i, j) => { ma.set(a.subarray(i*16, i*16 + 16), j*16); if(mc && ca) mc.set(ca.subarray(i*3, i*3 + 3), j*3);
+      FJK_M.fromArray(a, i*16); FJK_M.decompose(FJK_V, FJK_Q, FJK_S); const s = Math.max(Math.abs(FJK_S.x), Math.abs(FJK_S.y), Math.abs(FJK_S.z));
+      const c = e.c.clone().multiply(FJK_S).applyQuaternion(FJK_Q).add(FJK_V); sp.expandByPoint(c); rr = Math.max(rr, e.r*s); });
+    m.count = L.length; m.instanceMatrix.needsUpdate = true; if(m.instanceColor) m.instanceColor.needsUpdate = true;
+    const bs = new THREE.Sphere(); sp.getBoundingSphere(bs); bs.radius += rr + 0.5; m.geometry.boundingSphere = bs; m.visible = true; });
+  e.v = o.instanceMatrix.version; e.vc = o.instanceColor ? o.instanceColor.version : -1; e.n = n; }
+function fjChunk(){ if(!FJK.on){ if(FJK.list.length){ FJK.list.forEach(fjChunkDrop); FJK.list = []; FJK.w = null; } return; }
+  FJK.f++; if(!BIG) { if(FJK.list.length){ FJK.list.forEach(fjChunkDrop); FJK.list = []; } FJK.w = null; return; }
+  if(FJK.w !== world){ if(FJK.list.length){ FJK.list.forEach(fjChunkDrop); FJK.list = []; FJK.t = 0; } if(FJK.t++ < 20) return; fjChunkInit(); } else if(++FJK.t % 120 === 0) fjChunkScan();   // modelos que chegam depois (pacote de árvores carrega sozinho)
+  for(let q = FJK.list.length - 1; q >= 0; q--){ const e = FJK.list[q], o = e.src;
+    if(!o.parent){ fjChunkDrop(e); FJK.list.splice(q, 1); continue; }
+    if(o.instanceMatrix.version !== e.v || o.count !== e.n || (o.instanceColor && o.instanceColor.version !== e.vc)){
+      if(!FJL.list.some(x => x.hi === o || x.lo === o) && ++e.ch > 12 && (FJK.f - e.f0) < e.ch*8){ fjChunkDrop(e); FJK.list.splice(q, 1); FJK.seen.add(o); o.userData.fjk = true; continue; } // muda demais: deixa como era
+      fjChunkBuild(e); }
+    o.layers.set(29);
+    e.cells.forEach(m => { if(m.parent !== o.parent) o.parent.add(m); if(m.matrix !== o.matrix) m.matrix.copy(o.matrix);
+      m.visible = o.visible && m.count > 0; m.castShadow = o.castShadow; m.receiveShadow = o.receiveShadow; m.renderOrder = o.renderOrder; m.material = o.material;
+      m.customDepthMaterial = o.customDepthMaterial; m.customDistanceMaterial = o.customDistanceMaterial; m.onBeforeRender = o.onBeforeRender; }); }
+}
 let fpsN = 0, fpsT = 0;
 function frame(now){
   if(CFG.fps && now - last < 1000/CFG.fps - 2){ requestAnimationFrame(frame); return; }
   const dt = Math.min(0.05, (now - last)/1000); last = now;
-  if(!PAUSED) tick(dt); view(dt); fjCull(camera); fjLod(camera); fjBatch(); fjLootFx(); fjGrass(PAUSED ? 0 : dt); mkFlora(camera); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
+  if(!PAUSED) tick(dt); view(dt); fjCull(camera); fjLod(camera); fjChunk(); fjBatch(); fjLootFx(); fjGrass(PAUSED ? 0 : dt); mkFlora(camera); updateDmgs(PAUSED ? 0 : dt); updateDirs(PAUSED ? 0 : dt); updateAmb(); if(!PAUSED){ updateScenery(dt); updateTracers(dt); }
   if(TOON){ toonT += dt; if(toonT > 1.5) applyToon(); }
   fjAutoRes(now); fpsN++; fpsT += FJAR.iv/1000; if(fpsT >= 0.5){ if(CFG.showFps) $('fps').textContent = Math.round(fpsN/fpsT) + ' FPS' + (FJAR.k < 0.99 ? ' · resolução ' + Math.round(FJAR.k*100) + '%' : ''); fpsN = 0; fpsT = 0; }
   if(pv && !$('shop').hidden){ pv.rot += dt*0.9; pv.m.g.rotation.y = Math.sin(pv.rot)*0.75 + pv.off; if(pv.m.spin) pv.m.spin.rotation.y += dt*8; SKINS.tick(pv.m, pv.rot*2, dt); SKINS.tickCos(pv.m, pv.rot*2); pv.r.render(pv.sc, pv.cam); }
@@ -18124,6 +18176,220 @@ const fr2InGap = (a, g0, g1) => { const t = ((a - g0)%(2*Math.PI) + 2*Math.PI)%(
       for(let i=0;i<=40;i++){ const u = g1 + (2*Math.PI - (g1 - g0))*i/40, px = x + Math.sin(u)*(E.RD - 0.08), pz = z + Math.cos(u)*(E.RD - 0.08); box(px - 0.1, px + 0.1, T + 0.3, T + 1.3, pz - 0.1, pz + 0.1, 0x3d4148); }
       [0.4, 0.4 + Math.PI/2, 0.4 + Math.PI, 0.4 + 1.5*Math.PI].forEach(a => { const px = x + Math.sin(a)*2, pz = z + Math.cos(a)*2; box(px - 0.13, px + 0.13, T + 0.3, T + 2.9, pz - 0.13, pz + 0.13, 0x6f4f30); }); });
     FJ_BLD.push([x - 4, x + 4, z - 4, z + 4, 0xf4ead8]); bonusLoot.push(['sniper', x + 1.0, T + 0.3, z - 1.0]); }; }
+
+// ---------- Guerra MOBA no Front do Feijão (lote 1): 6 rotas e ondas de soldadinhos ----------
+// cada tropa sai por 3 rotas; a cada 30 s sai uma onda de soldadinhos (NPC leve, não ocupa vaga de jogador) por rota
+// o líder da partida simula; os outros PCs só desenham (posição na rota + tiros) e mandam os acertos deles pro líder
+const MOB = {WAVE:30, W0:20, HP:34, SPD:4.2, SIGHT:28, RNG:22, DMG:6, DMGS:12, BV:70, MAX:96, VIS:230,
+  lanes:[], sd:[], bul:[], wt:0, nid:1, im:null, job:null, tk:0, nt:0, ft:[], pay:new Map(), payT:0, wave:0, on:false};
+const MOB_LANES = [
+  {n:'Rota Norte', a:0, b:2, c:['Moinho', 'Aeródromo', "Torre d'Água"]},
+  {n:'Rota Sul', a:3, b:1, c:['Celeiro', 'Vila da Ponte', 'Silo']},
+  {n:'Rota Oeste', a:0, b:3, c:['Pedreira', 'Farol', 'Paiol']},
+  {n:'Rota Leste', a:2, b:1, c:['Mirante', 'Radar', 'Galpão']},
+  {n:'Rota do Meio', a:0, b:1, c:['Casamata', 'Forte da Colina', 'Bunker']},
+  {n:'Rota do Meio', a:3, b:2, c:['Posto', 'Forte da Colina', 'Ninho']}];
+const mobOn = () => WAR && BIG && round === 20 && BIGMAP === 'front' && R1.phase === 'play' && WD.hq.length === 4;
+const mobLead = () => typeof wdLead !== 'function' || wdLead();
+const mobNet = () => typeof wdNet === 'function' && wdNet();
+const mobAuth = p => !mobNet() || (p && typeof own === 'function' && own(p));
+// escala pelos jogadores de verdade (1-20: 4 por onda, vida normal; 21-60: 5, vida 1,5x; 61-100: 6, vida 2x)
+const mobHumans = () => players.filter(p => !p.isBot && !p.dummy).length;
+const mobN = () => { const h = mobHumans(); return h <= 20 ? 4 : h <= 60 ? 5 : 6; };
+const mobHPk = () => { const h = mobHumans(); return h <= 20 ? 1 : h <= 60 ? 1.5 : 2; };
+
+// ---------- caminho das rotas: A* na grade de 6 m (igual ao do comboio), preferindo a estrada ----------
+function mobGrid(){ const X = (TER ? TER.X : BIG_W) - 24, Z = (TER ? TER.Z : BIG_W) - 24, C = 6, nx = Math.floor(2*X/C), nz = Math.floor(2*Z/C), wl = typeof FJ_WL === 'number' ? FJ_WL : -99;
+  const cx = i => -X + (i + 0.5)*C, cz = j => -Z + (j + 0.5)*C, N = nx*nz, H = new Float32Array(N), ok = new Uint8Array(N), road = new Uint8Array(N), PX = new Float32Array(N), PZ = new Float32Array(N);
+  const blk = (x, z, h, m, bm) => solidsAt(x, z).some(b => { if(!b.active || b.max.y <= h + 0.7 || b.min.y > h + 5) return false; const big = Math.max(b.max.x - b.min.x, b.max.z - b.min.z) >= 3, M = big ? bm ?? 2.6 : m;
+    return x > b.min.x - M && x < b.max.x + M && z > b.min.z - M && z < b.max.z + M; });
+  if(typeof FJ_RP !== 'undefined' && Array.isArray(FJ_RP)) for(const P of FJ_RP) for(let q=1;q<P.length;q++){ const [x0, z0] = P[q - 1], [x1, z1] = P[q], n = Math.ceil(Math.hypot(x1 - x0, z1 - z0)/2);
+    for(let t=0;t<=n;t++){ const x = x0 + (x1 - x0)*t/n, z = z0 + (z1 - z0)*t/n, i = Math.floor((x + X)/C), j = Math.floor((z + Z)/C); if(i < 0 || j < 0 || i >= nx || j >= nz) continue; const k = i*nz + j;
+      if(!road[k] || Math.hypot(x - cx(i), z - cz(j)) < Math.hypot(PX[k] - cx(i), PZ[k] - cz(j))){ road[k] = 1; PX[k] = x; PZ[k] = z; } } }
+  for(let i=0;i<nx;i++) for(let j=0;j<nz;j++){ const k = i*nz + j, x = road[k] ? PX[k] : cx(i), z = road[k] ? PZ[k] : cz(j), g0 = gY(x, z), h = road[k] ? gobH(x, z, g0 <= wl + 0.9 ? wl + 7 : g0 + 1) : g0; H[k] = h;
+    const hq = WD.hq.some(Q => Math.hypot(Q.x - x, Q.z - z) < WD.HQR + 16);
+    ok[k] = !hq && (road[k] ? h > wl + 0.3 && !blk(x, z, h, -99, 0.3) : h > wl + 0.9 && ![[0, 0], [1.6, 0], [-1.6, 0], [0, 1.6], [0, -1.6]].some(([u, v], q) => blk(x + u, z + v, h, q ? 0 : 1.0, q ? 0.2 : 1.4))) ? 1 : 0; }
+  return {X, Z, C, nx, nz, N, H, ok, road, PX, PZ, cx, cz}; }
+function mobCell(G, x, z){ const {X, Z, C, nx, nz, ok} = G, i = clamp(Math.floor((x + X)/C), 0, nx - 1), j = clamp(Math.floor((z + Z)/C), 0, nz - 1);
+  for(let r=0;r<16;r++) for(let a=-r;a<=r;a++) for(let b=-r;b<=r;b++){ if(Math.max(Math.abs(a), Math.abs(b)) !== r) continue; const u = i + a, v = j + b; if(u >= 0 && v >= 0 && u < nx && v < nz && ok[u*nz + v]) return u*nz + v; } return -1; }
+function mobAstar(G, s, g){ const {N, nx, nz, C, ok, H, road, PX, PZ, cx, cz} = G, D = new Float32Array(N).fill(1e9), P = new Int32Array(N).fill(-1), done = new Uint8Array(N), hp = [], gi = Math.floor(g/nz), gj = g % nz;
+  const push = (k, f) => { hp.push([f, k]); let i = hp.length - 1; while(i){ const p = (i - 1) >> 1; if(hp[p][0] <= hp[i][0]) break; [hp[p], hp[i]] = [hp[i], hp[p]]; i = p; } };
+  const pop = () => { const t = hp[0], l = hp.pop(); if(hp.length){ hp[0] = l; let i = 0; for(;;){ const a = 2*i + 1, b = a + 1; let m = i; if(a < hp.length && hp[a][0] < hp[m][0]) m = a; if(b < hp.length && hp[b][0] < hp[m][0]) m = b; if(m === i) break; [hp[m], hp[i]] = [hp[i], hp[m]]; i = m; } } return t; };
+  D[s] = 0; push(s, 0); let it = 0;
+  while(hp.length && it++ < 250000){ const [, k] = pop(); if(done[k]) continue; done[k] = 1; if(k === g) break; const i = Math.floor(k/nz), j = k % nz;
+    for(let a=-1;a<=1;a++) for(let b=-1;b<=1;b++){ if(!a && !b) continue; const u = i + a, v = j + b; if(u < 0 || v < 0 || u >= nx || v >= nz) continue; const q = u*nz + v; if(!ok[q] || done[q]) continue;
+      const d = (a && b ? 1.414 : 1)*C, dh = Math.abs(H[q] - H[k]); if(dh > d*0.6) continue; const c = D[k] + d*(1 + dh/d*4)*(road[q] ? 0.3 : 1);
+      if(c < D[q]){ D[q] = c; P[q] = k; push(q, c + Math.hypot(u - gi, v - gj)*C*0.3); } } }
+  if(s !== g && P[g] < 0) return null; const L = []; for(let k=g; k>=0; k=P[k]){ L.push(road[k] ? [PX[k], PZ[k], H[k]] : [cx(Math.floor(k/nz)), cz(k % nz), H[k]]); if(k === s) break; } return L.reverse(); }
+// suaviza os degraus da grade (mantém as pontas)
+function mobSmooth(L){ for(let n=0;n<2;n++){ const M = L.map(p => p.slice()); for(let i=1;i<L.length - 1;i++){ M[i][0] = (L[i - 1][0] + 2*L[i][0] + L[i + 1][0])/4; M[i][1] = (L[i - 1][1] + 2*L[i][1] + L[i + 1][1])/4; } L = M; } return L; }
+// pontos da rota: saída da base A > 3 postos/zonas > saída da base B (fora do anel da base)
+function mobLaneEnds(D){ const A = WD.hq[D.a], B = WD.hq[D.b], C = D.c.map(n => frR(n)).filter(Boolean).map(g => [g[1], g[2]]); if(!A || !B || C.length < 2) return null;
+  const ex = (H, P) => { const dx = P[0] - H.x, dz = P[1] - H.z, d = Math.hypot(dx, dz) || 1; return [H.x + dx/d*(WD.HQR + 20), H.z + dz/d*(WD.HQR + 20)]; };
+  return [ex(A, C[0])].concat(C, [ex(B, C[C.length - 1])]); }
+// o cálculo é repartido pelos quadros (um trecho por quadro) pra não travar o começo da partida
+function* mobJob(){ const G = mobGrid(); yield;
+  for(let li=0; li<MOB_LANES.length; li++){ const D = MOB_LANES[li], W = mobLaneEnds(D); if(!W) continue; let pts = [];
+    for(let q=1;q<W.length;q++){ const s = mobCell(G, W[q - 1][0], W[q - 1][1]), g = mobCell(G, W[q][0], W[q][1]); let seg = s >= 0 && g >= 0 ? mobAstar(G, s, g) : null;
+      if(!seg){ const n = Math.max(2, Math.ceil(Math.hypot(W[q][0] - W[q - 1][0], W[q][1] - W[q - 1][1])/6)); seg = []; for(let t=0;t<=n;t++){ const x = W[q - 1][0] + (W[q][0] - W[q - 1][0])*t/n, z = W[q - 1][1] + (W[q][1] - W[q - 1][1])*t/n; seg.push([x, z, gY(x, z)]); } }
+      if(pts.length) seg.shift(); pts = pts.concat(seg); yield; }
+    pts = mobSmooth(pts); const len = [0]; for(let i=1;i<pts.length;i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    MOB.lanes[li] = {i:li, n:D.n, a:D.a, b:D.b, p:pts, len, L:len[len.length - 1]}; }
+  MOB.job = null; }
+// ponto da rota na distância u (com deslocamento lateral off)
+function mobAt(R, u, off, out){ const L = R.len, P = R.p; u = clamp(u, 0, R.L); let lo = 0, hi = L.length - 1; while(hi - lo > 1){ const m = (lo + hi) >> 1; if(L[m] <= u) lo = m; else hi = m; }
+  const a = P[lo], b = P[hi], k = L[hi] > L[lo] ? (u - L[lo])/(L[hi] - L[lo]) : 0, dx = b[0] - a[0], dz = b[1] - a[1], d = Math.hypot(dx, dz) || 1;
+  const x = a[0] + dx*k - dz/d*off, z = a[1] + dz*k + dx/d*off, py = a[2] + (b[2] - a[2])*k, g = gY(x, z);
+  out.x = x; out.z = z; out.y = py - g > 1.5 ? py : g; out.f = Math.atan2(dx, dz); return out; }
+
+// ---------- desenho: InstancedMesh (corpo na cor da tropa, capacete, olhos e fuzil) ----------
+function mobMeshes(){ if(MOB.im) return MOB.im; const N = MOB.MAX, I = (g, m, n) => { const o = new THREE.InstancedMesh(g, m, n || N); o.frustumCulled = false; o.userData.keep = true; o.count = 0; o.castShadow = false; o.receiveShadow = false; return o; };
+  const body = I(new THREE.SphereGeometry(0.4, 12, 10), new THREE.MeshLambertMaterial({color:0xffffff}));
+  const helm = I(new THREE.SphereGeometry(0.44, 12, 6, 0, Math.PI*2, 0, Math.PI/2), new THREE.MeshLambertMaterial({color:0x5b6a3a}));
+  const brim = I(new THREE.CylinderGeometry(0.5, 0.5, 0.05, 14), new THREE.MeshLambertMaterial({color:0x4a5730}));
+  const eye = I(new THREE.SphereGeometry(0.085, 8, 6), new THREE.MeshBasicMaterial({color:0xffffff}), N*2);
+  const pup = I(new THREE.SphereGeometry(0.045, 6, 4), new THREE.MeshBasicMaterial({color:0x1d1426}), N*2);
+  const gun = I(new THREE.BoxGeometry(0.09, 0.11, 0.62), new THREE.MeshLambertMaterial({color:0x3a3530}));
+  const bul = I(new THREE.BoxGeometry(0.06, 0.06, 0.8), new THREE.MeshBasicMaterial({color:0xffe066, fog:false}), 200);
+  // (r128: setColorAt cria a cor com o tamanho de count; count aqui já é 0, então a cor é criada à mão com espaço pra todos)
+  body.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N*3).fill(1), 3); body.instanceColor.setUsage(THREE.DynamicDrawUsage);
+  [body, helm, brim, eye, pup, gun, bul].forEach(o => o.instanceMatrix.setUsage(THREE.DynamicDrawUsage));
+  MOB.im = {body, helm, brim, eye, pup, gun, bul, all:[body, helm, brim, eye, pup, gun, bul], o:new THREE.Object3D(), c:new THREE.Color()}; return MOB.im; }
+function mobShow(on){ const M = mobMeshes(); M.all.forEach(o => { if(on && o.parent !== world) world.add(o); if(!on && o.parent) o.parent.remove(o); o.count = 0; }); }
+function mobDraw(){ const M = mobMeshes(), o = M.o, cam = camera.position, V2 = MOB.VIS*MOB.VIS; let n = 0;
+  const put = (mesh, i, x, y, z, ry, sx, sy, sz, rx) => { o.position.set(x, y, z); o.rotation.set(rx || 0, ry, 0); o.scale.set(sx, sy, sz); o.updateMatrix(); mesh.setMatrixAt(i, o.matrix); };
+  for(const s of MOB.sd){ if(!s.alive) continue; const dx = s.pos.x - cam.x, dz = s.pos.z - cam.z; if(dx*dx + dz*dz > V2) continue;
+    const f = s.face, sf = Math.sin(f), cf = Math.cos(f), walk = s.mv ? Math.abs(Math.sin(s.wt*9))*0.09 : 0, y = s.pos.y + walk, hit = s.ht > 0 ? 1 + s.ht*0.6 : 1;
+    put(M.body, n, s.pos.x, y + 0.62, s.pos.z, f, 1.02*hit, 1.55, 0.95*hit); M.c.setHex(WD_T[s.t].c); if(s.ht > 0) M.c.lerp(new THREE.Color(0xffffff), s.ht*1.6); M.body.setColorAt(n, M.c);
+    put(M.helm, n, s.pos.x, y + 1.08, s.pos.z, f, 1, 0.8, 1); put(M.brim, n, s.pos.x + sf*0.04, y + 1.09, s.pos.z + cf*0.04, f, 1, 1, 1);
+    for(const k of [0, 1]){ const lx = (k ? 0.15 : -0.15), ex = s.pos.x + sf*0.34 + cf*lx, ez = s.pos.z + cf*0.34 - sf*lx; put(M.eye, n*2 + k, ex, y + 0.86, ez, f, 1, 1.2, 1); put(M.pup, n*2 + k, ex + sf*0.06, y + 0.86, ez + cf*0.06, f, 1, 1.2, 1); }
+    const gx = s.pos.x + sf*0.32 + cf*-0.3, gz = s.pos.z + cf*0.32 - sf*-0.3; put(M.gun, n, gx, y + 0.6, gz, f + (s.aim ? 0 : 0.5), 1, 1, 1, s.aim ? 0 : 0.35);
+    if(++n >= MOB.MAX) break; }
+  M.body.count = M.helm.count = M.brim.count = M.gun.count = n; M.eye.count = M.pup.count = n*2;
+  let b = 0; const T = new THREE.Vector3(); for(const B of MOB.bul){ if(b >= 200) break; o.position.set(B.x, B.y, B.z); T.set(B.x + B.vx, B.y + B.vy, B.z + B.vz); o.scale.set(1, 1, 1); o.rotation.set(0, 0, 0); o.lookAt(T); o.updateMatrix(); M.bul.setMatrixAt(b++, o.matrix); }
+  M.bul.count = b; M.all.forEach(m => { m.instanceMatrix.needsUpdate = true; }); if(M.body.instanceColor) M.body.instanceColor.needsUpdate = true; }
+
+// ---------- soldadinhos ----------
+function mobMake(R, t, u, id, hp){ const d = t === R.a ? 1 : -1, off = ((id*37) % 7 - 3)*0.55 + rand(-0.25, 0.25), s = {id, t, li:R.i, d, u, off, tu:u, pos:new THREE.Vector3(), hp, mhp:hp, face:0, cd:rand(0.4, 1.2), tg:null, rt:0, wt:rand(0, 6), mv:true, aim:false, ht:0, age:0, alive:true, isMob:true};
+  const P = mobAt(R, u, off, {}); s.pos.set(P.x, P.y, P.z); s.face = d > 0 ? P.f : P.f + Math.PI; MOB.sd.push(s); return s; }
+function mobWave(){ const n = mobN(), hp = Math.round(MOB.HP*mobHPk()); MOB.wave++;
+  for(const R of MOB.lanes){ if(!R) continue; for(const t of [R.a, R.b]){ for(let k=0;k<n;k++){ if(MOB.sd.length >= MOB.MAX) return; mobMake(R, t, t === R.a ? 2 + k*3.2 : R.L - 2 - k*3.2, MOB.nid++, hp); } } }
+  if(MOB.wave === 1) say('🪖 A primeira onda de <b>soldadinhos</b> saiu das bases! Eles andam pelas 6 rotas e atiram em quem for de outra tropa', true); }
+// alvo: soldadinho de outra tropa ou jogador inimigo à vista (prefere soldadinho, como num MOBA)
+function mobFind(s){ let best = null, bd = MOB.SIGHT;
+  for(const o of MOB.sd){ if(!o.alive || o.t === s.t) continue; const d = Math.abs(o.pos.x - s.pos.x) + Math.abs(o.pos.z - s.pos.z); if(d > bd*1.42) continue; const e = Math.hypot(o.pos.x - s.pos.x, o.pos.z - s.pos.z); if(e < bd){ bd = e; best = o; } }
+  let bp = null, bpd = (best ? bd : MOB.SIGHT) - 4; for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === s.t || q.glide || Math.abs(q.pos.y - s.pos.y) > 14) continue; const e = Math.hypot(q.pos.x - s.pos.x, q.pos.z - s.pos.z); if(e < bpd){ bpd = e; bp = q; } }
+  if(bp && mobLos(s, bp)) return bp; return best; }
+function mobLos(s, q){ const o = new THREE.Vector3(s.pos.x, s.pos.y + 0.95, s.pos.z), t = new THREE.Vector3(q.pos.x, q.pos.y + 0.9, q.pos.z), d = t.clone().sub(o), L = d.length(); if(L < 1) return true; d.normalize(); return rayHit(o, d, L, null).distanceTo(o) > L - 0.9; }
+function mobAimPt(tg){ return tg.isMob ? [tg.pos.x, tg.pos.y + 0.65, tg.pos.z] : [tg.pos.x, tg.pos.y + (tg.stance === 2 ? 0.3 : tg.stance === 1 ? 0.6 : 0.9), tg.pos.z]; }
+function mobFire(s, ax, ay, az, send){ const ox = s.pos.x + Math.sin(s.face)*0.55, oy = s.pos.y + 0.75, oz = s.pos.z + Math.cos(s.face)*0.55, dx = ax - ox, dy = ay - oy, dz = az - oz, d = Math.hypot(dx, dy, dz) || 1, sp = 0.035*d/MOB.RNG + 0.02;
+  const vx = (dx/d + rand(-sp, sp))*MOB.BV, vy = (dy/d + rand(-sp, sp)*0.6)*MOB.BV, vz = (dz/d + rand(-sp, sp))*MOB.BV;
+  MOB.bul.push({x:ox, y:oy, z:oz, vx, vy, vz, t:0, team:s.t, life:(MOB.RNG + 8)/MOB.BV}); s.aim = true; s.ft = 0.25;
+  if(MOB.bul.length > 200) MOB.bul.shift(); if(Math.random() < 0.6) sfxAt(s.pos, 'w_pistol', 40);
+  if(send) MOB.ft.push([s.id, Math.round(ax*10), Math.round(ay*10), Math.round(az*10)]); }
+function mobStepSd(s, dt){ const R = MOB.lanes[s.li]; if(!R) return; s.age += dt; s.ht = Math.max(0, s.ht - dt); s.ft = (s.ft || 0) - dt; if(s.ft <= 0) s.aim = false;
+  s.rt -= dt; if(s.rt <= 0 || (s.tg && (!s.tg.alive || s.tg.dying > 0))){ s.rt = rand(0.3, 0.45); s.tg = mobFind(s); }
+  const tg = s.tg, td = tg ? Math.hypot(tg.pos.x - s.pos.x, tg.pos.z - s.pos.z) : 99;
+  if(tg && td < MOB.RNG){ s.mv = false; s.face = Math.atan2(tg.pos.x - s.pos.x, tg.pos.z - s.pos.z); s.cd -= dt;
+    if(s.cd <= 0){ s.cd = rand(1.0, 1.4); const [ax, ay, az] = mobAimPt(tg); mobFire(s, ax, ay, az, mobNet()); } }
+  else { s.mv = true; s.wt += dt; s.u += s.d*MOB.SPD*dt; s.cd = Math.max(s.cd - dt, 0.3); }
+  const P = mobAt(R, s.u, s.off, MOB._p || (MOB._p = {})); s.pos.set(P.x, P.y, P.z); if(s.mv) s.face = s.d > 0 ? P.f : P.f + Math.PI;
+  // chegou na base inimiga: entra no anel e queima (no lote 2 a guarita cuida deles)
+  if((s.d > 0 && s.u >= R.L - 0.5) || (s.d < 0 && s.u <= 0.5) || s.age > 300) mobKill(s, null, true); }
+function mobKill(s, by, quiet){ if(!s.alive) return; s.alive = false; s.hp = 0; puff(s.pos.x, s.pos.y + 0.6, s.pos.z, quiet ? 6 : 12, WD_T[s.t].c, 0.12, 3); if(!quiet) sfxAt(s.pos, 'splat', 30);
+  if(by && !quiet && mobLead()){ const m = MOB.pay.get(by) || [0, 0]; m[0] += 15; m[1]++; MOB.pay.set(by, m); } }
+// dano num soldadinho: o líder aplica; os outros PCs mandam pro líder e mostram o número na hora
+function mobDmg(s, dmg, by){ if(!s || !s.alive || dmg <= 0) return; dmg = Math.round(dmg);
+  if(by && !by.isBot && by === you()){ dmgNum(s, Math.min(dmg, Math.max(1, s.hp)), dmg >= s.hp ? 'big' : ''); hitMark(dmg >= s.hp); }
+  s.ht = 0.18; if(!mobLead()){ netEv({t:'wmh', i:s.id, d:dmg, n:by ? by.nid : -1}); s.hp = Math.max(1, s.hp - dmg); return; }
+  s.hp -= dmg; if(s.hp <= 0) mobKill(s, by); }
+// tiros dos soldadinhos: acertam jogador (cada PC cuida dos seus feijões) e, no líder, soldadinho de outra tropa
+function mobStepBul(dt){ const lead = mobLead(), wl = typeof FJ_WL === 'number' ? FJ_WL : -99;
+  for(let i=MOB.bul.length - 1;i>=0;i--){ const B = MOB.bul[i]; let gone = false; const n = Math.max(1, Math.ceil(Math.hypot(B.vx, B.vy, B.vz)*dt/0.6)), h = dt/n;
+    for(let st=0; st<n && !gone; st++){ B.x += B.vx*h; B.y += B.vy*h; B.z += B.vz*h; B.t += h; if(B.t > B.life || B.y < Math.max(wl, gY(B.x, B.z))){ gone = true; break; }
+      for(const b of solidsAt(B.x, B.z)){ if(b.active && b.mesh && b.kind !== 'ramp' && B.x > b.min.x && B.x < b.max.x && B.y > b.min.y && B.y < b.max.y && B.z > b.min.z && B.z < b.max.z){ gone = true; break; } } if(gone) break;
+      for(const q of players){ if(!q.alive || q.dying > 0 || q.squad === B.team || q.iframe > 0) continue; const dx = q.pos.x - B.x, dz = q.pos.z - B.z; if(dx*dx + dz*dz > 0.36 || B.y < q.pos.y || B.y > q.pos.y + bodyH(q)) continue;
+        gone = true; if(mobAuth(q)) mobHurt(q, B.team); break; }
+      if(gone) break;
+      for(const o of MOB.sd){ if(!o.alive || o.t === B.team) continue; const dx = o.pos.x - B.x, dy = o.pos.y + 0.62 - B.y, dz = o.pos.z - B.z; if(dx*dx + dy*dy + dz*dz > 0.36) continue; gone = true; if(lead){ o.hp -= MOB.DMGS; o.ht = 0.12; if(o.hp <= 0) mobKill(o, null); } break; } }
+    if(gone){ puff(B.x, B.y, B.z, 2, 0xffe066, 0.06, 1.2); MOB.bul.splice(i, 1); } } }
+function mobHurt(q, team){ let d = MOB.DMG; if(q.arm){ const c = VEST_CUT[q.arm.vest]; if(c) d = Math.max(1, Math.round(d*(1 - c))); } const T = WD_T[team], _s = say;
+  say = (h, f) => _s(/ficou fora da zona/.test(h) ? `${nm(q)} caiu pra um soldadinho da <b style="color:${T.s}">${T.n}</b>` : h, f);
+  try{ hurt(q, null, d, `Um soldadinho da ${T.n} te pegou`); } finally { say = _s; } }
+// grãos por soldadinho derrubado (junta 2 s pra não encher a tela de aviso)
+function mobPayStep(dt){ if((MOB.payT -= dt) > 0) return; MOB.payT = 2; for(const [p, m] of MOB.pay) if(p && m[0]) wdsPay(p, m[0], `${m[1]} soldadinho${m[1] > 1 ? 's' : ''}`); MOB.pay.clear(); }
+
+// ---------- passo da partida ----------
+function mobStart(){ mobClear(); if(!(WAR && BIG && round === 20 && BIGMAP === 'front')) return; MOB.on = true; MOB.job = mobJob(); MOB.wt = MOB.WAVE - MOB.W0; mobShow(true); mobNetHook(); }
+function mobClear(){ MOB.on = false; MOB.lanes = []; MOB.sd = []; MOB.bul = []; MOB.ft = []; MOB.job = null; MOB.wave = 0; MOB.nid = 1; MOB.pay.clear(); if(MOB.im) mobShow(false); }
+function mobStep(dt){ if(!MOB.on) return; if(!mobOn() || WD.over){ if(MOB.im) mobDraw(); return; }
+  if(MOB.job){ const t0 = performance.now(); while(MOB.job && performance.now() - t0 < 12) MOB.job.next(); }
+  const lead = mobLead();
+  if(lead){ if(!MOB.job){ MOB.wt += dt; if(MOB.wt >= MOB.WAVE){ MOB.wt -= MOB.WAVE; mobWave(); } }
+    for(const s of MOB.sd) if(s.alive) mobStepSd(s, dt);
+    mobPayStep(dt);
+    if(mobNet() && (MOB.nt -= dt) <= 0){ MOB.nt = 0.25; mobOut(); } }
+  else { MOB.wt += dt; for(const s of MOB.sd) if(s.alive) mobPuppet(s, dt); }
+  MOB.sd = MOB.sd.filter(s => s.alive); mobStepBul(dt); mobDraw(); }
+
+// ---------- rede: o líder manda 'wmb' (4 por segundo) e os tiros 'wmf'; quem acerta manda 'wmh' ----------
+function mobOut(){ const a = []; for(const s of MOB.sd) if(s.alive) a.push(s.id, s.t, s.li*2 + (s.d > 0 ? 1 : 0), Math.round(s.u*10), Math.max(1, Math.round(s.hp)), s.mv ? 1 : 0, s.mhp);
+  netEv({t:'wmb', s:a, w:Math.round(MOB.wt*10), v:MOB.wave}); if(MOB.ft.length){ netEv({t:'wmf', f:MOB.ft.flat()}); MOB.ft = []; } }
+function mobPuppet(s, dt){ const R = MOB.lanes[s.li]; if(!R) return; s.ht = Math.max(0, s.ht - dt); s.ft = (s.ft || 0) - dt; if(s.ft <= 0) s.aim = false;
+  if(s.mv){ s.tu += s.d*MOB.SPD*dt; s.wt += dt; } s.u += (s.tu - s.u)*Math.min(1, dt*6);
+  const P = mobAt(R, s.u, s.off, MOB._q || (MOB._q = {})); s.pos.set(P.x, P.y, P.z); if(s.mv) s.face = s.d > 0 ? P.f : P.f + Math.PI;
+  else { const q = players.filter(p => p.alive && p.squad !== s.t).sort((a, b) => a.pos.distanceToSquared(s.pos) - b.pos.distanceToSquared(s.pos))[0]; if(q && q.pos.distanceTo(s.pos) < MOB.RNG) s.face = Math.atan2(q.pos.x - s.pos.x, q.pos.z - s.pos.z); } }
+function mobNetHook(){ if(typeof WN_EV === 'undefined' || WN_EV.wmb) return;
+  WN_EV.wmb = e => { if(NET.host || !MOB.on || !Array.isArray(e.s)) return; const seen = new Set(), by = new Map(MOB.sd.map(s => [s.id, s]));
+    for(let i=0; i + 6 < e.s.length; i += 7){ const id = e.s[i] | 0, t = clamp(e.s[i + 1] | 0, 0, 3), li = (e.s[i + 2] | 0) >> 1, R = MOB.lanes[li]; if(!R) continue; seen.add(id); let s = by.get(id);
+      const u = (+e.s[i + 3] || 0)/10; if(!s){ s = mobMake(R, t, u, id, e.s[i + 6] | 0 || MOB.HP); s.d = (e.s[i + 2] & 1) ? 1 : -1; }
+      s.tu = u; if(Math.abs(s.u - u) > 12) s.u = u; s.hp = e.s[i + 4] | 0; s.mhp = e.s[i + 6] | 0 || s.mhp; s.mv = !!e.s[i + 5]; }
+    for(const s of MOB.sd) if(!seen.has(s.id) && s.alive) mobKill(s, null, s.hp > 8); MOB.wt = (+e.w || 0)/10; if((e.v | 0) === 1 && MOB.wave < 1) say('🪖 A primeira onda de <b>soldadinhos</b> saiu das bases!', true); MOB.wave = e.v | 0; };
+  WN_EV.wmf = e => { if(NET.host || !MOB.on || !Array.isArray(e.f)) return; const by = new Map(MOB.sd.map(s => [s.id, s]));
+    for(let i=0; i + 3 < e.f.length; i += 4){ const s = by.get(e.f[i] | 0); if(s && s.alive) mobFire(s, e.f[i + 1]/10, e.f[i + 2]/10, e.f[i + 3]/10, false); } };
+  WN_EV.wmh = e => { if(!NET.host || !MOB.on) return; const s = MOB.sd.find(x => x.id === (e.i | 0)); if(!s || !s.alive) return; const p = NET.byNid[e.n] || null; s.hp -= clamp(+e.d || 0, 0, 300); s.ht = 0.18; if(s.hp <= 0) mobKill(s, p); }; }
+
+// ---------- tiros dos jogadores e dos bots acertam soldadinho ----------
+const _mobA = new THREE.Vector3();
+function mobShots(dt){ if(!MOB.on || !MOB.sd.length || !mobOn()) return;
+  for(let i=shots.length - 1;i>=0;i--){ const s = shots[i], w = s.w; if(!s.owner || (w && (w.smoke || w.util))) continue; const own = s.owner.squad;
+    if(w && w.boom){ s._mh = s._mh || new Set(); for(const o of MOB.sd){ if(!o.alive || o.t === own || s._mh.has(o.id)) continue; if(Math.hypot(o.pos.x - s.pos.x, o.pos.y + 0.6 - s.pos.y, o.pos.z - s.pos.z) < 1.1){ s._mh.add(o.id); if(mobAuth(s.owner)) mobDmg(o, w.dmg, s.owner); } } continue; }
+    // segmento do tiro neste quadro contra a esfera de cada soldadinho
+    const vx = s.vel.x*dt, vy = s.vel.y*dt, vz = s.vel.z*dt, L2 = vx*vx + vy*vy + vz*vz || 1e-6, mx = s.pos.x + vx/2, mz = s.pos.z + vz/2, rr = Math.sqrt(L2)/2 + 1.2; let hit = null, ht = 2;
+    for(const o of MOB.sd){ if(!o.alive || o.t === own || Math.abs(o.pos.x - mx) > rr || Math.abs(o.pos.z - mz) > rr) continue; const cx = o.pos.x - s.pos.x, cy = o.pos.y + 0.62 - s.pos.y, cz = o.pos.z - s.pos.z;
+      const t = clamp((cx*vx + cy*vy + cz*vz)/L2, 0, 1), ex = cx - vx*t, ey = cy - vy*t, ez = cz - vz*t; if(ex*ex + ey*ey*0.45 + ez*ez < 0.36 && t < ht){ ht = t; hit = o; } }
+    if(!hit) continue; const auth = mobAuth(s.owner);
+    if(w && w.splash){ if(auth){ s.pos.set(s.pos.x + vx*ht, s.pos.y + vy*ht, s.pos.z + vz*ht); s.vel.set(0, 0.001, 0); s.t = (w.life || 3) + 0.01; } continue; }
+    if(auth) mobDmg(hit, w ? w.dmg : 7, s.owner); if(w && w.flame){ hit.burn = 1; }
+    puff(s.pos.x + vx*ht, s.pos.y + vy*ht, s.pos.z + vz*ht, 4, WD_T[hit.t].c, 0.08, 2); world.remove(s.m); shots.splice(i, 1); } }
+{ const _ex = explode; explode = function(s){ const r = _ex(s); if(MOB.on && MOB.sd.length && s && s.w && s.w.splash && s.owner && mobAuth(s.owner)){ const w = s.w;
+    for(const o of MOB.sd){ if(!o.alive || o.t === s.owner.squad) continue; _mobA.set(o.pos.x, o.pos.y + 0.6, o.pos.z); const d = _mobA.distanceTo(s.pos); if(d > w.splash) continue; mobDmg(o, w.dmg*(0.35 + 0.65*(1 - d/w.splash)), s.owner); } }
+  return r; }; }
+// bot sem inimigo por perto atira no soldadinho de outra tropa
+{ const _bs = botShoot; botShoot = function(p, dt, inp){ const r = _bs(p, dt, inp); if(!MOB.on || !MOB.sd.length || !mobOn() || p.foe || p.glide || p.down || p.car || !p.alive) return r;
+    p.mobT = (p.mobT || 0) - dt; p.mobA = (p.mobA || 0) - dt;
+    if(p.mobT <= 0){ p.mobT = rand(0.4, 0.8); let b = null, bd = 24; for(const o of MOB.sd){ if(!o.alive || o.t === p.squad) continue; const d = Math.hypot(o.pos.x - p.pos.x, o.pos.z - p.pos.z); if(d < bd){ bd = d; b = o; } } p.mobTg = b; }
+    const o = p.mobTg; if(o && o.alive && p.mobA <= 0 && (p.shotCD || 0) <= 0 && Math.hypot(o.pos.x - p.pos.x, o.pos.z - p.pos.z) < 24){ p.mobA = rand(0.45, 1.0);
+      const e = (1.5 - (p.skill || 0.8))*1.2; p.aimPt = new THREE.Vector3(o.pos.x + rand(-e, e)*0.5, o.pos.y + 0.6 + rand(-e, e)*0.3, o.pos.z + rand(-e, e)*0.5); p.face = Math.atan2(o.pos.x - p.pos.x, o.pos.z - p.pos.z); inp.push = true; }
+    return r; }; }
+
+// ---------- HUD (linha da próxima onda) e minimapa (rotas e soldadinhos) ----------
+{ const _h = wdHud; wdHud = function(){ _h(); const el = $('wdHud'); if(!el) return; let L = el.querySelector('.wdMob'); if(!L){ L = document.createElement('div'); L.className = 'wdZ wdMob'; el.appendChild(L); }
+    L.hidden = !MOB.on; if(L.hidden) return; const n = MOB.sd.length, h = MOB.job ? '🪖 Traçando as 6 rotas…' : `🪖 Onda ${MOB.wave + 1} em <b>${Math.max(0, Math.ceil(MOB.WAVE - MOB.wt))}</b> s · ${n} soldadinho${n === 1 ? '' : 's'} nas rotas`;
+    if(L._h !== h){ L._h = h; L.innerHTML = h; } }; }
+{ const _dm = fjDrawMap; fjDrawMap = function(cv, big){ _dm(cv, big); if(!MOB.on || !WAR || !WD.cz) return; const g = cv.getContext('2d'), S = cv.width, me = players[0], W = BIG_W, span = big ? 2*W : Math.min(150, 2*W*0.75);
+    const cx = big ? 0 : clamp(me.pos.x, -W + span/2, W - span/2), cz = big ? 0 : clamp(me.pos.z, -W + span/2, W - span/2), k = S/span, X = x => (x - cx)*k + S/2, Z = z => (z - cz)*k + S/2;
+    g.save(); g.lineCap = 'round'; g.lineJoin = 'round';
+    for(const R of MOB.lanes){ if(!R) continue; g.beginPath(); R.p.forEach((p, i) => i ? g.lineTo(X(p[0]), Z(p[1])) : g.moveTo(X(p[0]), Z(p[1]))); g.strokeStyle = 'rgba(43,24,70,.45)'; g.lineWidth = big ? 6 : 4; g.stroke(); g.strokeStyle = 'rgba(255,247,232,.8)'; g.lineWidth = big ? 2.5 : 1.6; g.stroke();
+      if(big){ const m = R.p[Math.floor(R.p.length/2)]; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.lineWidth = 3; g.strokeStyle = 'rgba(43,24,70,.85)'; g.strokeText(R.n, X(m[0]), Z(m[1]) + 16); g.fillStyle = '#fff7e8'; g.fillText(R.n, X(m[0]), Z(m[1]) + 16); } }
+    const r = big ? 2.6 : 1.8; for(const s of MOB.sd){ if(!s.alive) continue; const x = X(s.pos.x), z = Z(s.pos.z); if(x < -4 || z < -4 || x > S + 4 || z > S + 4) continue; g.fillStyle = WD_T[s.t].s; g.fillRect(x - r, z - r, r*2, r*2); }
+    g.restore(); }; }
+
+// ---------- ganchos no jogo ----------
+// wdStartX roda no começo da Guerra no líder (depois do wdStart) e no cliente online (depois de montar as bases)
+{ const _wx = wdStartX; wdStartX = function(...a){ const r = _wx(...a); mobStart(); return r; }; }
+{ const _sr = startRound; startRound = function(...a){ if(MOB.on) mobClear(); return _sr(...a); }; }
+{ const _us = updateShoot; updateShoot = function(dt){ if(MOB.on && mobOn()) mobShots(dt); _us(dt); if(MOB.on) mobStep(dt); }; }
 
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
