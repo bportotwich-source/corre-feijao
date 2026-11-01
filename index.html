@@ -19717,6 +19717,32 @@ if(typeof netEvIn === 'function'){ const _ni = netEvIn; netEvIn = function(e, fr
         vvEmote(p, e.k); if(p.vvE && Number.isFinite(+e.f)) p.vvE.f = +e.f; }catch(err){} return; }
     return _ni.apply(this, arguments); }; }
 
+// ---------- Aba Inventário (01/11, pedido do Bruno): mesma tela da Loja, só com os itens que o jogador já tem; fica depois do Jogar ----------
+let invMode = false;
+{ const nb = document.createElement('button'); nb.className = 'mtab'; nb.id = 'btnInv'; nb.textContent = 'Inventário'; $('tabPlay').after(nb);
+  nb.onclick = () => { sfx('beep'); invMode = true; if(shopTab === 'pass') shopTab = 'color'; shopSel = null; openScreen('shop'); };
+  ['btnShop', 'btnPass'].forEach(k => $(k) && $(k).addEventListener('click', () => { invMode = false; }, true)); }
+{ const _os2 = openScreen; openScreen = function(id){ if(id !== 'shop') invMode = false; return _os2.apply(this, arguments); }; }
+{ const _rs2 = renderShop; renderShop = function(){ const r = _rs2.apply(this, arguments), S = $('shop'), on = invMode && shopTab !== 'pass';
+    S.classList.toggle('invOnly', on);
+    if(on){ const h2 = S.querySelector('.phead h2'); if(h2) h2.textContent = 'Inventário';
+      const I = $('items'); I.querySelectorAll('.item').forEach(b => { if(!owns(b.dataset.id)) b.remove(); });
+      if(!I.querySelector('.item')) I.innerHTML = '<p class="invVazio">Você ainda não tem nada aqui. Compre na Loja ou ganhe no Passe.</p>'; }
+    return r; }; }
+{ const _mt = mbTabSet; mbTabSet = function(id){ const r = _mt.apply(this, arguments), inv = invMode && (id === 'shop' || id === 'pass') && shopTab !== 'pass';
+    const bi = $('btnInv'), bs = $('btnShop'); if(bi){ bi.classList.toggle('on', inv); if(inv) bi.setAttribute('aria-current', 'page'); else bi.removeAttribute('aria-current'); }
+    if(inv && bs){ bs.classList.remove('on'); bs.removeAttribute('aria-current'); } return r; }; }
+{ const st = document.createElement('style'); st.textContent = `
+#shop.invOnly .prof small{visibility:hidden}
+#shop .invVazio{grid-column:1/-1;margin:24px 0;text-align:center;color:var(--tbI,#2a1250);font-weight:800;opacity:.75}`; document.head.appendChild(st); }
+
+// ---------- Ícones da barra azul (01/11, pedido do Bruno): engrenagem de verdade no lugar do "sol" e os dois ícones centrados no botão ----------
+{ const s = document.querySelector('#btnSettings .mi svg'); if(s) s.innerHTML = '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>';
+  const st = document.createElement('style'); st.textContent = `
+#menu .mico{display:flex!important;align-items:center;justify-content:center;padding:0!important;line-height:0}
+#menu .mico>.mi{display:grid!important;place-items:center!important;line-height:0;margin:0!important}
+#menu .mico>.mi svg{display:block;width:22px;height:22px;stroke-width:2}`; document.head.appendChild(st); }
+
 // ---------- Jogar com amigos (online P2P com PeerJS): sala com código, lobby, chat e partida sincronizada ----------
 // O líder cria a sala e roda a partida de verdade (bots, regras, tempo, zona). Cada amigo manda a posição do próprio feijão e recebe a de todo o resto.
 // No Battle Royale quem atira decide se acertou (o dano vai pro dono do feijão atingido) e cada um decide a própria morte.
