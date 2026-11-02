@@ -15756,6 +15756,17 @@ const Platform = {
 };
 const CFG_DEF = {full:false, quality:2, scale:100, shadows:true, fov:60, fps:0, showFps:false, occ:true, grass:1, shake:true, vol:80, music:70, sfx:90, muteBlur:true, sens:100, adsSens:100, invY:false, camDist:85, name:'', tips:true, lang:'pt', toon:false, cross:'cruz', hudTheme:'tatico', autoQ:true, fpp:false, autoRes:true};
 const CFG = Object.assign({}, CFG_DEF, Platform.load('feijao-cfg') || {});
+function fjGpuNome(){ try{ const gl = renderer.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return String(e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER) || ''); }catch(e){ return ''; } }
+function fjGpuFraca(n){ n = n || fjGpuNome();
+  if(/NVIDIA|GeForce|Quadro|RTX|GTX|Radeon (RX|Pro)|Arc\(TM\) A\d|Arc A\d|Apple M\d/i.test(n)) return false;   // placa dedicada (ou Apple M, que aguenta)
+  return /Intel|UHD|Iris|HD Graphics|Radeon\(TM\) (Vega|Graphics)|Radeon Graphics|Vega \d|Mali|Adreno|PowerVR|SwiftShader|llvmpipe|Microsoft Basic/i.test(n); }
+function fjLeveAuto(){ if(CFG.leve0) return; CFG.leve0 = 1;
+  const fab = CFG.quality === CFG_DEF.quality && CFG.shadows === CFG_DEF.shadows && CFG.grass === CFG_DEF.grass && CFG.scale === CFG_DEF.scale && (CFG.flora === undefined || CFG.flora === 1);
+  const n = fjGpuNome();
+  if(fab && fjGpuFraca(n)){ CFG.quality = 0; CFG.shadows = false; CFG.grass = 0; CFG.flora = 0; CFG.autoRes = true; CFG.leve0 = 2;
+    setTimeout(() => { try{ toast('💻 Vídeo integrado detectado: <b>modo leve</b> ligado (Qualidade Baixa, sem sombras e sem grama). Dá pra mudar em Configurações › Vídeo.'); }catch(e){} }, 2500); }
+  Platform.save('feijao-cfg', CFG); }
+fjLeveAuto();
 let PAUSED = false, returnTo = 'menu', setTab = 'video';
 function applyAudio(){ if(!ac) return; master.gain.value = 0.7*CFG.vol/100*(CFG.muteBlur && !document.hasFocus() ? 0 : 1); musicGain.gain.value = 0.32*CFG.music/100; sfxGain.gain.value = CFG.sfx/100; }
 function applyVideo(){
