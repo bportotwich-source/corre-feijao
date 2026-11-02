@@ -19477,6 +19477,10 @@ addEventListener('keyup', e => { if(e.code === 'KeyX' && CB2.bm) e.stopImmediate
 { const _nh = cb2NetHook; cb2NetHook = function(){ _nh(); if(typeof WN_EV === 'undefined' || WN_EV.wdm) return;
     WN_EV.wdm = e => { if(!wnOn()) return; const S = OBR.L.find(S => S.id === e.id); if(S) cb2Unbuild(S); }; }; }
 
+// ---------- na Guerra o F é só pra farm (Bruno 02/11 20:22: "F tá atirando"): segurar F repetia a tecla e o jogo atirava; atirar fica no clique ----------
+addEventListener('keydown', e => { if(e.code !== 'KeyF' || !WAR || !BIG || round !== 20 || !inMatch() || PAUSED) return; if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
+  const me = you(); if(!me.alive) return; e.preventDefault(); e.stopImmediatePropagation(); if(typeof keys !== 'undefined') keys.KeyF = false; }, true);
+
 // ===== fim do construir2 =====
 
 // Guerra MOBA lote 4b (corre-feijao/guerra/moba/moba5.js)
