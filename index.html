@@ -19419,11 +19419,14 @@ function cb2SameSpot(k, x, y, z, t){ const P = CB2_P[k]; if(!P) return null;
   return _m(o); }; }
 
 // ---------- desmontar (X no modo construir): a peça/defesa da sua tropa que você mira sai e volta todo o material (Bruno 02/11 15:17) ----------
-function cb2Aim(me){ const o = cam1.pos, d = cam1.look.clone().sub(cam1.pos).normalize(); let best = null, bt = 1e9;
+function cb2Aim(me){ const o = camera.position.clone(), d = new V3(); camera.getWorldDirection(d); let best = null, bt = 1e9;   // raio da câmera de verdade (a mira do meio da tela)
   for(const S of OBR.L){ if(S.dead || S.t !== me.squad || Math.hypot(S.x - me.pos.x, S.z - me.pos.z) > 10) continue;
     for(const b of S.cols || []){ let t0 = 0, t1 = 30, ok = true;
       for(const ax of ['x', 'y', 'z']){ const v = d[ax], a = b.min[ax] - o[ax], c = b.max[ax] - o[ax]; if(Math.abs(v) < 1e-6){ if(a > 0 || c < 0){ ok = false; break; } continue; } let p = a/v, q = c/v; if(p > q) [p, q] = [q, p]; t0 = Math.max(t0, p); t1 = Math.min(t1, q); if(t0 > t1){ ok = false; break; } }
       if(ok && t0 < bt){ bt = t0; best = S; } } }
+  if(best) return best;
+  // não acertou nada na mira: a peça da tropa mais perto na frente do feijão (até 4,5 m)
+  let bd = 4.5; for(const S of OBR.L){ if(S.dead || S.t !== me.squad) continue; const dx = S.x - me.pos.x, dz = S.z - me.pos.z, q = Math.hypot(dx, dz); if(q > 0.5 && (dx*d.x + dz*d.z)/q < 0.3) continue; if(q < bd && Math.abs((S.y || 0) - me.pos.y) < 3.5){ bd = q; best = S; } }
   return best; }
 function cb2Unbuild(S){ if(!S || S.dead) return; S.dead = true; world.remove(S.g); (S.cols || []).forEach(b => b.active = false); const i = OBR.L.indexOf(S); if(i >= 0) OBR.L.splice(i, 1);
   if(S.op) obrOff(S.op); if(S.want) S.want.obrM = null; puff(S.x, (S.y || 0) + 0.8, S.z, 12, 0xd2bb85, 0.2, 3); }
