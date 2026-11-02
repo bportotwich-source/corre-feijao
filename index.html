@@ -4797,16 +4797,38 @@ function fjLodInit(){
     lo.setColorAt(0, new THREE.Color()); lo.count = 0; o.parent.add(lo); o.instanceMatrix.setUsage(THREE.DynamicDrawUsage); lo.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     FJL.list.push({hi:o, lo, n, M, ML, C, X, near:o.userData.lodNear}); });
 }
+// árvores bem longe viram "placa" (2 cartões cruzados com a foto da própria árvore): perto e no meio nada muda
+const FJI = {on:true, near:[80, 100, 130, 170], imp:[150, 180, 230, 270]};
+function fjImpBake(e){ const g = e.lo.geometry; if(!g.boundingBox) g.computeBoundingBox(); const bb = g.boundingBox, W = Math.max(bb.max.x - bb.min.x, bb.max.z - bb.min.z), H = bb.max.y - bb.min.y;
+  if(!(W > 0.1 && H > 0.1)) return null;
+  const tw = 128, th = Math.min(512, Math.max(64, Math.round(128*H/W/32)*32 || 128)), rt = new THREE.WebGLRenderTarget(tw, th, {minFilter:THREE.LinearMipmapLinearFilter, magFilter:THREE.LinearFilter, generateMipmaps:true});
+  const sc = new THREE.Scene(), cx = (bb.min.x + bb.max.x)/2, cz = (bb.min.z + bb.max.z)/2;
+  sc.add(new THREE.HemisphereLight(hemiL.color, hemiL.groundColor, hemiL.intensity)); sc.add(new THREE.AmbientLight(0xffffff, 0)); scene.children.forEach(o => { if(o.isAmbientLight) sc.add(new THREE.AmbientLight(o.color, o.intensity)); });
+  const dl = new THREE.DirectionalLight(sun.color, sun.intensity); dl.position.set(cx + W*0.6, bb.max.y + H, cz + W*2); dl.target.position.set(cx, (bb.min.y + bb.max.y)/2, cz); sc.add(dl); sc.add(dl.target);
+  const m = new THREE.Mesh(g, e.lo.material); m.frustumCulled = false; sc.add(m);
+  const cam = new THREE.OrthographicCamera(-W/2, W/2, H/2, -H/2, 0.1, W*4 + 10); cam.position.set(cx, (bb.min.y + bb.max.y)/2, cz + W*2 + 2); cam.lookAt(cx, (bb.min.y + bb.max.y)/2, cz);
+  const oT = renderer.getRenderTarget(), oC = renderer.getClearColor(new THREE.Color()), oA = renderer.getClearAlpha(), oS = renderer.shadowMap.autoUpdate;
+  renderer.shadowMap.autoUpdate = false; renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(sc, cam);
+  renderer.setRenderTarget(oT); renderer.setClearColor(oC, oA); renderer.shadowMap.autoUpdate = oS;
+  const pos = [], uv = [], nor = [], idx = [];
+  [[1, 0], [0, 1]].forEach(([ax, az], q) => { const b = q*4; [[-1, 0, 0], [1, 0, 1], [1, 1, 1], [-1, 1, 0]].forEach(([s, v, u]) => { pos.push(cx + s*ax*W/2, bb.min.y + v*H, cz + s*az*W/2); uv.push(u, v); nor.push(0, 1, 0); }); idx.push(b, b + 1, b + 2, b, b + 2, b + 3); });
+  const ig = new THREE.BufferGeometry(); ig.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); ig.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); ig.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); ig.setIndex(idx);
+  const mt = new THREE.MeshBasicMaterial({map:rt.texture, alphaTest:0.5, side:THREE.DoubleSide, transparent:false});
+  const im = new THREE.InstancedMesh(ig, mt, e.n); im.castShadow = false; im.receiveShadow = false; im.frustumCulled = false; im.userData.keep = true; im.userData.fjImp = true;
+  im.setColorAt(0, new THREE.Color()); im.count = 0; im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); e.lo.parent.add(im); e.rt = rt; return im; }
 function fjLod(cam){
   pnLod(cam); if(!TER){ return; } if(FJL.w !== world) fjLodInit(); if(!FJL.list.length) return;
   const P = cam.position; if(FJL.t-- > 0 && FJL.p && Math.abs(FJL.p.x - P.x) + Math.abs(FJL.p.z - P.z) < 3) return; FJL.t = 30; FJL.p = {x:P.x, z:P.z};
-  const R2 = FJL.NEAR*FJL.NEAR, F2 = (scene.fog.far + 15)**2, hs = [P];
+  const fq = CFG.quality | 0, NQ = FJI.near[fq], R2 = NQ*NQ, I2 = FJI.on ? Math.max(NQ + 40, FJI.imp[fq])**2 : 1e18, F2 = (scene.fog.far + 15)**2, hs = [P];
   if(twoP && typeof cam2 !== 'undefined' && cam2.pos) hs.push(cam2.pos);
-  for(const e of FJL.list){ const hm = e.hi.instanceMatrix.array, hc = e.hi.instanceColor.array, lm = e.lo.instanceMatrix.array, lc = e.lo.instanceColor.array; let a = 0, b = 0;
+  for(const e of FJL.list){ if(FJI.on && e.imp === undefined){ try{ e.imp = fjImpBake(e); }catch(er){ e.imp = null; } } const im = FJI.on && e.imp, hm = e.hi.instanceMatrix.array, hc = e.hi.instanceColor.array, lm = e.lo.instanceMatrix.array, lc = e.lo.instanceColor.array, pm = im && im.instanceMatrix.array, pc = im && im.instanceColor.array; let a = 0, b = 0, c = 0;
+    if(e.imp && !im){ e.imp.count = 0; e.imp.visible = false; }
     for(let i = 0; i < e.n; i++){ let d2 = 1e12; for(const h of hs){ const dx = e.X[i*2] - h.x, dz = e.X[i*2 + 1] - h.z, q = dx*dx + dz*dz; if(q < d2) d2 = q; }
-      if(d2 < (e.near ? e.near*e.near : R2)){ hm.set(e.M.subarray(i*16, i*16 + 16), a*16); hc.set(e.C.subarray(i*3, i*3 + 3), a*3); a++; }
-      else if(d2 < F2){ lm.set((e.ML || e.M).subarray(i*16, i*16 + 16), b*16); lc.set(e.C.subarray(i*3, i*3 + 3), b*3); b++; } }
-    e.hi.count = a; e.lo.count = b; e.hi.instanceMatrix.needsUpdate = e.hi.instanceColor.needsUpdate = e.lo.instanceMatrix.needsUpdate = e.lo.instanceColor.needsUpdate = true; }
+      if(d2 < R2){ hm.set(e.M.subarray(i*16, i*16 + 16), a*16); hc.set(e.C.subarray(i*3, i*3 + 3), a*3); a++; }
+      else if(d2 < I2 || !im){ if(d2 < F2){ lm.set((e.ML || e.M).subarray(i*16, i*16 + 16), b*16); lc.set(e.C.subarray(i*3, i*3 + 3), b*3); b++; } }
+      else if(d2 < F2){ pm.set((e.ML || e.M).subarray(i*16, i*16 + 16), c*16); pc.set(e.C.subarray(i*3, i*3 + 3), c*3); c++; } }
+    e.hi.count = a; e.lo.count = b; e.hi.instanceMatrix.needsUpdate = e.hi.instanceColor.needsUpdate = e.lo.instanceMatrix.needsUpdate = e.lo.instanceColor.needsUpdate = true;
+    if(e.imp){ e.imp.count = c; e.imp.visible = c > 0; e.imp.instanceMatrix.needsUpdate = e.imp.instanceColor.needsUpdate = true; } }
 }
 // loot numa grade de 8 m: os bots procuram item perto sem varrer o mapa inteiro a cada quadro
 let LOOTV = 0; const LGR = {v:-1, a:null, m:new Map()}, LGC = 8;
