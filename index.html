@@ -19009,8 +19009,8 @@ function cb2Plan(){ const me = you(), B = CB2.bm, k = B.k, P = CB2_P[k], cy = ob
   let gy = null, bd = 10; for(const S of OBR.L){ if(!S.cb2 || S.dead) continue; const d = Math.hypot(S.x - x, S.z - z); if(d < bd && Math.abs(S.gy - me.pos.y) < 9){ bd = d; gy = S.gy; } }
   const [lo, hi] = P.ty === 'E' ? cb2Ground(x - 2*Math.abs(Math.cos(f)) - 0.2, x + 2*Math.abs(Math.cos(f)) + 0.2, z - 2*Math.abs(Math.sin(f)) - 0.2, z + 2*Math.abs(Math.sin(f)) + 0.2) : cb2Ground(cx - 2, cx + 2, cz - 2, cz + 2);
   if(gy === null) gy = Math.round(((lo + hi)/2)*20)/20;
-  const lp = Math.max(0, Math.floor((me.pos.y - gy + 0.6)/CB2.H)); let lv = Math.min(5, lp + dl);
-  while(lv < 5 && hi > gy + lv*CB2.H + 1.0) lv++;
+  // andar: o do feijão (+1 olhando pra cima), nunca abaixo do andar que o chão daqui alcança; a peça pode entrar na terra (Bruno 02/11 15:12)
+  const lg = Math.max(0, Math.floor((lo - gy + 0.4)/CB2.H)), lp = me.pos.y - gY(me.pos.x, me.pos.z) < 0.35 ? lg : Math.max(0, Math.floor((me.pos.y - gy + 0.6)/CB2.H)); let lv = Math.min(5, Math.max(lp + dl, lg));
   const y = gy + lv*CB2.H, c = cb2Check(me, k, x, y, z, f, lv, gy, lo, hi);
   Object.assign(B, {x, y, z, f, gy, lv, ok:!!c.ok, why:c.why || '', a:c.a}); }
 function cb2Check(p, k, x, y, z, f, lv, gy, lo, hi){ const P = CB2_P[k], t = p.squad, a = obrArea(t, x, z);
@@ -19018,10 +19018,9 @@ function cb2Check(p, k, x, y, z, f, lv, gy, lo, hi){ const P = CB2_P[k], t = p.s
   if(a[0] === 'b' && typeof genDown === 'function' && genDown(t)) return {why:'Base sem energia: conserte o gerador primeiro'};
   if(OBR.L.filter(S => S.cb2 && S.a === a).length >= CB2.MAXA) return {why:`Já tem ${CB2.MAXA} peças aqui`};
   if(lo < (typeof FJ_WL === 'number' ? FJ_WL : -99) + 0.3 && lv === 0) return {why:'Não dá na água'};
-  if(lv === 0 && hi - lo > 2.2) return {why:'Chão muito torto'};
   const same = OBR.L.find(S => S.cb2 && !S.dead && CB2_P[S.ck].ty === P.ty && !CB2_P[S.ck].lad === !P.lad && Math.abs(S.x - x) < 0.3 && Math.abs(S.z - z) < 0.3 && Math.abs(S.y - y) < 1.0);
   if(same) return {why:'Já tem peça aqui', a};
-  if(lv > 0 && !OBR.L.some(S => S.cb2 && !S.dead && Math.hypot(S.x - x, S.z - z) < 4.4 && (Math.abs(S.y - y) < 0.5 || Math.abs(S.y - (y - CB2.H)) < 0.5))) return {why:'Precisa de uma peça embaixo ou do lado pra apoiar', a};
+  if(lv > 0 && y - lo > 0.8 && !OBR.L.some(S => S.cb2 && !S.dead && Math.hypot(S.x - x, S.z - z) < 4.4 && (Math.abs(S.y - y) < 0.5 || Math.abs(S.y - (y - CB2.H)) < 0.5))) return {why:'Precisa de uma peça embaixo ou do lado pra apoiar', a};
   // não entra em prédio, árvore ou construção antiga
   // volume testado: a pegada da peça, de 0,4 m acima do piso até 2,6 m (teto: só até 1 m)
   const T = {x, y, z, f}, [x0, x1, , , z0, z1] = cb2Box(T, P.lad ? [-0.45, 0.45, 0, 1, -0.45, -0.22] : P.ty === 'E' ? [-2, 2, 0, 1, -0.2, 0.2] : [-2, 2, 0, 1, -2, 2]), ya = y + 0.4, yb = y + (k === 'teto' ? 1.0 : 2.6), seen = new Set();
@@ -19083,7 +19082,7 @@ function cb2Cost(I){ const me = you(), M = fmMat(me), L = [];
   for(const [k, v] of Object.entries(I.mat || {})) L.push(`<b class="${(M[k] || 0) < v ? 'no' : ''}">${FM_K[k].ic}${v}</b>`); return L.join(''); }
 function cb2MenuDraw(force){ let b = $('cb2Menu'); if(!b){ b = document.createElement('div'); b.id = 'cb2Menu'; $('brHud').appendChild(b); b.addEventListener('mousedown', cb2MenuClick); }
   const B = CB2.bm; b.hidden = !B || WD.over; if(b.hidden) return; const me = you(), M = fmMat(me), T = CB2_TABS[CB2.tab];
-  const tabs = CB2_TABS.map((t, i) => `<i data-tab="${i}" class="${i === CB2.tab ? 'on' : ''}">${t.ic} ${t.nm}</i>`).join('') + '<u><kbd>Q</kbd> troca a aba · <kbd>K</kbd> sai</u>';
+  const tabs = CB2_TABS.map((t, i) => `<i data-tab="${i}" class="${i === CB2.tab ? 'on' : ''}">${t.ic} ${t.nm}</i>`).join('') + '<u><kbd>Q</kbd> troca a aba · <kbd>X</kbd> desmonta · <kbd>K</kbd> sai</u>';
   const cards = T.K.map((k, i) => { const P = CB2_P[k], I = P ? OBR.I['cb_' + k] : OBR.I[CB2_K(k)], nm = k === 'muro_s' ? 'Muro de sacos' : I.nm, img = CB2_ICO[k] ? `<img src="data:image/webp;base64,${CB2_ICO[k]}">` : `<em>${I.ic}</em>`;
     const no = (I.price && me.wdM < I.price) || !!fmLack(me, I); return `<div data-k="${k}" class="${B.k === k ? 'on' : ''}${no ? ' no' : ''}"><kbd>${i + 1}</kbd>${img}<span>${nm}</span><p>${cb2Cost(I)}</p></div>`; }).join('');
   const P = CB2_P[B.k], deg = B.cb ? ((B.rot % 4)*90) : (B.rot*45), what = P ? (P.ty === 'E' ? 'troca o lado' : P.ty === 'R' ? 'vira a subida' : 'gira') : 'gira 45°';
@@ -19405,6 +19404,41 @@ function cb2Clear(x0, x1, z0, z1, y0, y1){ let n = 0; const seen = new Set();
 { const _h = wdHud; wdHud = function(){ _h(); const el = $('wdHud'); if(!el || !gobOn()) return; const o = el.querySelector('.wdMat'); if(!o) return; if(!o.classList.contains('cb2Mat')) o.classList.add('cb2Mat');
   const M = fmMat(you()), c = [['🪵', 'Madeira', M.w || 0], ['🪨', 'Pedra', M.s || 0], ['⚙️', 'Metal', M.m || 0]].map(([i, n, v]) => `<em title="${n}"${v < 10 ? ' class="lo"' : ''}><span>${i}</span><b>${v}</b></em>`).join('');
   if(o._c !== c || !o.querySelector('em')){ o._c = c; o.innerHTML = c; } }; }
+
+// defesas soltas (torre, canhão, morteiro, torreta, palete...) também aceitam chão torto: entram na terra (Bruno 02/11 15:12)
+for(const k in OBR.I) if(!k.startsWith('cb_')) OBR.I[k].slope = Math.max(OBR.I[k].slope || 0, 3.5);
+
+// ---------- trocar peça no mesmo lugar (parede de madeira -> muro de pedra, porta, portão...): paga só o material da nova (Bruno 02/11 15:14) ----------
+function cb2SameSpot(k, x, y, z, t){ const P = CB2_P[k]; if(!P) return null;
+  return OBR.L.find(S => S.cb2 && !S.dead && S.ck !== k && (t === undefined || S.t === t) && CB2_P[S.ck].ty === P.ty && !CB2_P[S.ck].lad === !P.lad && Math.abs(S.x - x) < 0.3 && Math.abs(S.z - z) < 0.3 && Math.abs(S.y - y) < 1.0) || null; }
+{ const _c = cb2Check; cb2Check = function(p, k, x, y, z, ...a){ const old = cb2SameSpot(k, x, y, z, p.squad); if(!old) return _c(p, k, x, y, z, ...a);
+  const i = OBR.L.indexOf(old); OBR.L.splice(i, 1); try{ const r = _c(p, k, x, y, z, ...a); if(r.ok) r.swap = old; return r; } finally { OBR.L.splice(i, 0, old); } }; }
+// em todo PC (o 'wbd' chama o cb2Make): a peça antiga do mesmo lugar sai sem entulho antes da nova entrar
+{ const _m = cb2Make; cb2Make = function(o){ const old = CB2_P[o.k] ? cb2SameSpot(o.k, o.x, o.y, o.z, o.t) : null;
+  if(old){ old.dead = true; world.remove(old.g); old.cols.forEach(b => b.active = false); const i = OBR.L.indexOf(old); if(i >= 0) OBR.L.splice(i, 1); }
+  return _m(o); }; }
+
+// ---------- desmontar (X no modo construir): a peça/defesa da sua tropa que você mira sai e volta todo o material (Bruno 02/11 15:17) ----------
+function cb2Aim(me){ const o = cam1.pos, d = cam1.look.clone().sub(cam1.pos).normalize(); let best = null, bt = 1e9;
+  for(const S of OBR.L){ if(S.dead || S.t !== me.squad || Math.hypot(S.x - me.pos.x, S.z - me.pos.z) > 10) continue;
+    for(const b of S.cols || []){ let t0 = 0, t1 = 30, ok = true;
+      for(const ax of ['x', 'y', 'z']){ const v = d[ax], a = b.min[ax] - o[ax], c = b.max[ax] - o[ax]; if(Math.abs(v) < 1e-6){ if(a > 0 || c < 0){ ok = false; break; } continue; } let p = a/v, q = c/v; if(p > q) [p, q] = [q, p]; t0 = Math.max(t0, p); t1 = Math.min(t1, q); if(t0 > t1){ ok = false; break; } }
+      if(ok && t0 < bt){ bt = t0; best = S; } } }
+  return best; }
+function cb2Unbuild(S){ if(!S || S.dead) return; S.dead = true; world.remove(S.g); (S.cols || []).forEach(b => b.active = false); const i = OBR.L.indexOf(S); if(i >= 0) OBR.L.splice(i, 1);
+  if(S.op) obrOff(S.op); if(S.want) S.want.obrM = null; puff(S.x, (S.y || 0) + 0.8, S.z, 12, 0xd2bb85, 0.2, 3); }
+function cb2Dismantle(){ const me = you(), S = cb2Aim(me); if(!S){ sfx('lose'); banner('🔧 Mire numa peça da sua tropa', 'Chegue perto e aperte X olhando pra ela', 900); return; }
+  const bot = /_b\d+$/.test(String(S.id)) || (S.by && S.by.isBot), I = OBR.I[S.k] || {}, M = fmMat(me), back = bot ? {} : Object.assign({}, I.mat || {});   // feita por bot: sai, mas não devolve nada
+  if(S.k === 'palete' && S.st){ back.w = (back.w || 0) + (S.st.w || 0); back.s = (back.s || 0) + (S.st.s || 0); }
+  for(const [m, v] of Object.entries(back)) M[m] = (M[m] || 0) + v;
+  if(!bot && !S.cb2 && I.price && me.wdM !== undefined) me.wdM += I.price;
+  cb2Unbuild(S); if(gobNetOn()) netEv({t:'wdm', id:S.id}); sfx('click');
+  const txt = Object.entries(back).filter(([, v]) => v > 0).map(([m, v]) => `+${v} ${{w:'🪵', s:'🪨', m:'⚙️'}[m] || m}`).concat(!bot && !S.cb2 && I.price ? [`+🫘 ${I.price}`] : []).join(' ');
+  say(`🔧 Desmontou ${I.nm || 'peça'} ${txt}`, true); }
+addEventListener('keydown', e => { if(e.code !== 'KeyX' || !CB2.bm || !inMatch() || PAUSED || (e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) return; e.stopImmediatePropagation(); e.preventDefault(); if(!e.repeat) cb2Dismantle(); }, true);
+addEventListener('keyup', e => { if(e.code === 'KeyX' && CB2.bm) e.stopImmediatePropagation(); }, true);
+{ const _nh = cb2NetHook; cb2NetHook = function(){ _nh(); if(typeof WN_EV === 'undefined' || WN_EV.wdm) return;
+    WN_EV.wdm = e => { if(!wnOn()) return; const S = OBR.L.find(S => S.id === e.id); if(S) cb2Unbuild(S); }; }; }
 
 // ===== fim do construir2 =====
 
