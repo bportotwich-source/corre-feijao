@@ -19497,6 +19497,49 @@ addEventListener('keyup', e => { if(e.code === 'KeyX' && CB2.bm) e.stopImmediate
 addEventListener('keydown', e => { if(e.code !== 'KeyF' || !WAR || !BIG || round !== 20 || !inMatch() || PAUSED) return; if(e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
   const me = you(); if(!me.alive) return; e.preventDefault(); e.stopImmediatePropagation(); if(typeof keys !== 'undefined') keys.KeyF = false; }, true);
 
+// ===================== CONSTRUIR 2 — lote 4: defesa em cima da construção (estilo Rust; Bruno aprovou o plano 03/11 01:44) =====================
+// No modo construir, com uma defesa escolhida (torreta, morteiro, canhão, antiaéreo, torre, muro de sacos), mire num chão/teto da sua tropa:
+//   ela encaixa no meio do piso, lá em cima (1 defesa por piso). Piso quebrou -> a defesa de cima quebra junto.
+// Online: o 'wbd' das defesas não leva altura; o x vai com +0,01 x (andar + 1) e cada PC acha o piso por essa marca (1 cm não se vê).
+// Torreta no alto (1 andar ou mais acima do chão): +25% de alcance. Morteiro no alto já cai mais longe sozinho (sai de mais alto).
+const CB2_ONF = k => k !== 'palete' && !!OBR.I[k] && !k.startsWith('cb_');
+const cb2Flr = S => S && S.cb2 && !S.dead && (S.ck === 'chao' || S.ck === 'teto');
+const cb2FlrTop = S => S.y + (S.ck === 'teto' ? 0.7 : 0.22);
+const cb2FlrLv = S => Math.max(0, Math.round((S.y - S.gy)/CB2.H));
+// piso que a mira acerta (raio da câmera), até 14 m do feijão
+function cb2AimFloor(me){ const o = camera.position.clone(), d = new V3(); camera.getWorldDirection(d); let best = null, bt = 1e9;
+  for(const S of OBR.L){ if(!cb2Flr(S) || S.t !== me.squad || Math.hypot(S.x - me.pos.x, S.z - me.pos.z) > 14) continue;
+    for(const b of S.cols){ let t0 = 0, t1 = 40, ok = true;
+      for(const ax of ['x', 'y', 'z']){ const v = d[ax], a = b.min[ax] - o[ax], c = b.max[ax] - o[ax]; if(Math.abs(v) < 1e-6){ if(a > 0 || c < 0){ ok = false; break; } continue; } let p = a/v, q = c/v; if(p > q) [p, q] = [q, p]; t0 = Math.max(t0, p); t1 = Math.min(t1, q); if(t0 > t1){ ok = false; break; } }
+      if(ok && t0 < bt){ bt = t0; best = S; } } }
+  return best; }
+function cb2OnFloor(k, x, z, t){ for(const S of OBR.L){ if(!cb2Flr(S) || S.t !== t || Math.abs(S.z - z) > 0.004) continue; if(Math.abs(S.x + 0.01*(cb2FlrLv(S) + 1) - x) < 0.004) return S; } return null; }
+function cb2DefCheck(p, k, F){ const I = OBR.I[k], t = p.squad, a = F.a || obrArea(t, F.x, F.z);
+  if(!a) return {why:'Só perto da sua base ou de um posto que a sua tropa domina'};
+  const here = OBR.L.filter(S => S.a === a && !S.cb2); if(here.length >= 8) return {why:'Já tem 8 construções aqui', a}; if(here.filter(S => S.k === k).length >= I.max) return {why:`Máximo de ${I.max} ${I.nm.toLowerCase()} por lugar`, a};
+  if(OBR.L.some(S => !S.cb2 && !S.dead && S.onF === F)) return {why:'Esse piso já tem uma defesa em cima', a};
+  const top = cb2FlrTop(F), R = I.r*0.6, own = new Set(F.cols);
+  for(const b of solidsAt(F.x, F.z)) if(b.active && !own.has(b) && b.kind !== 'ramp' && !cb2Nat(b) && b.max.y > top + 0.3 && b.min.y < top + 2.4 && F.x + R > b.min.x && F.x - R < b.max.x && F.z + R > b.min.z && F.z - R < b.max.z) return {why:'Sem espaço em cima desse piso', a};
+  if(p.wdM < I.price) return {why:`Faltam 🫘 ${I.price - p.wdM}`, a};
+  const l = fmLack(p, I); if(l) return {why:`Faltam ${l}`, a, lack:true};
+  return {ok:true, a}; }
+// mira num piso com defesa escolhida: a defesa vai pro meio dele, lá em cima
+{ const _pl = cb2Plan; cb2Plan = function(){ _pl(); const B = CB2.bm, me = you(); if(!B || B.cb) return; const k = CB2_K(B.k); B.onF = null; if(!CB2_ONF(k)) return;
+  const F = cb2AimFloor(me); if(!F) return;
+  const c = cb2DefCheck(me, k, F); Object.assign(B, {x:F.x + 0.01*(cb2FlrLv(F) + 1), z:F.z, y:cb2FlrTop(F), ok:!!c.ok, why:c.why || '', a:c.a, onF:F}); }; }
+// em todo PC: defesa com a marca no x sobe pro piso
+{ const _m = obrMake; obrMake = function(o){ const S = _m(o); if(!S || !o || !CB2_ONF(o.k)) return S; const F = cb2OnFloor(o.k, o.x, o.z, o.t); if(!F) return S;
+  const Y = cb2FlrTop(F), dy = Y - S.y; S.y = Y; S.g.position.y = Y; for(const b of S.cols){ b.min.y += dy; b.max.y += dy; } S.onF = F; S.hi = Y - gY(F.x, F.z) > 2.4;
+  for(const p of players) if(p.alive && Math.hypot(p.pos.x - S.x, p.pos.z - S.z) < OBR.I[o.k].r*0.8 && p.pos.y < Y && p.pos.y > Y - 2.5) p.pos.y = Y + 0.05;   // quem estava no piso fica em cima
+  return S; }; }
+// piso caiu: a defesa de cima cai junto (o líder decide; os outros recebem o 'wbx')
+{ const _d = cb2Doors; cb2Doors = function(dt){ _d(dt); if(gobNetOn() && !gobLead()) return;
+  for(const S of OBR.L.slice()) if(S.onF && S.onF.dead && !S.dead) obrBreak(S, null); }; }
+// torreta no alto: +25% de alcance
+{ const _f = mstFind; mstFind = function(P){ const S = P && P.id && String(P.id).startsWith('cb') ? OBR.L.find(S => S.ms === P) : null; if(!S || !S.hi) return _f(P); const R = MST.RT; MST.RT = R*1.25; try{ return _f(P); } finally { MST.RT = R; } }; }
+{ const _t = cb2Turrets; cb2Turrets = function(dt){ const n = MOB && MOB.bul ? MOB.bul.length : 0; _t(dt); if(!MOB || !MOB.bul) return;
+  for(let i = Math.min(n, MOB.bul.length); i < MOB.bul.length; i++){ const b = MOB.bul[i]; const S = b.src && OBR.L.find(S => S.ms === b.src); if(S && S.hi) b.life *= 1.25; } }; }
+
 // ===== fim do construir2 =====
 
 // Guerra MOBA lote 4b (corre-feijao/guerra/moba/moba5.js)
