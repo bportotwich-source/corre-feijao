@@ -20066,6 +20066,26 @@ const VZ_ARV = {pinheiro:['Pine_4', 'Pine_1', 'Pine_5'], pinheiro_jovem:['Pine_3
 // plantas a mais no anel do chão (só aparecem quando o arquivo extra carregou)
 MKF_SET.campo.B.push(['Flower_6', .03, .45], ['Clover_1', .03, .6]); MKF_SET.mata.A.push(['Plant_7', .04, .4]); MKF_SET.mata.B.push(['Mushroom_Oyster', .03, .55]);
 
+// árvore de farm (madeira) da Guerra com modelo do MegaKit (Copa 2 / Copa 5), em vez do cilindro + bola
+const FARV = {N:['CommonTree_2', 'CommonTree_5'], H:8.5};
+{ const _m = cb2FModel; cb2FModel = function(k){ const g = _m(k); if(k !== 'w' || typeof MK === 'undefined') return g;
+    const ok = FARV.N.filter(n => MK.g[n]); if(!ok.length) return g; const nome = ok[(CB2.fid + CB2.F.length) % ok.length], M = MK.g[nome];
+    while(g.children.length) g.remove(g.children[0]);
+    const arv = new THREE.Group(); arv.name = 'arv'; const im = new THREE.InstancedMesh(M.g, M.m, 1), s = FARV.H/MK.h[nome]*(0.9 + Math.random()*0.25);
+    im.setColorAt(0, new THREE.Color(1, 1, 1)); im.setMatrixAt(0, new THREE.Matrix4().makeScale(s, s, s)); im.castShadow = true; im.receiveShadow = true; im.userData.keep = true; im.frustumCulled = false;
+    arv.add(im); g.add(arv); g.userData.arv = arv; return g; }; }
+// quando cai: a copa some numa nuvem de folhas, fica o toco, e um tronco cortado tomba e fica deitado no chão uns segundos
+FARV.LIE = 4; FARV.mt = null;
+function farvLog(){ if(!FARV.mt) FARV.mt = [new THREE.MeshLambertMaterial({color:0x6e4b2f}), new THREE.MeshLambertMaterial({color:0xdcb57e}), new THREE.MeshLambertMaterial({color:0xdcb57e})];
+  const lg = new THREE.Group(), L = 5, c = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.46, L, 12), FARV.mt); c.position.y = 0.55 + L/2; c.castShadow = true; lg.add(c);
+  for(let i = 0; i < 3; i++){ const r = new THREE.Mesh(new THREE.CylinderGeometry(0.47, 0.47, 0.12, 12), FARV.mt[0]); r.position.y = 1.4 + i*1.5; r.scale.set(1, 1, 0.92); lg.add(r); }   // nós da casca
+  return lg; }
+{ const _d = cb2FDown; cb2FDown = function(N, p, ang){ const ja = N.fall; _d(N, p, ang); if(ja || N.k !== 'w' || !N.arv || !N.g) return;
+    N.arv.visible = false; puff(N.x, N.y + 6, N.z, 30, 0x5d9a3c, 0.4, 6); puff(N.x, N.y + 0.8, N.z, 12, 0xc8955a, 0.2, 3);
+    const toco = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.52, 0.55, 12), FARV.mt ? FARV.mt : (farvLog(), FARV.mt)); toco.position.y = 0.27; toco.castShadow = true; N.g.add(toco);
+    const lg = farvLog(); N.g.add(lg); N.arv = lg; N.lie = 0; }; }
+{ const _c = cb2Chop; cb2Chop = function(dt){ for(const N of CB2.F) if(N.fall && N.k === 'w' && N.lie != null && N.fall > 1.4 && N.lie < FARV.LIE){ N.lie += dt; N.fall -= dt; } return _c(dt); }; }
+
 window.__game = {get fut(){ return fut; }, futTest(pl, st, n){ plan = pl; stage = st; round = pl[st]; players.forEach((p, i) => p.alive = i < n); startRound(); return round; }, futDist:(x, y, z) => futDist(x, y, z), passGain, renderPass, openScreen, checkCh, bump, get cam(){ return camera; }, play:(m, b, s) => play(m, b, s), startKeep(r){ plan = [1, 13, 14, r === 20 || r === 15 ? r : 20]; stage = plan.indexOf(r); round = r; startRound(); }, get zoneP(){ return zoneP; }, snd:k => playSnd(k, {ui:true, must:true}), get SNDK(){ return Object.keys(SND); }, get ac(){ return ac; }, meter(){ if(!ac) return null; if(!this.an){ this.an = ac.createAnalyser(); this.an.fftSize = 2048; master.connect(this.an); this.buf = new Float32Array(2048); } this.an.getFloatTimeDomainData(this.buf); let pk = 0, s = 0; for(const v of this.buf){ pk = Math.max(pk, Math.abs(v)); s += v*v; } return [pk, Math.sqrt(s/2048)].map(v => +v.toFixed(3)); }, brLevel:() => brLevel(), renderSnd:k => renderSnd(k), pause, hurt:(...a) => hurt(...a), fireW:(...a) => fireW(...a), splat:(...a) => splat(...a), get PAUSED(){ return PAUSED; }, CFG,Q, keys, WPN, get loot(){ return loot; }, SAVE, get earn(){ return earn; }, get mingle(){ return mingle; }, roomOf:p => roomOf(p), DBG, stepPlayer, collideBox, start(a){ $('menu').hidden = true; $('top').hidden = false; initAudio(); createPlayers(); earn = newEarn(); elimOrder = []; plan = a; stage = 0; round = a[0]; startRound(); }, get stage(){ return stage; }, sim(sec){ for(let t=0;t<sec;t+=1/60) tick(1/60); }, players, R1, get solids(){ return solids; }, get round(){ return round; }, set light(v){ light = v; lightT = 0; }};
 
 // ---------- Menu principal v2 (thread "Reorganizar menus e HUDs"): um Jogar só com o modo escolhido ----------
